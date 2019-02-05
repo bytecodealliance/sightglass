@@ -1,0 +1,20 @@
+[package]
+name = "sightglass"
+version = "0.1.0"
+authors = ["Frank Denis <fdenis@fastly.com>"]
+
+[dependencies]
+bencher = "0.1"
+clap = "2"
+failure = "0.1"
+goblin = "0.0"
+hwloc = "0.5"
+libc = "0.2"
+libloading = "0.5"
+precision = "0.1.8"
+printtable = "0.1"
+serde = "1"
+serde_derive = "1"
+serde_json = "1"
+toml = "0.4"
+xfailure = "0.1"
