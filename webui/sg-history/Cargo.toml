@@ -8,7 +8,7 @@ keywords = ["benchmark", "benchmarking", "performance"]
 categories = ["visualization"]
 homepage = "https://github.com/fastly/sightglass"
 repository = "https://github.com/fastly/sightglass"
-license = "Apache-2.0 WITH LLVM-exception"
+license = "Apache-2.0 WITH LLVM-exception OR MIT"
 
 [dependencies]
 mvdb = "0.3.0"

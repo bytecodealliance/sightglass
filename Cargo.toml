@@ -7,7 +7,7 @@ description = "A benchmark suite and tool to compare different implementations o
 keywords = ["benchmark", "benchmarking", "performance"]
 homepage = "https://github.com/fastly/sightglass"
 repository = "https://github.com/fastly/sightglass"
-license = "Apache-2.0 WITH LLVM-exception"
+license = "Apache-2.0 WITH LLVM-exception OR MIT"
 
 [dependencies]
 bencher = "0.1"
