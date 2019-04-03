@@ -149,7 +149,7 @@ pub fn resolve(tests_symbols: &[TestSymbol], library: &Library) -> Vec<Test> {
                 .bodies
                 .iter()
                 .map(|body| unsafe {
-                    let body_sym: Symbol<TestBodyFn> = library.get(body.as_bytes()).unwrap();
+                    let body_sym: Symbol<'_, TestBodyFn> = library.get(body.as_bytes()).unwrap();
                     TestBody {
                         name: body.to_string(),
                         body_fn: *body_sym.into_raw(),
@@ -157,11 +157,11 @@ pub fn resolve(tests_symbols: &[TestSymbol], library: &Library) -> Vec<Test> {
                 })
                 .collect();
             let setup_fn = test_symbol.setup.as_ref().map(|setup| unsafe {
-                let setup_sym: Symbol<TestSetupFn> = library.get(setup.as_bytes()).unwrap();
+                let setup_sym: Symbol<'_, TestSetupFn> = library.get(setup.as_bytes()).unwrap();
                 *setup_sym.into_raw()
             });
             let teardown_fn = test_symbol.teardown.as_ref().map(|teardown| unsafe {
-                let teardown_sym: Symbol<TestTeardownFn> =
+                let teardown_sym: Symbol<'_, TestTeardownFn> =
                     library.get(teardown.as_bytes()).unwrap();
                 *teardown_sym.into_raw()
             });

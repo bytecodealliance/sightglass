@@ -1,5 +1,5 @@
-use super::config::*;
-use super::errors::*;
+use crate::config::*;
+use crate::errors::*;
 use hwloc::{ObjectType, Topology, TopologyObject};
 
 /// Tune the system for more reliable measurements
@@ -26,6 +26,6 @@ fn last_core(topo: &mut Topology) -> Result<&TopologyObject, BenchError> {
     let all_cores = topo.objects_at_depth(core_depth);
     all_cores
         .last()
-        .map(|&x| x)
+        .cloned()
         .ok_or(BenchError::InternalError("No cores found"))
 }

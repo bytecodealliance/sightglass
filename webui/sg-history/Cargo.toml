@@ -1,11 +1,18 @@
 [package]
 name = "sg-history"
 version = "0.1.0"
-authors = ["Frank Denis <github@pureftpd.org>"]
+authors = ["Frank Denis <fdenis@fastly.com>"]
+edition = "2018"
+description = "Data store and web service for visualizing SightGlass results"
+keywords = ["benchmark", "benchmarking", "performance"]
+categories = ["visualization"]
+homepage = "https://github.com/fastly/sightglass"
+repository = "https://github.com/fastly/sightglass"
+license = "Apache-2.0 WITH LLVM-exception OR MIT"
 
 [dependencies]
-mvdb = "0.3"
-rouille = "3.0"
-serde = "1.0"
-serde_derive = "1.0"
-serde_json = "1.0"
+mvdb = "0.3.0"
+rouille = "3.0.0"
+serde = "1.0.89"
+serde_derive = "1.0.89"
+serde_json = "1.0.39"

@@ -109,7 +109,3 @@ By defaut, the `Text` and `CSV` output do not include a breakdown of the time sp
 This can be changed with the optional `breakdown` property being set to `true`.
 
 The `JSON` output always includes this information.
-
-## WIP
-
-This documentation is terrible, but it will eventually be awesome.

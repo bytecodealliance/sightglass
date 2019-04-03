@@ -1,5 +1,6 @@
 **/*.rs.bk
 **/*~
 /target/
+/webui/sg-history/target/
 benchmarks/**/*.ll
 benchmarks/**/*.o

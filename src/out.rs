@@ -55,7 +55,7 @@ impl Out {
     pub fn out_vec(&self, output_configs: &[OutputConfig]) -> Result<(), BenchError> {
         for output_config in output_configs {
             let format = Format::parse(&output_config.format)?;
-            let writer: Box<Write> = match output_config.file {
+            let writer: Box<dyn Write> = match output_config.file {
                 Some(ref file) if !file.is_empty() => Box::new(File::create(file)?),
                 _ => Box::new(io::stdout()),
             };
@@ -70,7 +70,7 @@ impl Out {
         format: Format,
         breakdown: bool,
     ) -> Result<(), BenchError> {
-        let serializer: Box<Serializable<W>> = match format {
+        let serializer: Box<dyn Serializable<W>> = match format {
             Format::Text => Box::new(Text) as Box<_>,
             Format::CSV => Box::new(CSV) as Box<_>,
             Format::JSON => Box::new(JSON) as Box<_>,
@@ -83,9 +83,9 @@ fn into_sorted(
     test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
 ) -> Vec<(&String, Vec<(&String, &AnonymousTestResult)>)> {
     let mut test_suites_results: Vec<_> = test_suites_results
-        .into_iter()
+        .iter()
         .map(|(test_name, test_suite)| {
-            let mut test_suite: Vec<_> = test_suite.into_iter().collect();
+            let mut test_suite: Vec<_> = test_suite.iter().collect();
             test_suite.sort_unstable_by_key(|x| x.0);
             (test_name, test_suite)
         })
