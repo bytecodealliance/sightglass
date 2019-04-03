@@ -1,11 +1,11 @@
-extern crate mvdb;
 #[macro_use]
 extern crate rouille;
-extern crate serde;
-extern crate serde_json;
+
+use serde_json;
 #[macro_use]
 extern crate serde_derive;
 use mvdb::Mvdb;
+use std::clone::Clone;
 use std::collections::BTreeMap;
 use std::env;
 use std::io;
@@ -73,7 +73,7 @@ impl PersistentHistory {
 
     fn get(&self) -> Result<History, io::Error> {
         self.db
-            .access(|db| db.clone())
+            .access(Clone::clone)
             .map_err(|_| io::Error::last_os_error())
     }
 }

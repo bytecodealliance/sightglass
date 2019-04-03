@@ -1,18 +1,9 @@
-extern crate bencher;
-extern crate clap;
 #[macro_use]
 extern crate failure;
-extern crate goblin;
-extern crate hwloc;
-extern crate libc;
-extern crate libloading;
-extern crate precision;
-extern crate printtable;
-extern crate serde;
+
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate toml;
+
 #[macro_use]
 extern crate xfailure;
 

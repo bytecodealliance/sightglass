@@ -98,7 +98,7 @@ impl<T> Sample<T> {
 pub trait Runnable<Ret> {
     fn setup(&mut self) {}
     fn teardown(&mut self) {}
-    fn bodies<'t>(&'t mut self) -> Vec<Box<Fn(usize) -> Ret + 't>>;
+    fn bodies<'t>(&'t mut self) -> Vec<Box<dyn Fn(usize) -> Ret + 't>>;
 }
 
 impl TestBodiesBench {
@@ -109,8 +109,8 @@ impl TestBodiesBench {
 }
 
 impl Runnable<()> for TestBodiesBench {
-    fn bodies<'t>(&'t mut self) -> Vec<Box<Fn(usize) -> () + 't>> {
-        let mut fns: Vec<Box<Fn(usize) -> () + 't>> = vec![];
+    fn bodies<'t>(&'t mut self) -> Vec<Box<dyn Fn(usize) -> () + 't>> {
+        let mut fns: Vec<Box<dyn Fn(usize) -> () + 't>> = vec![];
         for _ in 0..self.bodies.len() {
             let this = self.clone();
             fns.push(Box::new(move |body_id| this.body(body_id)))
@@ -326,7 +326,7 @@ fn load_library<P: AsRef<OsStr>>(
 fn bench_library(config: &Config, library_path: &Path) -> Result<Vec<TestResult>, BenchError> {
     let tests_symbols = symbols::extract_tests_symbols(library_path)?;
     let library = load_library(library_path, false, true)?;
-    let tests_runner: Symbol<&TestsConfig> =
+    let tests_runner: Symbol<'_, &TestsConfig> =
         unsafe { library.get(TEST_LIBRARIES_TABLE_SYMBOL) }.map_err(BenchError::from)?;
     if tests_runner.version != TEST_ABI_VERSION {
         xbail!(BenchError::ABIError("Incompatible ABI version"));
