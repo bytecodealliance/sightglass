@@ -9,10 +9,10 @@ extern crate xfailure;
 
 mod bench;
 mod config;
+mod cpu_affinity;
 mod errors;
 mod out;
 mod symbols;
-mod sysopts;
 
 use self::bench::bench;
 use self::config::Config;
@@ -21,7 +21,7 @@ use std::process;
 
 fn _main() -> Result<(), BenchError> {
     let config = Config::parse()?;
-    let _ = sysopts::tune(&config);
+    let _ = cpu_affinity::tune(&config);
     bench(&config)?;
     Ok(())
 }

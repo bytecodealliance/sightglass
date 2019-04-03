@@ -1,5 +1,5 @@
-use super::config::*;
-use super::errors::*;
+use crate::config::*;
+use crate::errors::*;
 use hwloc::{ObjectType, Topology, TopologyObject};
 
 /// Tune the system for more reliable measurements
