@@ -3,6 +3,12 @@ name = "sg-history"
 version = "0.1.0"
 authors = ["Frank Denis <fdenis@fastly.com>"]
 edition = "2018"
+description = "Data store and web service for visualizing SightGlass results"
+keywords = ["benchmark", "benchmarking", "performance"]
+categories = ["visualization"]
+homepage = "https://github.com/fastly/sightglass"
+repository = "https://github.com/fastly/sightglass"
+license = "Apache-2.0 WITH LLVM-exception"
 
 [dependencies]
 mvdb = "0.3.0"

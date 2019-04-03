@@ -3,6 +3,11 @@ name = "sightglass"
 version = "0.1.0"
 authors = ["Frank Denis <fdenis@fastly.com>"]
 edition = "2018"
+description = "A benchmark suite and tool to compare different implementations of the same primitives"
+keywords = ["benchmark", "benchmarking", "performance"]
+homepage = "https://github.com/fastly/sightglass"
+repository = "https://github.com/fastly/sightglass"
+license = "Apache-2.0 WITH LLVM-exception"
 
 [dependencies]
 bencher = "0.1"
