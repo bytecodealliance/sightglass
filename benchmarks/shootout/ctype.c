@@ -41,26 +41,26 @@ ctype_body(void *ctx_)
     str = ctx->str;
 
     assert(ctx->str_size >= 2U);
-    memset(ctx->str, 'x', ctx->str_size);
-    ctx->str[ctx->str_size - 1U] = 0;
+    memset(str, 'x', ctx->str_size);
+    str[ctx->str_size - 1U] = 0;
 
     for (i = 0; i < ITERATIONS; i++) {
-        BLACK_BOX(ctx->str);
+        BLACK_BOX(str);
         for (j = 0U; j < ctx->str_size; j++) {
-            ret += isalpha((int) (unsigned char) ctx->str[j]);
-            ret += isalnum((int) (unsigned char) ctx->str[j]);
-            ret += isdigit((int) (unsigned char) ctx->str[j]);
-            ret += isspace((int) (unsigned char) ctx->str[j]);
-            ret += isprint((int) (unsigned char) ctx->str[j]);
-            if (isupper((int) (unsigned char) ctx->str[j])) {
-                ctx->str[j] = (char) tolower((int) (unsigned char) ctx->str[j]);
-            } else if (islower((int) (unsigned char) ctx->str[j])) {
-                ctx->str[j] = (char) toupper((int) (unsigned char) ctx->str[j]);
+            ret += isalpha((int) (unsigned char) str[j]);
+            ret += isalnum((int) (unsigned char) str[j]);
+            ret += isdigit((int) (unsigned char) str[j]);
+            ret += isspace((int) (unsigned char) str[j]);
+            ret += isprint((int) (unsigned char) str[j]);
+            if (isupper((int) (unsigned char) str[j])) {
+                str[j] = (char) tolower((int) (unsigned char) str[j]);
+            } else if (islower((int) (unsigned char) str[j])) {
+                str[j] = (char) toupper((int) (unsigned char) str[j]);
             }
         }
     }
 
-    free(ctx->str);
+    free(str);
     BLACK_BOX(ret);
     ctx->ret = ret;
 }
