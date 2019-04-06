@@ -39,15 +39,15 @@ strchr_body(void *ctx_)
     str = ctx->str;
 
     assert(ctx->str_size >= 2U);
-    memset(ctx->str, 'x', ctx->str_size);
-    ctx->str[ctx->str_size - 1U] = 0;
+    memset(str, 'x', ctx->str_size);
+    str[ctx->str_size - 1U] = 0;
 
     for (i = 0; i < ITERATIONS; i++) {
-        BLACK_BOX(ctx->str);
-        ret += (strchr(ctx->str, 'A') != NULL);
+        BLACK_BOX(str);
+        ret += (strchr(str, 'A') != NULL);
     }
 
-    free(ctx->str);
+    free(str);
     BLACK_BOX(ret);
     ctx->ret = ret;
 }
