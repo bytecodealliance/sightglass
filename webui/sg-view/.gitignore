@@ -9,3 +9,6 @@ npm-debug.log
 
 # Nuxt generate
 dist
+
+# since Yarn seems to be preferred...
+package-lock.json
