@@ -14,6 +14,25 @@ import SGCommits from "~/components/SGCommits.vue";
 import axios from "axios";
 import dayjs from "dayjs";
 
+/**
+ * Helper to avoid undefined portions of the input data; roughly equivalent to _.get but lodash is not imported
+ * @param fn_returning_value a function that when calls returns a value or throws an error
+ * @param default_value the default value to return if fn_returning_value throws an error
+ * @return {*} the value
+ */
+function get_or_default(fn_returning_value, default_value) {
+  if(!fn_returning_value || typeof fn_returning_value !== "function") {
+    throw new Error(`Expected a function to be passed but found: ${fn_returning_value}`);
+  }
+
+  try {
+    return fn_returning_value();
+  } catch {
+    console.warn(`Returning default value ${default_value} for ${fn_returning_value}`);
+    return default_value;
+  }
+}
+
 export default {
   components: {
     SGCommits
@@ -35,7 +54,7 @@ export default {
           let results = commit.results;
           for (var i = 0, j = results.length; i < j; i++) {
             let test_name = results[i][0];
-            let xperf_cretonne = results[i][1][1][1];
+            let xperf_cretonne = get_or_default(() => results[i][1][1][1], 0);
             let xperf_ref = results[i][1][0][1];
             tests_names.includes(test_name) || tests_names.push(test_name);
             avg_cretonne += xperf_cretonne.mean;
