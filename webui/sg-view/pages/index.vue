@@ -12,7 +12,6 @@
 <script>
 import SGCommits from "~/components/SGCommits.vue";
 import axios from "axios";
-import dayjs from "dayjs";
 
 /**
  * Helper to avoid undefined portions of the input data; roughly equivalent to _.get but lodash is not imported
