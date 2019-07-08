@@ -46,16 +46,8 @@
 
   /**
    * @param numbers a series of numbers, e.g. [42, 523, 32, ...]
-   * @return {number} the simple mean of the series
-   */
-  function calculate_average(numbers) {
-    const sum = (total, value) => total + value;
-    return Math.round(numbers.reduce(sum, 0) / numbers.length); // TODO loss of precision?
-  }
-
-  /**
-   * @param numbers a series of numbers, e.g. [42, 523, 32, ...]
    * @return {number} the geometric mean of the series
+   * @see https://gist.github.com/dherman/3d0b4733303eaf4bae5e
    */
   function calculate_geometric_mean(numbers) {
     const sum = (total, value) => total + Math.log(value);
