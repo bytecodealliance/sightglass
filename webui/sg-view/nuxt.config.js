@@ -52,5 +52,11 @@ module.exports = {
         });
       }
     }
+  },
+  /*
+  ** Allow overriding from environment
+  */
+  env: {
+    HISTORY_URL: process.env.HISTORY_URL || 'http://localhost:8001/history'
   }
 };

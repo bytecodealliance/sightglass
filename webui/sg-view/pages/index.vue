@@ -25,7 +25,7 @@
     },
     created() {
       axios
-        .get("http://localhost:8001/history")
+        .get(process.env.HISTORY_URL)
         .then(response => {
           this.loading = false;
           let items_obj = response.data.history;
