@@ -91,7 +91,6 @@
       </v-container>
 </template>
 <script>
-import axios from "axios";
 export default {
   props: ["loading", "items", "tests_names", "gitrefs"],
   computed: {
