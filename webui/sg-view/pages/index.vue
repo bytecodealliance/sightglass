@@ -14,6 +14,7 @@
   import axios from "axios";
   import {
       calculate_average_slowdown_ratio,
+      convert_meta,
       extract_git_refs,
       extract_test_names,
       get_index_by_name
@@ -36,7 +37,7 @@
             const reference_index = get_index_by_name("Reference", result.results);
             items.push({
               commit_id: commit,
-              meta: result.meta,
+              meta: convert_meta(result.meta),
               results: result.results,
               perf: calculate_average_slowdown_ratio(lucet_index, reference_index, result.results)
             });
