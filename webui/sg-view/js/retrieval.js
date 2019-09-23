@@ -55,8 +55,8 @@ export function calculate_average_slowdown_ratio(target_index, reference_index, 
       continue; // we want to avoid including missing results in the calculation
     }
 
-    target_means.push(test[1][target_index].mean);
-    reference_means.push(test[1][reference_index].mean);
+    target_means.push(test[1][target_index][1].mean);
+    reference_means.push(test[1][reference_index][1].mean);
   }
 
   return calculate_geometric_mean(target_means) / calculate_geometric_mean(reference_means);
