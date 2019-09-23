@@ -1,6 +1,12 @@
 import test from 'ava';
 import {history} from './fixtures/history';
-import {calculate_geometric_mean, extract_git_refs, extract_test_names, get_index_by_name} from "../js/retrieval";
+import {
+  calculate_geometric_mean,
+  convert_meta,
+  extract_git_refs,
+  extract_test_names,
+  get_index_by_name
+} from "../js/retrieval";
 
 function firstKey(o) {
   return Object.keys(o)[0];
@@ -27,4 +33,10 @@ test('extract_test_names', t => {
 test.skip('extract_git_refs', t => {
   // TODO the data is incorrect; fix that and then fix this test
   t.deepEqual(extract_git_refs(history), ['wasmtime_app']);
+});
+
+test('convert_meta', t => {
+  const firstMeta = history[firstKey(history)].meta;
+  t.is(convert_meta(firstMeta).ts, 1568059309000);
+  t.is(convert_meta(firstMeta).gitref, 'wasmtime_app'); // TODO eventually this should be a real gitref
 });

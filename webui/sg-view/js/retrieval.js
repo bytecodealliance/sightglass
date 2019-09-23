@@ -83,3 +83,15 @@ export function extract_git_refs(history) {
   Object.values(history).map(commit => git_refs.add(commit.meta.gitref));
   return Array.from(git_refs);
 }
+
+/**
+ * Convert meta object for use within the Vue app
+ * @param meta the meta-information of the test results
+ * @return {any} a clone of the meta object with the timestamp and gitref modified
+ */
+export function convert_meta(meta) {
+  let copy = Object.assign({}, meta);
+  copy.ts = meta.ts.secs_since_epoch * 1000;
+  copy.gitref = meta.gitref.replace(/^refs\/heads\//, '');
+  return copy;
+}
