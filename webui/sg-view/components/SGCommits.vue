@@ -2,7 +2,7 @@
       <v-container>
       <v-flex>
 <v-layout row wrap>
-        <v-autocomplete label="Test:" :items="tests_names" v-model="test_name" menu-props="auto" clearable placeholder="Display only results from a specific test" />
+        <v-autocomplete label="Test:" :items="tests_names" v-model="test_name" menu-props="auto" clearable v-on:click:clear="clear" placeholder="Display only results from a specific test" />
         <v-autocomplete label="Branch:" :items="gitrefs" v-model="gitref" menu-props="auto" clearable placeholder="Display only results from a specific branch" />
         <v-flex sm4><v-switch label="Plot all tests" v-model="plot_all" /></v-flex>
 </v-layout>
@@ -91,13 +91,20 @@
       </v-container>
 </template>
 <script>
+import {calculate_average_slowdown_ratio} from "../js/retrieval";
+
 export default {
   props: ["loading", "items", "tests_names", "gitrefs"],
   computed: {
     filtered_items: function() {
+      console.debug('Computing filtered items');
       let items = this.items;
+
+      // filtering by gitref
       this.gitref &&
         (items = items.filter(item => item.meta.gitref === this.gitref));
+
+      // filtering by date
       let ts_begin = 0,
         ts_end = Number.MAX_SAFE_INTEGER;
       this.date_begin && (ts_begin = new Date(this.date_begin).getTime());
@@ -107,6 +114,8 @@ export default {
           item => item.meta.ts >= ts_begin && item.meta.ts <= ts_end
         );
       }
+
+      // filtering by test name; WARNING: this changes the perf values so they must be re-calculated on change
       if (this.test_name) {
         items = items.map(item => {
           let perf = 0.0;
@@ -120,10 +129,17 @@ export default {
           item.perf = perf;
           return item;
         });
+      } else {
+          items = items.map(item => {
+              item.perf = calculate_average_slowdown_ratio(1, 0, item.results);
+              return item;
+          });
       }
+
       return items;
     },
     chartdata: function() {
+      console.debug('Computing chart data');
       if (this.plot_all) {
         let chartdata = [];
         for (let i = 0, j = this.tests_names.length; i < j; i++) {
