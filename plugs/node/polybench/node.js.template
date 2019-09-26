@@ -1,0 +1,11 @@
+const fs = require('fs');
+var source = fs.readFileSync('REPLACE_ME_WITH_WASM_FILE_PATH');
+var typedArray = new Uint8Array(source);
+
+WebAssembly.instantiate(typedArray, {
+}).then(result => {
+  console.log(result.instance.exports._start());
+}).catch(e => {
+  // error caught
+  console.log(e);
+});

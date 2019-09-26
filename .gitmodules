@@ -1,0 +1,4 @@
+[submodule "sightglass"]
+	path = sightglass
+	url = https://github.com/CraneStation/sightglass.git
+	branch = master
