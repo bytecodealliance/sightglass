@@ -1,24 +1,16 @@
 import test from 'ava';
-import {history} from './fixtures/history';
+import {history} from '../../../test/fixtures/history-output';
 import {
   calculate_average_slowdown_ratio,
   calculate_geometric_mean,
-  convert_meta,
-  extract_git_refs,
-  extract_test_names,
-  get_index_by_name
+  extract_benchmarks,
+  extract_runtimes,
+  extract_suites, extract_target_runtime
 } from "../js/retrieval";
 
-function firstKey(o) {
+function first_key(o) {
   return Object.keys(o)[0];
 }
-
-test('get_index_by_name', t => {
-  const firstResults = history[firstKey(history)].results;
-  t.is(get_index_by_name('wasmtime_app', firstResults), 1);
-  t.is(get_index_by_name('base_native', firstResults), 0);
-  t.is(get_index_by_name('unknown name', firstResults), -1);
-});
 
 test('calculate_geometric_mean', t => {
   t.is(calculate_geometric_mean([0]), 0);
@@ -31,21 +23,31 @@ test('calculate_geometric_mean', t => {
 });
 
 test('calculate_average_slowdown_ratio', t => {
-  const firstResults = history[firstKey(history)].results;
-  t.is(calculate_average_slowdown_ratio(1, 0, firstResults), 7.873731806770273);
+  const firstRun = history[first_key(history)];
+  t.is(calculate_average_slowdown_ratio('wasmtime', 'native', firstRun), 7.873731806770273);
 });
 
-test('extract_test_names', t => {
-  t.deepEqual(extract_test_names(history), ['ackermann', 'base64', 'ctype', 'ed25519', 'fib2', 'gimli', 'heapsort', 'keccak', 'matrix', 'matrix2', 'memmove', 'minicsv', 'nestedloop', 'nestedloop2', 'nestedloop3', 'random', 'random2', 'ratelimit', 'seqhash', 'sieve', 'strcat', 'strcat2', 'strchr', 'strlen', 'strtok', 'switch', 'switch2', 'xblabla20', 'xchacha20']);
+test('extract_runtimes', t => {
+  t.deepEqual(extract_runtimes(history), ['wasmtime', 'native']);
 });
 
-test.skip('extract_git_refs', t => {
-  // TODO the data is incorrect; fix that and then fix this test
-  t.deepEqual(extract_git_refs(history), ['wasmtime_app']);
+test('extract_suites', t => {
+  t.deepEqual(extract_suites(history), ['shootout']);
 });
 
-test('convert_meta', t => {
-  const firstMeta = history[firstKey(history)].meta;
-  t.is(convert_meta(firstMeta).ts, 1568059309000);
-  t.is(convert_meta(firstMeta).gitref, 'wasmtime_app'); // TODO eventually this should be a real gitref
+test('extract_benchmarks', t => {
+  t.deepEqual(extract_benchmarks(history), ['ackermann', 'base64', 'ctype', 'ed25519', 'fib2', 'gimli', 'heapsort', 'keccak', 'matrix', 'matrix2', 'memmove', 'minicsv', 'nestedloop', 'nestedloop2', 'nestedloop3', 'random', 'random2', 'ratelimit', 'seqhash', 'sieve', 'strcat', 'strcat2', 'strchr', 'strlen', 'strtok', 'switch', 'switch2', 'xblabla20', 'xchacha20']);
+});
+
+test('extract_target_runtime', t => {
+  const firstRun = history[first_key(history)];
+  t.is(extract_target_runtime('some-runtime', firstRun), null);
+
+  const wasmtime_results = extract_target_runtime('wasmtime', firstRun);
+  t.deepEqual(Object.keys(wasmtime_results.results.gimli), ['native', 'wasmtime']);
+  t.is(wasmtime_results.runtime, 'wasmtime');
+
+  const native_results = extract_target_runtime('native', firstRun);
+  t.deepEqual(Object.keys(native_results.results.gimli), ['native']);
+  t.is(native_results.runtime, 'native');
 });

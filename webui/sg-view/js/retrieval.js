@@ -1,36 +1,5 @@
 /**
- * Helper to avoid undefined portions of the input data; roughly equivalent to _.get but lodash is not imported
- * @param fn_returning_value a function that when calls returns a value or throws an error
- * @param default_value the default value to return if fn_returning_value throws an error
- * @return {*} the value
- */
-export function get_or_default(fn_returning_value, default_value) {
-  if (!fn_returning_value || typeof fn_returning_value !== "function") {
-    throw new Error(`Expected a function to be passed but found: ${fn_returning_value}`);
-  }
-
-  try {
-    return fn_returning_value();
-  } catch {
-    console.warn(`Returning default value ${default_value} for ${fn_returning_value}`);
-    return default_value;
-  }
-}
-
-/**
- * Assumes that all entries in the history follow the same order for the target VMs
- * @param name the target name to search for
- * @param results a list of sightglass results with the structure: ["test_name", [["target1", {...data}], ["target2", {...data}], ...]]
- * @return {number} the index of the data in the results for the given target name
- */
-export function get_index_by_name(name, results) {
-  const target_names = new Set(); // relies on Set iterating in insertion order
-  results.map(result => result[1].map(target => target_names.add(target[0]))); // TODO add some check to ensure there are no out-of-order results
-  return Array.from(target_names).indexOf(name);
-}
-
-/**
- * @param numbers a series of numbers, e.g. [42, 523, 32, ...]
+ * @param {[number]} numbers - a series of numbers, e.g. [42, 523, 32, ...]
  * @return {number} the geometric mean of the series
  * @see https://gist.github.com/dherman/3d0b4733303eaf4bae5e
  */
@@ -41,57 +10,87 @@ export function calculate_geometric_mean(numbers) {
 
 /**
  * Calculate the slowdown ration between a target and reference implementation across multiple benchmark results
- * @param target_index the index in the benchmark results for a given implementation
- * @param reference_index the index in the benchmark results for a references implementation
- * @param history a Rust-like list of commits containing results with the structure: ["test_name", [["target1", {...data}], ["target2", {...data}], ...]]
+ * @param {string} target - the name of a runtime (i.e. implementation) in the benchmark results
+ * @param {string} reference - the name of the reference runtime (i.e. the implementation to compare against as a base) in the benchmark results
+ * @param {object} run - a run result contained within the output of sg-history, see `[top-level]/test/fixtures/stored-run.json`
  * @return {number} the average slowdown, e.g. the target is 1.7x slower than the reference
  */
-export function calculate_average_slowdown_ratio(target_index, reference_index, history) {
+export function calculate_average_slowdown_ratio(target, reference, run) {
+  console.debug(`Calculating average slodown ratio of ${target} to ${reference}`, run);
   const target_means = [];
   const reference_means = [];
-  for (const test of history) {
-    if (!test[1][target_index] || !test[1][reference_index]) {
-      console.warn(`Missing results for test: ${test[0]}`);
+  for (const benchmark of Object.keys(run.results)) {
+    const benchmark_results = run.results[benchmark];
+    if (!benchmark_results[target] || !benchmark_results[reference]) {
+      console.warn(`Missing ${benchmark} results for either ${target} or ${reference} (timestamp: ${run.meta.timestamp}):`, run.results);
       continue; // we want to avoid including missing results in the calculation
     }
-
-    target_means.push(test[1][target_index][1].mean);
-    reference_means.push(test[1][reference_index][1].mean);
+    target_means.push(benchmark_results[target].mean);
+    reference_means.push(benchmark_results[reference].mean);
   }
 
   return calculate_geometric_mean(target_means) / calculate_geometric_mean(reference_means);
 }
 
 /**
- * Extracts the test names from a list of results
- * @param history a Rust-like list of commits containing results with the structure: ["test_name", [["target1", {...data}], ["target2", {...data}], ...]]
- * @return {[string]} a unique list of names
+ * Extracts the runtimes used for running the benchmarks (e.g. wasmtime, lucet)
+ * @param {object} history - the output of sg-history, see `[top-level]/test/fixtures/history-output.json`
+ * @return {[string]} a unique list of runtimes
  */
-export function extract_test_names(history) {
-  const test_names = new Set();
-  Object.values(history).map(commit => commit.results.map(results => test_names.add(results[0])));
-  return Array.from(test_names);
+export function extract_runtimes(history) {
+  // TODO generators?
+  const runtimes = new Set();
+  Object.values(history).map(r => Object.keys(r.meta.runtimes).map(rt => runtimes.add(rt)));
+  return Array.from(runtimes);
 }
 
 /**
- * Extracts the git refs from a list of results
- * @param history a Rust-like list of commits containing results with the structure: ["test_name", [["target1", {...data}], ["target2", {...data}], ...]]
- * @return {[string]} a unique list of git refs
+ * Extracts the benchmarks run (e.g. wasmtime, lucet)
+ * @param {object} history - the output of sg-history, see `[top-level]/test/fixtures/history-output.json`
+ * @return {[string]} a unique list of benchmarks
  */
-export function extract_git_refs(history) {
-  const git_refs = new Set();
-  Object.values(history).map(commit => git_refs.add(commit.meta.gitref));
-  return Array.from(git_refs);
+export function extract_benchmarks(history) {
+  const benchmarks = new Set();
+  Object.values(history).map(r => Object.keys(r.results).map(b => benchmarks.add(b)));
+  return Array.from(benchmarks);
 }
 
 /**
- * Convert meta object for use within the Vue app
- * @param meta the meta-information of the test results
- * @return {any} a clone of the meta object with the timestamp and gitref modified
+ * Extracts the benchmark suites used for running the benchmarks (e.g. shootout, polybench)
+ * @param {object} history - the output of sg-history, see `[top-level]/test/fixtures/history-output.json`
+ * @return {[string]} a unique list of suites
  */
-export function convert_meta(meta) {
-  let copy = Object.assign({}, meta);
-  copy.ts = meta.ts.secs_since_epoch * 1000;
-  copy.gitref = meta.gitref.replace(/^refs\/heads\//, '');
-  return copy;
+export function extract_suites(history) {
+  const suites = new Set();
+  Object.values(history).map(r => suites.add(r.meta.suite));
+  return Array.from(suites);
+}
+
+/**
+ * Extract the results of a single runtime along with the reference runtime to compare against
+ * @param {string} target - the name of the runtime results to extract
+ * @param {object} run - a run result contained within the output of sg-history, see `[top-level]/test/fixtures/stored-run.json`
+ * @return {{meta: *, runtime: *, results: *}|null} either the results truncated to only the target runtime and the
+ * reference runtime or null if the target runtime is not found
+ */
+export function extract_target_runtime(target, run) {
+  if (Object.keys(run.meta.runtimes).includes(target)) {
+    const reference_runtime = run.meta.reference_runtime;
+    let results = {};
+    for(const r of Object.keys(run.results)) {
+      results[r] = {};
+      for (const rt of Object.keys(run.results[r])) {
+        if(rt === target || rt === reference_runtime) {
+          results[r][rt] = run.results[r][rt];
+        }
+      }
+    }
+    return {
+      meta: run.meta,
+      runtime: target,
+      results: results
+    };
+  } else {
+    return null;
+  }
 }

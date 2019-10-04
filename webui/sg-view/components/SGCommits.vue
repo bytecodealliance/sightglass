@@ -2,10 +2,12 @@
   <v-container>
     <v-flex>
       <v-layout row wrap>
-        <v-autocomplete label="Test:" :items="tests_names" v-model="test_name" menu-props="auto" clearable
-                        placeholder="Display only results from a specific test"/>
-        <v-autocomplete label="Branch:" :items="gitrefs" v-model="gitref" menu-props="auto" clearable
-                        placeholder="Display only results from a specific branch"/>
+        <v-autocomplete label="Test:" :items="benchmarks" v-model="benchmark" menu-props="auto" clearable
+                        placeholder="Display only results from a specific benchmark test"/>
+        <v-autocomplete label="Suite:" :items="suites" v-model="suite" menu-props="auto" clearable
+                        placeholder="Display only results from a specific benchmark suite"/>
+        <v-autocomplete label="Runtime:" :items="runtimes" v-model="runtime" menu-props="auto" clearable
+                        placeholder="Display only results from a specific runtime"/>
         <v-flex sm4>
           <v-switch label="Plot all tests" v-model="plot_all"/>
         </v-flex>
@@ -70,43 +72,39 @@
       </v-layout>
     </v-flex>
     <line-chart :data="chartdata"></line-chart>
-    <v-data-table v-bind:pagination.sync="pagination" :headers="headers" :items="filtered_items" :loading="loading"
+    <v-data-table v-bind:pagination.sync="pagination" :headers="headers" :items="tabledata" :loading="loading"
                   class="elevation-1" :rows-per-page-items='[10,25,50,{"text":"All","value":-1}]'>
       <template slot="items" slot-scope="props">
         <td>
-          {{ props.item.meta.ts | formatDate }}
+          {{ props.item.timestamp | formatDate }}
         </td>
         <td>
-          {{ props.item.meta.author }}
+          {{ props.item.runtime }}
         </td>
         <td>
-          {{ props.item.commit_id | truncate(16) }}
+          {{ props.item.suite }}
         </td>
         <td>
-          {{ props.item.meta.gitref | truncate(32) }}
+          <a v-bind:href="props.item.giturl">{{ props.item.git.commit | truncate(8) }}</a>
+          {{ props.item.git.message | truncate(30) }} ({{ props.item.git.author }})
         </td>
         <td>
-          {{ props.item.meta.message | truncate(100) }}
-        </td>
-        <td>
-          {{ props.item.perf | truncateNumber }}
+          {{ props.item.slowdown | truncateNumber }}
         </td>
       </template>
     </v-data-table>
   </v-container>
 </template>
 <script>
-  import {calculate_average_slowdown_ratio} from "../js/retrieval";
+
+  import {calculate_average_slowdown_ratio, extract_target_runtime} from "../js/retrieval";
 
   export default {
-    props: ["loading", "items", "tests_names", "gitrefs"],
+    props: ["loading", "history", "runtimes", "suites", "benchmarks"],
     computed: {
       filtered_items: function () {
         console.debug('Computing filtered items');
-        let items = this.items;
-
-        // filtering by gitref
-        this.gitref && (items = items.filter(item => item.meta.gitref === this.gitref));
+        let filtered = Object.values(this.history);
 
         // filtering by date
         let ts_begin = 0,
@@ -114,59 +112,80 @@
         this.date_begin && (ts_begin = new Date(this.date_begin).getTime());
         this.date_end && (ts_end = new Date(this.date_end).getTime());
         if (ts_begin > 0 && ts_end > 0 && ts_begin < ts_end) {
-          items = items.filter(
-            item => item.meta.ts >= ts_begin && item.meta.ts <= ts_end
-          );
+          filtered = filtered.filter(r => r.meta.timestamp >= ts_begin && r.meta.timestamp <= ts_end);
         }
 
-        // filtering by test name; WARNING: this changes the perf values so they must be re-calculated on change
-        if (this.test_name) {
-          items = items.map(item => {
-            let perf = 0.0;
-            let result = item.results.find(
-              result => result[0] === this.test_name
-            );
-            if (result) {
-              result = result[1];
-              perf = result[1][1].mean / result[0][1].mean;
-            }
-            item.perf = perf;
-            return item;
-          });
-        } else {
-          items = items.map(item => {
-            item.perf = calculate_average_slowdown_ratio(1, 0, item.results);
-            return item;
+        // filtering by suite name
+        if (this.suite) {
+          filtered = filtered.filter(r => r.meta.suite === this.suite);
+        }
+
+        // filtering by benchmark name
+        if (this.benchmark) {
+          filtered = filtered.map(r => {
+            return {meta: r.meta, results: {[this.benchmark]: r.results[this.benchmark]}};
           });
         }
 
-        return items;
+        // separate out and filter by runtime
+        filtered = filtered.flatMap(r => {
+          if (this.runtime) {
+            return [extract_target_runtime(this.runtime, r)];
+          } else {
+            return this.runtimes.map(rt => extract_target_runtime(rt, r))
+          }
+        });
+
+        // since extract_target_runtime can produce nulls, e.g. when the runtime doesn't exist in the run, we remove
+        // them with this filter
+        filtered = filtered.filter(r => r);
+
+        return filtered;
+      },
+      tabledata: function() {
+        let tabledata = [];
+        for (const run of this.filtered_items) {
+          tabledata.push({
+            timestamp: run.meta.timestamp,
+            runtime: run.runtime,
+            suite: run.meta.suite,
+            git: run.meta.runtimes[run.runtime],
+            giturl: `${run.meta.runtimes[run.runtime].repo}/commits/${run.meta.runtimes[run.runtime].commit}`,
+            slowdown: calculate_average_slowdown_ratio(run.runtime, run.meta.reference_runtime, run)
+          });
+        }
+        return tabledata;
       },
       chartdata: function () {
+        // for how vue-chartkick expects to receive the data, see examples at https://chartkick.com/vue
         console.debug('Computing chart data');
         if (this.plot_all) {
-          let chartdata = [];
-          for (let i = 0, j = this.tests_names.length; i < j; i++) {
-            chartdata.push({name: this.tests_names[i], data: {}});
-          }
-          for (let i = 0, j = this.tests_names.length; i < j; i++) {
-            let test_name = this.tests_names[i];
-            this.filtered_items.forEach(function (item) {
-              let perf = 0.0;
-              let result = item.results.find(result => result[0] === test_name);
-              if (result) {
-                result = result[1];
-                perf = result[1][1].mean / result[0][1].mean;
+          // calculate a slowdown line for each found runtime+benchmark combination
+          let points = {};
+          for (const run of this.filtered_items) {
+            for (const benchmark of Object.keys(run.results)){
+              for(const runtime of Object.keys(run.results[benchmark])){
+                let name = `${benchmark}-${runtime}`;
+                points[name] = points[name] || {name: name, data: {}};
+                const slowdown = run.results[benchmark][runtime].mean / run.results[benchmark][run.meta.reference_runtime].mean;
+                const date = new Date(run.meta.timestamp).toISOString();
+                points[name].data[date] = slowdown
               }
-              chartdata[i].data[new Date(item.meta.ts)] = perf;
-            });
+            }
           }
-          return chartdata;
+          return Object.values(points);
         } else {
-          let chartdata = {};
-          this.filtered_items.forEach(function (item) {
-            chartdata[new Date(item.meta.ts)] = item.perf;
-          });
+          // calculate a slowdown line for each found runtime
+          let chartdata = [];
+          for (const runtime of this.runtimes) {
+            let points = {name: runtime, data: {}};
+            for (const run of this.filtered_items.filter(r => r.runtime === runtime)) {
+              const slowdown = calculate_average_slowdown_ratio(runtime, run.meta.reference_runtime, run);
+              const date = new Date(run.meta.timestamp).toISOString();
+              points.data[date] = slowdown
+            }
+            chartdata.push(points);
+          }
           return chartdata;
         }
       }
@@ -174,41 +193,20 @@
     data() {
       return {
         pagination: {sortBy: "meta.ts", descending: true},
-        gitref: null,
-        branch: null,
-        test_name: null,
+        suite: null,
+        benchmark: null,
+        runtime: null,
         plot_all: false,
         menu_begin: false,
         date_begin: null,
         menu_end: false,
         date_end: null,
         headers: [
-          {text: "Date", align: "left", sortable: true, value: "meta.ts"},
-          {text: "Author", align: "left", sortable: true, value: "meta.author"},
-          {
-            text: "Commit",
-            align: "left",
-            sortable: true,
-            value: "commit_id"
-          },
-          {
-            text: "Branch",
-            align: "left",
-            sortable: true,
-            value: "meta.gitref"
-          },
-          {
-            text: "Message",
-            align: "left",
-            sortable: true,
-            value: "meta.message"
-          },
-          {
-            text: "Ratio",
-            align: "left",
-            sortable: true,
-            value: "perf"
-          }
+          {text: "Date Measured", align: "left", sortable: true, value: "timestamp"},
+          {text: "Runtime", align: "left", sortable: true, value: "runtime"},
+          {text: "Suite", align: "left", sortable: true, value: "suite"},
+          {text: "Commit", align: "left", sortable: true, value: "git"},
+          {text: "Slowdown Ratio (lower is better)", align: "left", sortable: true, value: "slowdown"},
         ]
       };
     }
