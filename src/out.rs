@@ -5,10 +5,11 @@ use bencher::stats::Summary;
 use printtable;
 use serde::ser::{Serialize, SerializeMap, Serializer};
 use serde_json;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::iter::FromIterator;
 
 pub struct Text;
 pub struct CSV;
@@ -300,21 +301,51 @@ impl<W: Write> Serializable<W> for JSON {
         test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
         _breakdown: bool,
     ) -> Result<(), BenchError> {
-        let results: Vec<_> = into_sorted(test_suites_results)
-            .into_iter()
-            .map(|(test_name, test_suite)| {
-                let test_suite: Vec<_> = test_suite
-                    .into_iter()
-                    .map(|(test_suite_name, anonymous_test_result)| {
-                        (test_suite_name, anonymous_test_result)
-                    })
-                    .collect();
-                (test_name, test_suite)
-            })
-            .collect();
+        // sort result keys by converting to a b-tree
+        let results = BTreeMap::from_iter(
+            test_suites_results
+                .iter()
+                .map(|(k, v)| (k, BTreeMap::from_iter(v))),
+        );
         let json_output_str = serde_json::to_string_pretty(&results)
             .map_err(|e| BenchError::ParseError(e.to_string()))?;
         writer.write_all(json_output_str.as_bytes())?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::bench::AnonymousTestResult;
+    use crate::out::Serializable;
+    use crate::out::JSON;
+    use std::io::{Read, Write};
+
+    macro_rules! hashmap {
+        ($( $key: expr => $val: expr ),*) => {{
+             let mut map = ::std::collections::HashMap::new();
+             $( map.insert($key, $val); )*
+             map
+        }}
+    }
+
+    fn remove_whitespace(json: &str) -> String {
+        json.split_whitespace().collect()
+    }
+
+    #[test]
+    fn serialize_to_json() {
+        let result1 = AnonymousTestResult::default();
+        let result2 = AnonymousTestResult::default();
+        let data = hashmap!["a".to_string() => hashmap!["c".to_string() => result1, "b".to_string() => result2]]; // note the out-of-order keys
+        let json = Box::new(JSON);
+        let mut output = vec![];
+
+        json.out(&mut output, &data, false);
+
+        let fixture_path = "test/fixtures/sightglass-output.json";
+        let expected = remove_whitespace(&std::fs::read_to_string(fixture_path).unwrap());
+        let actual = remove_whitespace(std::str::from_utf8(output.as_ref()).unwrap());
+        assert_eq!(expected, actual);
     }
 }

@@ -69,6 +69,15 @@ pub struct AnonymousTestResult {
     pub bodies_summary: Vec<TestBodySummary>,
 }
 
+impl Default for AnonymousTestResult {
+    fn default() -> Self {
+        Self {
+            grand_summary: Summary::new(&[0.0]),
+            bodies_summary: vec![],
+        }
+    }
+}
+
 impl From<TestResult> for AnonymousTestResult {
     fn from(test_result: TestResult) -> Self {
         AnonymousTestResult {
