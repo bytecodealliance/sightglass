@@ -11,7 +11,7 @@ use serde_json;
 use std::clone::Clone;
 use std::env;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// A file-based database implementation for storing the benchmark results.
 #[derive(Clone)]
@@ -99,8 +99,10 @@ fn main() {
     let listen_addr = env::args()
         .nth(1)
         .unwrap_or_else(|| "0.0.0.0:8001".to_string());
-    let history_location = Path::new("history.json");
-    let history_server = HistoryServer::new(history_location).unwrap();
+    let history_location = env::var_os("HISTORY_PATH")
+        .map(PathBuf::from)
+        .unwrap_or(PathBuf::from("history.json"));
+    let history_server = HistoryServer::new(&history_location).unwrap();
     history_server.start(&listen_addr);
 }
 
