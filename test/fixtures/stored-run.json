@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "timestamp": 12345768,
+    "suite": "polybench",
+    "server": "jlbirch-buildserver.jf.intel.com",
+    "reference_runtime": "native",
+    "runtimes": {
+      "wasmtime": {
+        "repo": "http://...",
+        "branch": "master",
+        "commit": "12383fad",
+        "author": "test <test@test.com>",
+        "message": "Added a new feature",
+        "timestamp": 123653782
+      },
+      "native": {
+        "repo": "http://...",
+        "branch": "master",
+        "commit": "12383fad",
+        "author": "test <test@test.com>",
+        "message": "Added a new feature",
+        "timestamp": 123653782
+      }
+    }
+  },
+  "results": {
+    "fib2": {
+      "wasmtime": {
+        "mean": 2207444.0,
+        "median": 2038070.0,
+        "min": 1964066.0,
+        "max": 3739473.0,
+        "std_dev": 540159.4440389286
+      },
+      "native": {
+        "mean": 2207444.0,
+        "median": 2038070.0,
+        "min": 1964066.0,
+        "max": 3739473.0,
+        "std_dev": 540159.4440389286
+      }
+    }
+  }
+}

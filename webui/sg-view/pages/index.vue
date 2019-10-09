@@ -5,20 +5,14 @@
         SightGlass viewer
       </h1>
     </div>
-    <SGCommits :loading="loading" :items="items" :tests_names="tests_names" :gitrefs="gitrefs"/>
+    <SGCommits :loading="loading" :history="history" :benchmarks="benchmarks" :suites="suites" :runtimes="runtimes"/>
   </section>
 </template>
 
 <script>
   import SGCommits from "~/components/SGCommits.vue";
   import axios from "axios";
-  import {
-      calculate_average_slowdown_ratio,
-      convert_meta,
-      extract_git_refs,
-      extract_test_names,
-      get_index_by_name
-  } from "../js/retrieval";
+  import {extract_benchmarks, extract_runtimes, extract_suites} from "../js/retrieval";
 
   export default {
     components: {
@@ -29,23 +23,10 @@
         .get(process.env.HISTORY_URL)
         .then(response => {
           this.loading = false;
-          let items_obj = response.data.history;
-
-          let items = [];
-          for (let [commit, result] of Object.entries(items_obj)) {
-            const lucet_index = get_index_by_name("lucet", result.results);
-            const reference_index = get_index_by_name("Reference", result.results);
-            items.push({
-              commit_id: commit,
-              meta: convert_meta(result.meta),
-              results: result.results,
-              perf: calculate_average_slowdown_ratio(lucet_index, reference_index, result.results)
-            });
-          }
-
-          this.tests_names = extract_test_names(items_obj);
-          this.gitrefs = extract_git_refs(items_obj);
-          this.items = items;
+          this.history = response.data.history;
+          this.benchmarks = extract_benchmarks(response.data.history);
+          this.suites = extract_suites(response.data.history);
+          this.runtimes = extract_runtimes(response.data.history);
         })
         .catch(e => {
           this.loading = false;
@@ -56,13 +37,10 @@
     data() {
       return {
         loading: true,
-        items: [],
-        chartdata: {},
-        tests_names: [],
-        test_name: null,
-        gitrefs: [],
-        gitref: null,
-        errors: []
+        history: {},
+        runtimes: [],
+        suites: [],
+        benchmarks: [],
       };
     }
   };
