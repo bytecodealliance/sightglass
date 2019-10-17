@@ -57,7 +57,7 @@ perf_suites = {
 ## TODO: Read from config.inc to populate
 send_url = {
     "shootout" : "localhost:8001/submit",
-    "polybench" : "localhost:8002/submit",
+    "polybench" : "localhost:8001/submit",
 }
 
 # Appended by build_dics()
@@ -102,49 +102,105 @@ def build_dics():
 # Send data to SG history UI(s)
 def send_data(suite, json_data_file):
 
-    time_stamp=int(time.time());
+    run_timestamp=int(time.time());
     if args.no_default_base_native:
         baseline = ARGS_DICT['runtime_list'][0]
     else:
         baseline = "base_native"
 
-    for vm in ARGS_DICT['runtime_list']:
+    json_data = {
+        "meta" : {
+            "timestamp": run_timestamp,
+            "suite": suite,
+            "server": SOURCE,
+            "reference_runtime" : baseline,
+        },
+        "results": {},
+    }
 
-        # Open data file and remove what's not needed
-        dest_json_data_file = "{}/{}-{}-{}".format(os.path.dirname(json_data_file), vm, suite, os.path.basename(json_data_file));
-        #print ("Creating data file: {}".format(dest_json_data_file));
-        with open(dest_json_data_file, 'w') as target:
-            with open(json_data_file, 'r') as source:
-                json_data = json.load(source)
-                for json_workload in json_data:
-                    for json_vm in json_workload[1]:
-                        #print ("\nVM: " + vm + " is type: {}".format(type(vm)))
-                        #print ("Baseline: " + baseline + " is type: {}".format(type(baseline)))
-                        if not ((vm == json_vm[0]) or (baseline == json_vm[0])):
-                            json_workload[1].remove(json_vm)
-                            break;
-                target.write(json.dumps(json_data))
-                sys.stdout.flush()
+    dest_json_data_file = "{}/results-{}.json".format(os.path.dirname(json_data_file), run_timestamp);
+    submission_id="Commit #";
+    source=SOURCE;
+    with open(dest_json_data_file, 'w') as target:
+        print ("Writing {}".format(dest_json_data_file));
+        for vm in ARGS_DICT['runtime_list']:
 
-        time.sleep(1)
-        submission_id=int(time.time());
-        source=SOURCE;
 
-        ## Call method for message
-        echo_message_1 = CWD + "/plugs/" + vm + "/" + suite + "echo_build.sh"
-        echo_message_2 = CWD + "/plugs/" + vm + "/" + "echo_build.sh"
-        if os.path.exists(echo_message_1):
-            message= subprocess.check_output(echo_message_1, shell=True).strip()
-        elif os.path.exists(echo_message_2):
-            message= subprocess.check_output(echo_message_2, shell=True).strip()
-        else:
-            message="gitref:TODO";
-        vm=vm;
-        data=dest_json_data_file;
-        send_cmd="./results/send.sh {} {} {} {} {} {} {}".format(send_url[suite], submission_id, \
-                                                                    source, message, vm, time_stamp, data);
-        os.system(send_cmd);
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_repo.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_repo.sh"
+            if os.path.exists(cmd_a):
+                repo = subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8')
+            elif os.path.exists(cmd_b):
+                repo = subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8')
+            else:
+                repo = "?";
 
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_commit_msg.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_commit_msg.sh"
+            if os.path.exists(cmd_a):
+                commit_msg = subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8')
+            elif os.path.exists(cmd_b):
+                commit_msg = subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8')
+            else:
+                commit_msg = "?";
+
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_commit.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_commit.sh"
+            if os.path.exists(cmd_a):
+                commit = subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8')
+            elif os.path.exists(cmd_b):
+                commit = subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8')
+            else:
+                commit = "?";
+
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_branch.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_branch.sh"
+            if os.path.exists(cmd_a):
+                branch = subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8')
+            elif os.path.exists(cmd_b):
+                branch = subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8')
+            else:
+                branch = "?";
+
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_author.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_author.sh"
+            if os.path.exists(cmd_a):
+                author = subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8')
+            elif os.path.exists(cmd_b):
+                author = subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8')
+            else:
+                author = "?";
+
+            cmd_a = CWD + "/plugs/" + vm + "/" + suite + "/echo_commit_date.sh";
+            cmd_b = CWD + "/plugs/" + vm + "/" + "echo_commit_date.sh"
+            if os.path.exists(cmd_a):
+                commit_timestamp = int(subprocess.check_output(cmd_a, shell=True).strip().decode('UTF-8'))
+            elif os.path.exists(cmd_b):
+                commit_timestamp = int(subprocess.check_output(cmd_b, shell=True).strip().decode('UTF-8'))
+            else:
+                commit_timestamp = 0;
+
+            vm_data = {
+                vm : {
+                    "repo": repo,
+                    "branch": branch,
+                    "commit": commit,
+                    "author": author,
+                    "message": commit_msg,
+                    "timestamp": commit_timestamp
+                },
+            }
+            json_data["meta"].setdefault("runtimes", vm_data).update(vm_data);
+            print ("No runtimes ... so adding");
+
+
+        with open(json_data_file, 'r') as source:
+            json_data["results"] = json.load(source)
+
+        target.write(json.dumps(json_data));
+
+    send_cmd="./results/send.sh {} {}".format(send_url[suite], dest_json_data_file);
+    os.system(send_cmd);
 
 # Driver main loop
 def main():
@@ -170,7 +226,7 @@ def main():
         for vm in eval(suite):
             print ("Executing build script: {}".format(eval(suite)[vm]));
             sha_return = subprocess.check_output(eval(suite)[vm], shell=False, stderr = subprocess.PIPE)
- 
+
 
     # Build sightglass
     build_return = subprocess.check_output(["cargo", "build", "--manifest-path=sightglass/Cargo.toml", "--release"], shell=False, stderr = subprocess.PIPE);
@@ -182,6 +238,7 @@ def main():
         os.popen("cp sg_template.toml {}".format(toml_name));
         sys.stdout.flush()
         time.sleep(1)
+
         for vm in eval(suite):
             valid_toml = True;
             implementation=CWD+"/plugs/" + vm + "/" + suite + "/bin/implementation.so"
@@ -197,7 +254,8 @@ def main():
                 valid_toml = False;
                 break;
 
-        if valid_toml:
+        if (True or valid_toml):
+
             os.system("./sightglass/target/release/sightglass -c {}".format(toml_name));
 
             # Archive and send results if required
