@@ -20,13 +20,22 @@
       get_index_by_name
   } from "../js/retrieval";
 
+  let host_history = process.env.HISTORY_URL;
+  if (!host_history) {
+    if (process.client) {
+      host_history = "http://"+window.location.hostname+":8001/history";
+    } else {
+      host_history = "http://localhost:8001/history";
+    }
+  }
+
   export default {
     components: {
       SGCommits
     },
     created() {
       axios
-        .get(process.env.HISTORY_URL)
+        .get(host_history)
         .then(response => {
           this.loading = false;
           let items_obj = response.data.history;
