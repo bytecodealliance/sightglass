@@ -1,0 +1,27 @@
+# Test suites to run
+test_suites = [
+#DO_NOT_REMOVE
+]
+
+# Pin the process to a single CPU core (Linux only)
+single_core = true
+
+# Supported output formats: Text, JSON and CSV
+# Outputs to stdout if no file name is provided
+output = [
+  { format = "Text", breakdown = false },
+  { format = "JSON", file = "./results/results-latest.json", breakdown = false },
+  { format = "CSV", file = "./results/results-latest.csv", breakdown = false },
+]
+
+# Minimum number of rounds to perform for each test
+initial_round_size = 3
+
+# Minimum number of samples to collect for each test
+min_sample_size = 10
+
+# Minimum time for a test has to run, in milliseconds, to record a sample
+min_run_time_ms = 10
+
+# Maximum time for a test to run
+max_run_time_ms = 2000

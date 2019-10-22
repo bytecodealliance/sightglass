@@ -4,3 +4,13 @@
 /webui/sg-history/target/
 benchmarks/**/*.ll
 benchmarks/**/*.o
+webui_runner/*-latest.toml
+webui_runner/plugs/**/benchmark/
+webui_runner/plugs/**/bin/
+webui_runner/plugs/**/build/
+webui_runner/results/*
+webui/history.json
+
+!webui_runner/results/shootout.html
+!webui_runner/results/polybench.html
+!webui_runner/results/send.sh
