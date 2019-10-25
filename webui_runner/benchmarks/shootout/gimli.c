@@ -1,0 +1,77 @@
+
+#include <sightglass.h>
+
+#include <stdint.h>
+
+#define ITERATIONS 10000
+
+#define gimli_BLOCKBYTES 48
+#define ROTL32(x, b) (uint32_t)(((x) << (b)) | ((x) >> (32 - (b))))
+
+static void
+gimli_core(uint32_t state[gimli_BLOCKBYTES / 4])
+{
+    unsigned int round;
+    unsigned int column;
+    uint32_t     x;
+    uint32_t     y;
+    uint32_t     z;
+
+    for (round = 24; round > 0; round--) {
+        for (column = 0; column < 4; column++) {
+            x = ROTL32(state[column], 24);
+            y = ROTL32(state[4 + column], 9);
+            z = state[8 + column];
+
+            state[8 + column] = x ^ (z << 1) ^ ((y & z) << 2);
+            state[4 + column] = y ^ x ^ ((x | z) << 1);
+            state[column]     = z ^ y ^ ((x & y) << 3);
+        }
+        switch (round & 3) {
+        case 0:
+            x        = state[0];
+            state[0] = state[1];
+            state[1] = x;
+            x        = state[2];
+            state[2] = state[3];
+            state[3] = x;
+            state[0] ^= ((uint32_t) 0x9e377900 | round);
+            break;
+        case 2:
+            x        = state[0];
+            state[0] = state[2];
+            state[2] = x;
+            x        = state[1];
+            state[1] = state[3];
+            state[3] = x;
+        }
+    }
+}
+
+#ifdef WASM_ENTRY
+#ifdef ALT_ENTRY
+void
+_call(int in)
+#else
+void
+_start(void)
+#endif
+#else  // WASM_ENTRY
+#ifdef EMBED_ENTRY
+void
+gimli_body(void *ctx_)
+#else 
+int
+main(void)
+#endif // EMBED_ENTRY
+#endif // WASM_ENTRY
+{
+    uint32_t state[gimli_BLOCKBYTES / 4] = { 0 };
+    BLACK_BOX(state);
+
+    int i;
+    for (i = 0; i < ITERATIONS; i++) {
+        gimli_core(state);
+    }
+    BLACK_BOX(state[0]);
+}

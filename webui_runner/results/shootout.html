@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, inital-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"> </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/1.0.3/jquery.csv.js"></script>
+  <script src='https://cdn.jsdelivr.net/lodash/4.17.2/lodash.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.0"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+	<div class="container">
+  <br>
+Shootout: results-latest
+<br>
+<br>
+ <select id="selectJitBench">
+  <option value="0">All</option>
+</select>
+ <button onclick="resetJitZoom()">Reset Zoom</button>
+  <canvas id="shootout"></canvas>
+  <br>
+  <br>
+	</div>
+  <script>
+
+function resetJitZoom() {
+  barchart_shootout.resetZoom();
+}
+
+// Chart jit
+// Get CSV data ... TODO: Probably a much better way 
+// TODO: get rid of console warnings
+let shootout_data = 0;
+$.ajax({
+    type: "GET",
+    method: 'GET',
+    dataType: 'text/plain',
+    url: "./shootout/results-latest.csv",
+    dataType: "text",
+    async: false,
+
+    success: function (data) {
+      console.log(data);
+      var options={"separator" : '\t'};
+      shootout_data = $.csv.toObjects(data, options);
+      console.log("Here 1: shootout_data: " + JSON.stringify(shootout_data));
+    },
+
+    complete: function () {
+        // call a function on complete 
+    }
+});
+
+
+// Group data
+console.log("shootout_data before grouping: " + JSON.stringify(shootout_data));
+var grouped_shootout_data = _.mapValues(_.groupBy(shootout_data, 'Test'),
+                                clist => clist.map( car=> _.omit(car, 'Test')));
+console.log("shootout_data after groupin: " + JSON.stringify(grouped_shootout_data));
+
+
+// Get graph labels (benchmark names)
+var csvd_bench_labels = Object.keys(grouped_shootout_data).map(function(vm) {
+	return vm;
+});
+console.log(JSON.stringify(csvd_bench_labels));
+
+
+
+let jitBenchList = document.getElementById('selectJitBench');
+for(var i = 0, l = csvd_bench_labels.length; i < l; i++){
+  var option = csvd_bench_labels[i];
+  jitBenchList.options.add( new Option(option, i+1, true));
+}
+
+
+jitBenchList.addEventListener("change", generateJitData);
+
+function generateJitData(event) {
+  sliceJitData(jitBenchList.value);
+}
+
+function sliceJitData(entry) {
+  barchart_shootout.data.labels = csvd_bench_labels;
+  barchart_shootout.data.datasets[0].data = jitdatasetdata[0];
+  barchart_shootout.data.datasets[1].data = jitdatasetdata[1];
+  barchart_shootout.data.datasets[2].data = jitdatasetdata[2];
+  barchart_shootout.data.datasets[3].data = jitdatasetdata[3];
+    if (entry != 0) {
+      barchart_shootout.data.labels = barchart_shootout.data.labels.slice(entry-1, entry);
+      barchart_shootout.data.datasets[0].data = jitdatasetdata[0].slice(entry-1, entry);
+      barchart_shootout.data.datasets[1].data = jitdatasetdata[1].slice(entry-1, entry);
+      barchart_shootout.data.datasets[2].data = jitdatasetdata[2].slice(entry-1, entry);
+      barchart_shootout.data.datasets[3].data = jitdatasetdata[3].slice(entry-1, entry);
+    }
+    console.log("SliceJitData Done: " + entry);
+    barchart_shootout.update();
+    barchart_shootout.resetZoom()  
+}
+
+
+// Initialize grouped value arrays
+csvd_baseline_data = new Array(csvd_bench_labels.length);
+csvd_lucet_data = new Array(csvd_bench_labels.length);
+csvd_wasmtime_data = new Array(csvd_bench_labels.length);
+csvd_node_data = new Array(csvd_bench_labels.length);
+
+// Get grouped data values
+var i = 0;
+Object.keys(grouped_shootout_data).map(function(vm) {
+  console.log(""+i+": " + JSON.stringify(csvd_bench_labels[i])); 
+  console.log("("+i+"): " + JSON.stringify(grouped_shootout_data[csvd_bench_labels[i]]));
+  for (var j = 0; j < grouped_shootout_data[csvd_bench_labels[i]].length; ++j) {
+    var bench_results = grouped_shootout_data[csvd_bench_labels[i]][j];
+    console.log("(("+i+")): " + JSON.stringify(grouped_shootout_data[csvd_bench_labels[i]][j]));
+	  if (bench_results["Implementation"] == "base_native") {
+ 		  csvd_baseline_data[i] = bench_results["Ratio"];
+    } else if (bench_results["Implementation"] == "lucet_app") {
+ 		  csvd_lucet_data[i] = bench_results["Ratio"];
+    } else if (bench_results["Implementation"] == "wasmtime_app") {
+ 		  csvd_wasmtime_data[i] = bench_results["Ratio"];
+    } else if (bench_results["Implementation"] == "node") {
+ 		  csvd_node_data[i] = bench_results["Ratio"];
+    }
+  }
+  ++i;
+});
+console.log("HI ***********************: ("+i+"): " + JSON.stringify(csvd_baseline_data));
+
+let shootout_bgColor= [
+                'rgba(255, 99, 132, 0.2)',
+                'rgba(54, 162, 235, 0.2)',
+                'rgba(255, 206, 86, 0.2)',
+                'rgba(75, 192, 192, 0.2)',
+                'rgba(153, 102, 255, 0.2)',
+                'rgba(255, 159, 64, 0.2)',
+                'rgba(255, 134, 235, 0.2)'
+            ];
+let shootout_bdColor = [
+                'rgba(255, 99, 132, 1)',
+                'rgba(54, 162, 235, 1)',
+                'rgba(255, 206, 86, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(255, 159, 64, 1)',
+                'rgba(255, 135, 112, 1)'
+            ];
+
+
+var jitdatasetdata = [csvd_baseline_data, csvd_lucet_data, csvd_wasmtime_data];            
+
+var data_shootout = {
+  labels: csvd_bench_labels,
+
+	datasets: [{
+    label: "base_native",
+    backgroundColor: shootout_bdColor[0],
+    borderColor: shootout_bdColor[0],
+		data: csvd_baseline_data
+  },
+	{
+		label: "lucet_app",
+    backgroundColor: shootout_bdColor[1],
+    borderColor: shootout_bdColor[1],
+		data: csvd_lucet_data
+  },
+  {
+		label: "wasmtime_app",
+    backgroundColor: shootout_bdColor[2],
+    borderColor: shootout_bdColor[2],
+		data: csvd_wasmtime_data
+  },
+  {
+		label: "node",
+    backgroundColor: shootout_bdColor[3],
+    borderColor: shootout_bdColor[3],
+		data: csvd_node_data
+  }
+]
+};
+
+if (typeof data_shootout_master == 'undefined') {
+  var data_shootout_master = data_shootout;
+}
+
+var ctx_shootout = document.getElementById("shootout").getContext("2d");
+var barchart_shootout = new Chart(ctx_shootout, {
+  type: 'bar',
+  data: data_shootout,
+  options: {
+    barValueSpacing: 20,
+    pan: {
+      enabled: true,
+      mode: 'x',
+   },
+   zoom: {
+         enabled: true,
+         mode: 'x',
+      },
+      legend: {
+         position: 'bottom'
+      },
+    scales: {
+      yAxes: [{
+        scaleLabel: {
+        display: true,
+        labelString: "Time Runtime / Time Baseline"
+        },
+        ticks: {
+          min: 0,
+        }
+      }]
+    },
+    title: {
+            display: true,
+            fontSize:16,
+            text: "Shootout Performance Ratio\n(Lower is Better)"
+        }
+  }
+});
+
+	</script>
+</body>
+</html>
+
