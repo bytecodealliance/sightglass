@@ -16,7 +16,7 @@ export function calculate_geometric_mean(numbers) {
  * @return {number} the average slowdown, e.g. the target is 1.7x slower than the reference
  */
 export function calculate_average_slowdown_ratio(target, reference, run) {
-  console.debug(`Calculating average slodown ratio of ${target} to ${reference}`, run);
+  console.debug(`Calculating average slowdown ratio of ${target} to ${reference}`, run);
   const target_means = [];
   const reference_means = [];
   for (const benchmark of Object.keys(run.results)) {
@@ -93,4 +93,15 @@ export function extract_target_runtime(target, run) {
   } else {
     return null;
   }
+}
+
+/**
+ * Replace the metadata Unix timestamps in history with JS Date objects for easier processing; note that this modifies
+ * the input history.
+ * @param history - the output of sg-history, see `[top-level]/test/fixtures/history-output.json`
+ * @return {object} the modified history (warning: this is the same reference as the input parameter, not a clone)
+ */
+export function fixup_unix_timestamps(history) {
+  Object.values(history).map(r => r.meta.timestamp = new Date(r.meta.timestamp * 1000));
+  return history;
 }
