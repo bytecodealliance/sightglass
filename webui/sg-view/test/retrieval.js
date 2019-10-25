@@ -5,11 +5,17 @@ import {
   calculate_geometric_mean,
   extract_benchmarks,
   extract_runtimes,
-  extract_suites, extract_target_runtime
+  extract_suites,
+  extract_target_runtime,
+  fixup_unix_timestamps
 } from "../js/retrieval";
 
 function first_key(o) {
   return Object.keys(o)[0];
+}
+
+function deep_clone(o) {
+  return JSON.parse(JSON.stringify(o));
 }
 
 test('calculate_geometric_mean', t => {
@@ -40,14 +46,22 @@ test('extract_benchmarks', t => {
 });
 
 test('extract_target_runtime', t => {
-  const firstRun = history[first_key(history)];
-  t.is(extract_target_runtime('some-runtime', firstRun), null);
+  const first_run = history[first_key(history)];
+  t.is(extract_target_runtime('some-runtime', first_run), null);
 
-  const wasmtime_results = extract_target_runtime('wasmtime', firstRun);
+  const wasmtime_results = extract_target_runtime('wasmtime', first_run);
   t.deepEqual(Object.keys(wasmtime_results.results.gimli), ['native', 'wasmtime']);
   t.is(wasmtime_results.runtime, 'wasmtime');
 
-  const native_results = extract_target_runtime('native', firstRun);
+  const native_results = extract_target_runtime('native', first_run);
   t.deepEqual(Object.keys(native_results.results.gimli), ['native']);
   t.is(native_results.runtime, 'native');
+});
+
+test('fixup_unix_timestamps', t => {
+  let cloned_history = deep_clone(history); // since fixup_unix_timestamps is destructive
+  const first_run = cloned_history[first_key(cloned_history)];
+  t.false(first_run.meta.timestamp instanceof Date);
+  fixup_unix_timestamps(cloned_history);
+  t.true(first_run.meta.timestamp instanceof Date);
 });

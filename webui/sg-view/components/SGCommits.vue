@@ -168,7 +168,7 @@
                 let name = `${benchmark}-${runtime}`;
                 points[name] = points[name] || {name: name, data: {}};
                 const slowdown = run.results[benchmark][runtime].mean / run.results[benchmark][run.meta.reference_runtime].mean;
-                const date = new Date(run.meta.timestamp).toISOString();
+                const date = run.meta.timestamp.toISOString();
                 points[name].data[date] = slowdown
               }
             }
@@ -181,7 +181,7 @@
             let points = {name: runtime, data: {}};
             for (const run of this.filtered_items.filter(r => r.runtime === runtime)) {
               const slowdown = calculate_average_slowdown_ratio(runtime, run.meta.reference_runtime, run);
-              const date = new Date(run.meta.timestamp).toISOString();
+              const date = run.meta.timestamp.toISOString();
               points.data[date] = slowdown
             }
             chartdata.push(points);
