@@ -51,7 +51,7 @@ DATE_TIME = datetime.now().strftime('%Y-%m-%d')
 ## TODO: Scan predefined directory to populate
 perf_suites = {
     "shootout" : "./benchmark/shootout/",
-    #"polybench" : "./benchmark/polybench/",
+    "polybench" : "./benchmark/polybench/",
 }
 
 ## TODO: Read from config.inc to populate
