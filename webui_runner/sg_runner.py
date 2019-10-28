@@ -254,7 +254,7 @@ def main():
                 valid_toml = False;
                 break;
 
-        if (True or valid_toml):
+        if (valid_toml):
 
             os.system("./sightglass/target/release/sightglass -c {}".format(toml_name));
 
