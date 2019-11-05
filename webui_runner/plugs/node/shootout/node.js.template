@@ -1,8 +1,14 @@
 const fs = require('fs');
+const WASI = require('wasi');
 var source = fs.readFileSync('REPLACE_ME_WITH_WASM_FILE_PATH');
 var typedArray = new Uint8Array(source);
 
+const wasi = new WASI({
+  // preopenDirectories: { '.': '.' },
+});
+
 WebAssembly.instantiate(typedArray, {
+  wasi_unstable: wasi.exports,
 }).then(result => {
   console.log(result.instance.exports._start());
 }).catch(e => {
