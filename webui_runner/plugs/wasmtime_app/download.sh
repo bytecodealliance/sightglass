@@ -3,7 +3,7 @@
 >&2 echo "wasmtime_app build"
 mkdir -p build; cd build
 if [ ! -d wasmtime ]; then
-    git clone https://github.com/CraneStation/wasmtime.git wasmtime
+    git clone https://github.com/bytecodealliance/wasmtime.git wasmtime
 fi
 cd wasmtime
 git clean -fd

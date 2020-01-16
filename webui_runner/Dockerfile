@@ -20,12 +20,12 @@ RUN ln -s /usr/bin/wasm-ld-8 /usr/bin/wasm-ld
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
-RUN curl -sS -L -O https://static.rust-lang.org/dist/rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz \
-	&& tar xzf rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz \
-	&& cd rust-1.37.0-x86_64-unknown-linux-gnu \
+RUN curl -sS -L -O https://static.rust-lang.org/dist/rust-1.40.0-x86_64-unknown-linux-gnu.tar.gz \
+	&& tar xzf rust-1.40.0-x86_64-unknown-linux-gnu.tar.gz \
+	&& cd rust-1.40.0-x86_64-unknown-linux-gnu \
 	&& ./install.sh \
 	&& cd .. \
-	&& rm -rf rust-1.37.0-x86_64-unknown-linux-gnu rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz
+	&& rm -rf rust-1.40.0-x86_64-unknown-linux-gnu rust-1.40.0-x86_64-unknown-linux-gnu.tar.gz
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 

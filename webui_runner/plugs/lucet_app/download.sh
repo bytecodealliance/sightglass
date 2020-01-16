@@ -5,7 +5,7 @@ source ../../config.inc
 >&2 echo "lucet_app download"
 mkdir -p build; cd build
 if [ ! -d lucet ]; then 
-    git clone https://github.com/fastly/lucet.git lucet
+    git clone https://github.com/bytecodealliance/lucet.git lucet
 fi
 cd lucet
 git clean -fd
