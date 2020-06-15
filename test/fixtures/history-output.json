@@ -9,7 +9,7 @@
         "runtimes": {
           "wasmtime": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",
@@ -17,7 +17,7 @@
           },
           "native": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",
@@ -501,7 +501,7 @@
         "runtimes": {
           "wasmtime": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",
@@ -509,7 +509,7 @@
           },
           "native": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",
@@ -993,7 +993,7 @@
         "runtimes": {
           "wasmtime": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",
@@ -1001,7 +1001,7 @@
           },
           "native": {
             "repo": "http://...",
-            "branch": "master",
+            "branch": "main",
             "commit": "12383fad",
             "author": "test <test@test.com>",
             "message": "Added a new feature",

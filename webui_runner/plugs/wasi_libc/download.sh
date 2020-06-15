@@ -12,7 +12,6 @@ git reset --hard
 git submodule init && git submodule update
 git submodule foreach --recursive git submodule init
 git submodule foreach --recursive git submodule update
-git checkout master
 
 PATH_TO_CLANG="/usr/bin/clang-8"
 PATH_TO_LLVM_AR="/usr/bin/llvm-ar-8"

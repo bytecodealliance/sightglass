@@ -12,7 +12,7 @@ git reset --hard
 git submodule init && git submodule update
 git submodule foreach --recursive git submodule init
 git submodule foreach --recursive git submodule update
-git checkout master
+
 >&2 echo "wasmtime_app download"
 cargo build --release
 cd ../../

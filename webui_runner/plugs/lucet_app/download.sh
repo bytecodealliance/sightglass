@@ -14,7 +14,6 @@ git reset --hard
 git submodule init && git submodule update
 git submodule foreach --recursive git submodule init
 git submodule foreach --recursive git submodule update
-git checkout master
 
 >&2 echo "lucet_app build"
 WASI_SYSROOT=${WASI_SYSROOT} CLANG_ROOT=${CLANG_ROOT} CLANG=${CLANG} cargo build --release
