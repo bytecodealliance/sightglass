@@ -1,1 +1,1 @@
-echo master
+echo main
