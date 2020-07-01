@@ -1,10 +1,10 @@
 FROM ubuntu:bionic
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
+	&& apt-get install -y --no-install-recommends \
 	apt-utils build-essential gpg-agent \
 	curl ca-certificates wget software-properties-common \
-    psmisc lsof git cmake nano
+	psmisc lsof git cmake nano
 
 RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key|apt-key add -
 
@@ -20,12 +20,13 @@ RUN ln -s /usr/bin/wasm-ld-8 /usr/bin/wasm-ld
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
-RUN curl -sS -L -O https://static.rust-lang.org/dist/rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz \
-	&& tar xzf rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz \
-	&& cd rust-1.37.0-x86_64-unknown-linux-gnu \
+# https://forge.rust-lang.org/infra/other-installation-methods.html
+RUN curl -sS -L -O https://static.rust-lang.org/dist/rust-1.44.1-x86_64-unknown-linux-gnu.tar.gz \
+	&& tar xzf rust-1.44.1-x86_64-unknown-linux-gnu.tar.gz \
+	&& cd rust-1.44.1-x86_64-unknown-linux-gnu \
 	&& ./install.sh \
 	&& cd .. \
-	&& rm -rf rust-1.37.0-x86_64-unknown-linux-gnu rust-1.37.0-x86_64-unknown-linux-gnu.tar.gz
+	&& rm -rf rust-1.44.1-x86_64-unknown-linux-gnu rust-1.44.1-x86_64-unknown-linux-gnu.tar.gz
 
 RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 
