@@ -4,7 +4,7 @@ source ../../config.inc
 
 >&2 echo "lucet_app download"
 mkdir -p build; cd build
-if [ ! -d lucet ]; then 
+if [ ! -d lucet ]; then
     git clone https://github.com/fastly/lucet.git lucet
 fi
 cd lucet
@@ -14,10 +14,7 @@ git reset --hard
 git submodule init && git submodule update
 git submodule foreach --recursive git submodule init
 git submodule foreach --recursive git submodule update
+git pull
 
 >&2 echo "lucet_app build"
-WASI_SYSROOT=${WASI_SYSROOT} CLANG_ROOT=${CLANG_ROOT} CLANG=${CLANG} cargo build --release
-
->&2 echo "lucet_app builtins build"
-cd ./lucet-builtins
-make
+make install
