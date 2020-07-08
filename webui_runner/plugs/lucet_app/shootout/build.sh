@@ -36,7 +36,7 @@ done
 
 #Build implementation.so
 mkdir -p ${SCRIPT_LOC}/bin; cd ${SCRIPT_LOC}/bin
-echo ${CC} ${COMMON_CFLAGS} -DWORKLOAD_LOCATION=${SCRIPT_LOC}/benchmark -DVM_LOCATION={LUCET} -shared -o implementation.so ../wrapper.c
-${CC} -fPIC ${COMMON_CFLAGS} -DWORKLOAD_LOCATION=${SCRIPT_LOC}/benchmark -DVM_LOCATION={LUCET} -shared -o implementation.so ../wrapper.c
+echo ${CC} ${COMMON_CFLAGS} -DWORKLOAD_LOCATION=${SCRIPT_LOC}/benchmark -DVM_LOCATION=${LUCET} -shared -o implementation.so ../wrapper.c
+${CC} -fPIC ${COMMON_CFLAGS} -DWORKLOAD_LOCATION=${SCRIPT_LOC}/benchmark -DVM_LOCATION=${LUCET} -shared -o implementation.so ../wrapper.c
 
 cd ${ORIG_CWD}
