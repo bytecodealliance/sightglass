@@ -1,6 +1,6 @@
 #!/bin/bash
 
->&2 echo "wasmtime_app build"
+>&2 echo "wasmtime_app download"
 mkdir -p build; cd build
 if [ ! -d wasmtime ]; then
     git clone https://github.com/CraneStation/wasmtime.git wasmtime
@@ -12,7 +12,8 @@ git reset --hard
 git submodule init && git submodule update
 git submodule foreach --recursive git submodule init
 git submodule foreach --recursive git submodule update
+git pull
 
->&2 echo "wasmtime_app download"
+>&2 echo "wasmtime_app build"
 cargo build --release
 cd ../../
