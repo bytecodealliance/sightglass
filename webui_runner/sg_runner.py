@@ -20,6 +20,7 @@ parser = argparse.ArgumentParser(
                                     lucet_app - https://github.com/fastly/lucet (latest via git pull)
                                     wasmtime_app - https://github.com/CraneStation/wasmtime (latest via git pull)
                                     node - https://github.com/nodejs/node (latest via nvm)
+                                    wamr_app_aot - https://github.com/bytecodealliance/wasm-micro-runtime (latest via git)
 
             available perf-suites:  shootout
 
