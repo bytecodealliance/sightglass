@@ -28,6 +28,7 @@ pub struct OutputConfig {
     pub format: String,
     pub file: Option<String>,
     pub breakdown: Option<bool>,
+    pub perf: Option<bool>,
 }
 
 /// Global configuration

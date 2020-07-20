@@ -1,6 +1,7 @@
 use super::config::*;
 use super::errors::*;
 use super::out;
+use super::perf::PerfCounterCollection;
 use super::symbols;
 use bencher::stats::Summary;
 use libc::c_void;
@@ -52,30 +53,21 @@ pub struct Test {
 #[derive(Clone)]
 pub struct TestBodySummary {
     pub name: String,
-    pub summary: Summary,
+    pub summary: SummarySet,
 }
 
 /// The outcome of a test
 #[derive(Clone)]
 struct TestResult {
     name: String,
-    grand_summary: Summary,
+    grand_summary: SummarySet,
     bodies_summary: Vec<TestBodySummary>,
 }
 
 /// The outcome of a test, without the name of the test
 pub struct AnonymousTestResult {
-    pub grand_summary: Summary,
+    pub grand_summary: SummarySet,
     pub bodies_summary: Vec<TestBodySummary>,
-}
-
-impl Default for AnonymousTestResult {
-    fn default() -> Self {
-        Self {
-            grand_summary: Summary::new(&[0.0]),
-            bodies_summary: vec![],
-        }
-    }
 }
 
 impl From<TestResult> for AnonymousTestResult {
@@ -90,17 +82,16 @@ impl From<TestResult> for AnonymousTestResult {
 /// Environment for a single test
 #[derive(Clone)]
 struct TestBodiesBench {
-    precision: Precision,
     ctx: TestCtx,
     bodies: Vec<unsafe extern "C" fn(TestCtx)>,
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct Sample<T>(Vec<T>);
+pub struct Samples<T>(Vec<T>);
 
-impl<T> Sample<T> {
+impl<T> Samples<T> {
     pub fn empty() -> Self {
-        Sample(vec![])
+        Samples(vec![])
     }
 }
 
@@ -128,71 +119,172 @@ impl Runnable<()> for TestBodiesBench {
     }
 }
 
-pub struct AdaptiveRunner {
+pub struct AdaptiveRunner<'a> {
     round_size: usize,
     min_sample_size: usize,
     min_run_time_ms: u64,
     max_run_time_ms: u64,
-    precision: Precision,
+    counters: &'a mut PerfCounterCollection,
+}
+
+#[derive(Clone, Copy)]
+pub struct Sample {
+    pub clock_time: Elapsed,
+    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
+    // disabled.
+    pub cpu_cycles: u64,
+    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
+    // disabled.
+    pub instructions_retired: u64,
+    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
+    // disabled.
+    pub cache_accesses: u64,
+    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
+    // disabled.
+    pub cache_misses: u64,
+}
+
+impl Sample {
+    pub fn empty() -> Self {
+        Sample {
+            clock_time: Elapsed::from_ticks(0),
+            cpu_cycles: 0,
+            instructions_retired: 0,
+            cache_accesses: 0,
+            cache_misses: 0,
+        }
+    }
+}
+
+impl std::ops::Div<u64> for Sample {
+    type Output = Self;
+
+    fn div(self, rhs: u64) -> Self::Output {
+        Sample {
+            clock_time: Elapsed::from_ticks(self.clock_time.ticks() / rhs),
+            cpu_cycles: self.cpu_cycles / rhs,
+            instructions_retired: self.instructions_retired / rhs,
+            cache_accesses: self.cache_accesses / rhs,
+            cache_misses: self.cache_misses / rhs,
+        }
+    }
+}
+
+impl std::ops::Add<Sample> for Sample {
+    type Output = Self;
+
+    fn add(self, rhs: Sample) -> Self::Output {
+        Sample {
+            clock_time: self.clock_time + rhs.clock_time,
+            cpu_cycles: self.cpu_cycles + rhs.cpu_cycles,
+            instructions_retired: self.instructions_retired + rhs.instructions_retired,
+            cache_accesses: self.cache_accesses + rhs.cache_accesses,
+            cache_misses: self.cache_misses + rhs.cache_misses,
+        }
+    }
+}
+
+impl std::ops::AddAssign<Sample> for Sample {
+    fn add_assign(&mut self, rhs: Sample) {
+        self.clock_time += rhs.clock_time;
+        self.cpu_cycles += rhs.cpu_cycles;
+        self.instructions_retired += rhs.instructions_retired;
+        self.cache_accesses += rhs.cache_accesses;
+        self.cache_misses += rhs.cache_misses;
+    }
 }
 
 #[derive(Clone)]
 pub struct RunnerResult {
-    pub summaries: Vec<Summary>,
-    pub grand_summary: Summary,
+    pub summaries: Vec<SummarySet>,
+    pub grand_summary: SummarySet,
 }
 
-impl AdaptiveRunner {
+// A collection of summaries
+#[derive(Clone)]
+pub struct SummarySet {
+    pub elapsed: Summary,
+    pub cpu_cycles: Summary,
+    pub instructions_retired: Summary,
+    pub cache_accesses: Summary,
+    pub cache_misses: Summary,
+}
+
+impl SummarySet {
+    pub fn new(samples: Vec<Sample>, precision: &Precision) -> Self {
+        let mut transformed_samples: [Vec<f64>; 5] = [
+            Vec::with_capacity(samples.len()),
+            Vec::with_capacity(samples.len()),
+            Vec::with_capacity(samples.len()),
+            Vec::with_capacity(samples.len()),
+            Vec::with_capacity(samples.len()),
+        ];
+        for sample in samples.into_iter() {
+            transformed_samples[0].push(sample.clock_time.as_ns(&precision) as f64);
+            transformed_samples[1].push(sample.cpu_cycles as f64);
+            transformed_samples[2].push(sample.instructions_retired as f64);
+            transformed_samples[3].push(sample.cache_accesses as f64);
+            transformed_samples[4].push(sample.cache_misses as f64);
+        }
+        SummarySet {
+            elapsed: Summary::new(&transformed_samples[0]),
+            cpu_cycles: Summary::new(&transformed_samples[1]),
+            instructions_retired: Summary::new(&transformed_samples[2]),
+            cache_accesses: Summary::new(&transformed_samples[3]),
+            cache_misses: Summary::new(&transformed_samples[4]),
+        }
+    }
+}
+
+impl<'a> AdaptiveRunner<'a> {
     pub fn new(
         initial_round_size: usize,
         min_sample_size: usize,
         min_run_time_ms: u64,
         max_run_time_ms: u64,
-        precision: &Precision,
+        counters: &'a mut PerfCounterCollection,
     ) -> Self {
         AdaptiveRunner {
             round_size: initial_round_size,
             min_sample_size,
             min_run_time_ms,
             max_run_time_ms,
-            precision: precision.clone(),
+            counters,
         }
     }
 
-    pub fn bench<Target, Ret>(&self, target: &mut Target) -> RunnerResult
+    pub fn bench<Target, Ret>(&mut self, target: &mut Target) -> RunnerResult
     where
         Target: Runnable<Ret>,
     {
-        let mut sample_for_all_bodies: Sample<Elapsed> = Sample::empty();
-        let mut samples: Vec<Sample<Elapsed>> = vec![];
+        let mut sample_for_all_runs: Samples<Sample> = Samples::empty();
+        let mut samples: Vec<Samples<Sample>> = vec![];
         let bodies = target.bodies();
-        samples.resize(bodies.len(), Sample::empty());
+        samples.resize(bodies.len(), Samples::empty());
         let mut round_size = self.round_size;
-        let ts_bench_start = self.precision.now();
+        let ts_bench_start = self.counters.now();
         let mut sample_id = 0;
         loop {
-            let mut elapsed_vec: Vec<Elapsed> = vec![];
-            elapsed_vec.resize(bodies.len(), Elapsed::new());
+            let mut bodies_sample_vec: Vec<Sample> = Vec::with_capacity(bodies.len());
+            bodies_sample_vec.resize_with(bodies.len(), || Sample::empty());
             for _ in 0..round_size {
                 for (body_id, body) in bodies.iter().enumerate() {
-                    let ts_start = self.precision.now();
-                    body(body_id);
-                    let ts_end = self.precision.now();
-                    elapsed_vec[body_id] += ts_end - ts_start;
+                    bodies_sample_vec[body_id] = self.counters.sample(|| {
+                        body(body_id);
+                    });
                 }
             }
-            let mut elapsed_for_all_bodies = Elapsed::new();
-            for (body_id, elapsed) in elapsed_vec.into_iter().enumerate() {
-                samples[body_id]
-                    .0
-                    .push(Elapsed::from_ticks(elapsed.ticks() / round_size as u64));
-                elapsed_for_all_bodies += elapsed;
+            let mut sample_for_all_bodies = Sample::empty();
+            for (body_id, sample) in bodies_sample_vec.into_iter().enumerate() {
+                samples[body_id].0.push(sample / round_size as u64);
+                sample_for_all_bodies += sample;
             }
-            sample_for_all_bodies.0.push(Elapsed::from_ticks(
-                elapsed_for_all_bodies.ticks() / round_size as u64,
-            ));
+            sample_for_all_runs
+                .0
+                .push(sample_for_all_bodies / round_size as u64);
 
-            let elapsed_total = (self.precision.now() - ts_bench_start).as_millis(&self.precision);
+            let elapsed_total = (self.counters.precision.now() - ts_bench_start)
+                .as_millis(&self.counters.precision);
             if elapsed_total < self.min_run_time_ms {
                 round_size = round_size.saturating_add(round_size);
                 continue;
@@ -205,27 +297,11 @@ impl AdaptiveRunner {
                 break;
             }
         }
-        let summaries: Vec<_> = samples
+        let summaries: Vec<SummarySet> = samples
             .into_iter()
-            .map(|sample| {
-                Summary::new(
-                    sample
-                        .0
-                        .into_iter()
-                        .map(|elapsed| elapsed.as_ns(&self.precision) as f64)
-                        .collect::<Vec<f64>>()
-                        .as_slice(),
-                )
-            })
+            .map(|sample| SummarySet::new(sample.0, &self.counters.precision))
             .collect();
-        let grand_summary = Summary::new(
-            sample_for_all_bodies
-                .0
-                .into_iter()
-                .map(|elapsed| elapsed.as_ns(&self.precision) as f64)
-                .collect::<Vec<f64>>()
-                .as_slice(),
-        );
+        let grand_summary = SummarySet::new(sample_for_all_runs.0, &self.counters.precision);
         RunnerResult {
             summaries,
             grand_summary,
@@ -236,7 +312,7 @@ impl AdaptiveRunner {
 /// Run an individual test
 fn run_test(
     config: &Config,
-    precision: &Precision,
+    counters: &mut PerfCounterCollection,
     global_ctx: TestCtx,
     test: &Test,
 ) -> Result<TestResult, BenchError> {
@@ -245,17 +321,16 @@ fn run_test(
         unsafe { setup(global_ctx, &mut ctx) }
     }
 
-    let bench_runner = AdaptiveRunner::new(
+    let mut bench_runner = AdaptiveRunner::new(
         config
             .initial_round_size
             .unwrap_or(DEFAULT_INITIAL_ROUND_SIZE),
         config.min_sample_size.unwrap_or(DEFAULT_MIN_SAMPLE_SIZE),
         config.min_run_time_ms.unwrap_or(DEFAULT_MIN_RUN_TIME_MS),
         config.max_run_time_ms.unwrap_or(DEFAULT_MAX_RUN_TIME_MS),
-        precision,
+        counters,
     );
     let mut test_bodies_bench = TestBodiesBench {
-        precision: precision.clone(),
         ctx,
         bodies: (*test)
             .bodies
@@ -292,10 +367,12 @@ fn run_tests(
     tests: Vec<Test>,
 ) -> Result<Vec<TestResult>, BenchError> {
     let mut test_results: Vec<TestResult> = vec![];
-    let precision = Precision::new(precision::Config::default())?;
+
+    let mut counters = PerfCounterCollection::new()?;
+
     for test in tests {
         eprintln!("  - {}", test.name);
-        let test_result = run_test(config, &precision, global_ctx, &test)?;
+        let test_result = run_test(config, &mut counters, global_ctx, &test)?;
         test_results.push(test_result);
     }
     Ok(test_results)

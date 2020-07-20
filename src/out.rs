@@ -39,6 +39,7 @@ pub trait Serializable<W: Write> {
         writer: W,
         test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
         breakdown: bool,
+        perf: bool,
     ) -> Result<(), BenchError>;
 }
 
@@ -60,7 +61,12 @@ impl Out {
                 Some(ref file) if !file.is_empty() => Box::new(File::create(file)?),
                 _ => Box::new(io::stdout()),
             };
-            self.out(writer, format, output_config.breakdown.unwrap_or(false))?;
+            self.out(
+                writer,
+                format,
+                output_config.breakdown.unwrap_or(false),
+                output_config.perf.unwrap_or(true),
+            )?;
         }
         Ok(())
     }
@@ -70,13 +76,14 @@ impl Out {
         writer: W,
         format: Format,
         breakdown: bool,
+        perf: bool,
     ) -> Result<(), BenchError> {
         let serializer: Box<dyn Serializable<W>> = match format {
             Format::Text => Box::new(Text) as Box<_>,
             Format::CSV => Box::new(CSV) as Box<_>,
             Format::JSON => Box::new(JSON) as Box<_>,
         };
-        serializer.out(writer, &self.test_suites_results, breakdown)
+        serializer.out(writer, &self.test_suites_results, breakdown, perf)
     }
 }
 
@@ -102,57 +109,97 @@ impl<W: Write> Serializable<W> for Text {
         writer: W,
         test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
         breakdown: bool,
+        perf: bool,
     ) -> Result<(), BenchError> {
         let mut header = vec!["Test", "Implementation", "Ratio", "Median", "RSD"];
         if breakdown {
             header.push("Function");
             header.push("Percentage");
         }
+        if perf {
+            header.push("CPU Cycles");
+            header.push("Instructions Retired");
+            header.push("Cache Accesses");
+            header.push("Cache Misses");
+        }
         let mut mat = vec![];
         for (test_name, test_suite) in into_sorted(test_suites_results) {
             let mut ref_mean = None;
             for (test_suite_name, anonymous_test_result) in test_suite {
-                ref_mean = ref_mean.or_else(|| Some(anonymous_test_result.grand_summary.mean));
+                ref_mean =
+                    ref_mean.or_else(|| Some(anonymous_test_result.grand_summary.elapsed.mean));
                 let ratio = match ref_mean {
                     Some(ref_mean) if ref_mean > 0.0 => {
-                        anonymous_test_result.grand_summary.mean / ref_mean
+                        anonymous_test_result.grand_summary.elapsed.mean / ref_mean
                     }
                     _ => 0.0,
                 };
-                let rsd = match anonymous_test_result.grand_summary.mean {
+                let rsd = match anonymous_test_result.grand_summary.elapsed.mean {
                     mean if mean > 0.0 => {
-                        anonymous_test_result.grand_summary.std_dev * 100.0 / mean
+                        anonymous_test_result.grand_summary.elapsed.std_dev * 100.0 / mean
                     }
                     _ => 0.0,
                 };
-                let ratio = format!("{}", ratio);
-                let median = format!("{}", anonymous_test_result.grand_summary.median);
+                let wallclock_ratio = format!("{}", ratio);
+                let elapsed_median =
+                    format!("{}", anonymous_test_result.grand_summary.elapsed.median);
                 let rsd = format!("{}", rsd);
                 let mut line = vec![
                     test_name.to_owned(),
                     test_suite_name.to_owned(),
-                    ratio,
-                    median,
+                    wallclock_ratio,
+                    elapsed_median,
                     rsd,
                 ];
                 if breakdown {
                     line.push("".to_owned());
                     line.push("".to_owned());
                 }
+                if perf {
+                    line.push(
+                        anonymous_test_result
+                            .grand_summary
+                            .cpu_cycles
+                            .median
+                            .to_string(),
+                    );
+                    line.push(
+                        anonymous_test_result
+                            .grand_summary
+                            .instructions_retired
+                            .median
+                            .to_string(),
+                    );
+                    line.push(
+                        anonymous_test_result
+                            .grand_summary
+                            .cache_accesses
+                            .median
+                            .to_string(),
+                    );
+                    line.push(
+                        anonymous_test_result
+                            .grand_summary
+                            .cache_misses
+                            .median
+                            .to_string(),
+                    );
+                }
                 mat.push(line);
 
                 let bodies_median_sum = anonymous_test_result
                     .bodies_summary
                     .iter()
-                    .map(|body_summary| body_summary.summary.median)
+                    .map(|body_summary| body_summary.summary.elapsed.median)
                     .sum::<f64>();
                 let include_breakdown =
                     bodies_median_sum > 0.0 && anonymous_test_result.bodies_summary.len() > 1;
                 if include_breakdown {
                     for body_summary in &anonymous_test_result.bodies_summary {
                         let name = &body_summary.name;
-                        let pct = body_summary.summary.median * 100.0 / bodies_median_sum;
-                        let line = vec![
+                        let summary = &body_summary.summary;
+                        let pct = summary.elapsed.median * 100.0 / bodies_median_sum;
+                        let mut line = vec![
                             "".to_owned(),
                             "".to_owned(),
                             "".to_owned(),
@@ -161,6 +208,12 @@ impl<W: Write> Serializable<W> for Text {
                             name.to_owned(),
                             format!("{:.2} %", pct),
                         ];
+                        if perf {
+                            line.push(summary.cpu_cycles.median.to_string());
+                            line.push(summary.instructions_retired.median.to_string());
+                            line.push(summary.cache_accesses.median.to_string());
+                            line.push(summary.cache_misses.median.to_string());
+                        }
                         mat.push(line);
                     }
                 }
@@ -177,69 +230,115 @@ impl<W: Write> Serializable<W> for CSV {
         mut writer: W,
         test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
         breakdown: bool,
+        perf: bool,
     ) -> Result<(), BenchError> {
         if breakdown {
-            writer.write_all(b"Test\tFunction\tImplementation\tMedian\tRSD\tPercentage\n")?;
+            writer.write_all(b"Test\tFunction\tImplementation\tMedian\tRSD\tPercentage")?;
+            if perf {
+                writer.write_all(
+                    b"\tCPU Cycles\tInstructions Retired\tCache Accesses\tCache Misses",
+                )?;
+            }
+            writer.write_all(b"\n")?;
+
             for (test_name, test_suite) in into_sorted(test_suites_results) {
                 for (test_suite_name, anonymous_test_result) in test_suite {
                     let bodies_median_sum = anonymous_test_result
                         .bodies_summary
                         .iter()
-                        .map(|body_summary| body_summary.summary.median)
+                        .map(|body_summary| body_summary.summary.elapsed.median)
                         .sum::<f64>();
                     for body_summary in &anonymous_test_result.bodies_summary {
-                        let rsd = match body_summary.summary.mean {
-                            mean if mean > 0.0 => body_summary.summary.std_dev * 100.0 / mean,
+                        let rsd = match body_summary.summary.elapsed.mean {
+                            mean if mean > 0.0 => {
+                                body_summary.summary.elapsed.std_dev * 100.0 / mean
+                            }
                             _ => 0.0,
                         };
                         let pct = match bodies_median_sum {
-                            sum if sum > 0.0 => body_summary.summary.median * 100.0 / sum,
+                            sum if sum > 0.0 => body_summary.summary.elapsed.median * 100.0 / sum,
                             _ => 0.0,
                         };
                         writer.write_all(
                             format!(
-                                "{}\t{}\t{}\t{}\t{}\t{:.2} %\n",
+                                "{}\t{}\t{}\t{}\t{}\t{:.2} %",
                                 test_name,
                                 body_summary.name,
                                 test_suite_name,
-                                body_summary.summary.median,
+                                body_summary.summary.elapsed.median,
                                 rsd,
                                 pct
                             )
                             .as_bytes(),
                         )?;
+                        if perf {
+                            writer.write_all(
+                                format!(
+                                    "\t{}\t{}\t{}\t{}",
+                                    body_summary.summary.cpu_cycles.median,
+                                    body_summary.summary.instructions_retired.median,
+                                    body_summary.summary.cache_accesses.median,
+                                    body_summary.summary.cache_misses.median,
+                                )
+                                .as_bytes(),
+                            )?;
+                        }
+                        writer.write_all(b"\n")?;
                     }
                 }
             }
         } else {
-            writer.write_all(b"Test\tImplementation\tRatio\tMedian\tRSD\n")?;
+            writer.write_all(b"Test\tFunction\tImplementation\tMedian\tRSD")?;
+            if perf {
+                writer.write_all(
+                    b"\tCPU Cycles\tInstructions Retired\tCache Accesses\tCache Misses",
+                )?;
+            }
+            writer.write_all(b"\n")?;
             for (test_name, test_suite) in into_sorted(test_suites_results) {
                 let mut ref_mean = None;
                 for (test_suite_name, anonymous_test_result) in test_suite {
-                    ref_mean = ref_mean.or_else(|| Some(anonymous_test_result.grand_summary.mean));
+                    ref_mean =
+                        ref_mean.or_else(|| Some(anonymous_test_result.grand_summary.elapsed.mean));
                     let ratio = match ref_mean {
                         Some(ref_mean) if ref_mean > 0.0 => {
-                            anonymous_test_result.grand_summary.mean / ref_mean
+                            anonymous_test_result.grand_summary.elapsed.mean / ref_mean
                         }
                         _ => 0.0,
                     };
-                    let rsd = match anonymous_test_result.grand_summary.mean {
+                    let rsd = match anonymous_test_result.grand_summary.elapsed.mean {
                         mean if mean > 0.0 => {
-                            anonymous_test_result.grand_summary.std_dev * 100.0 / mean
+                            anonymous_test_result.grand_summary.elapsed.std_dev * 100.0 / mean
                         }
                         _ => 0.0,
                     };
                     writer.write_all(
                         format!(
-                            "{}\t{}\t{}\t{}\t{}\n",
+                            "{}\t{}\t{}\t{}\t{}",
                             test_name,
                             test_suite_name,
                             ratio,
-                            anonymous_test_result.grand_summary.median,
+                            anonymous_test_result.grand_summary.elapsed.median,
                             rsd
                         )
                         .as_bytes(),
                     )?;
+                    if perf {
+                        writer.write_all(
+                            format!(
+                                "\t{}\t{}\t{}\t{}",
+                                anonymous_test_result.grand_summary.cpu_cycles.median,
+                                anonymous_test_result
+                                    .grand_summary
+                                    .instructions_retired
+                                    .median,
+                                anonymous_test_result.grand_summary.cache_accesses.median,
+                                anonymous_test_result.grand_summary.cache_misses.median,
+                            )
+                            .as_bytes(),
+                        )?;
+                    }
+                    writer.write_all(b"\n")?;
                 }
             }
         }
@@ -272,17 +371,29 @@ impl Serialize for AnonymousTestResult {
         let include_breakdown = self.bodies_summary.len() > 1;
         let map_len = if include_breakdown { 6 } else { 5 };
         let mut map = serializer.serialize_map(Some(map_len))?;
-        map.serialize_entry("mean", &self.grand_summary.mean)?;
-        map.serialize_entry("median", &self.grand_summary.median)?;
-        map.serialize_entry("min", &self.grand_summary.min)?;
-        map.serialize_entry("max", &self.grand_summary.max)?;
-        map.serialize_entry("std_dev", &self.grand_summary.std_dev)?;
+        map.serialize_entry("elapsed", &JSONSummary(self.grand_summary.elapsed.clone()))?;
+        map.serialize_entry(
+            "cpu_cycles",
+            &JSONSummary(self.grand_summary.cpu_cycles.clone()),
+        )?;
+        map.serialize_entry(
+            "instructions_retired",
+            &JSONSummary(self.grand_summary.instructions_retired.clone()),
+        )?;
+        map.serialize_entry(
+            "cache_accesses",
+            &JSONSummary(self.grand_summary.cache_accesses.clone()),
+        )?;
+        map.serialize_entry(
+            "cache_misses",
+            &JSONSummary(self.grand_summary.cache_misses.clone()),
+        )?;
         if include_breakdown {
             let json_bodies_summary: Vec<_> = self
                 .bodies_summary
                 .iter()
                 .cloned()
-                .map(|body_summary| (body_summary.name, JSONSummary(body_summary.summary)))
+                .map(|body_summary| (body_summary.name, JSONSummary(body_summary.summary.elapsed)))
                 .collect();
             map.serialize_entry("breakdown", &json_bodies_summary)?;
         }
@@ -300,6 +411,7 @@ impl<W: Write> Serializable<W> for JSON {
         mut writer: W,
         test_suites_results: &HashMap<String, HashMap<String, AnonymousTestResult>>,
         _breakdown: bool,
+        _perf: bool,
     ) -> Result<(), BenchError> {
         // sort result keys by converting to a b-tree
         let results = BTreeMap::from_iter(

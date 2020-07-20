@@ -12,6 +12,7 @@ mod config;
 mod cpu_affinity;
 mod errors;
 mod out;
+mod perf;
 mod symbols;
 
 use self::bench::bench;
