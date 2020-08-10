@@ -16,7 +16,7 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: webui/sg-view
+        working-directory: webui/sg-history
 
     steps:
     - uses: actions/checkout@v2
