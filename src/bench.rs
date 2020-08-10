@@ -127,33 +127,24 @@ pub struct AdaptiveRunner<'a> {
     counters: &'a mut PerfCounterCollection,
 }
 
-#[derive(Clone, Copy)]
+/// A recording of time and performance counter information. `Sample::default()` provides a useful
+/// zero to accumulate into.
+#[derive(Clone, Copy, Default)]
 pub struct Sample {
+    /// The wall clock time that passed while measuring this sample.
     pub clock_time: Elapsed,
-    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
-    // disabled.
+    /// Measured by performance counter. May be 0, in which case the counter is almost certainly
+    /// disabled.
     pub cpu_cycles: u64,
-    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
-    // disabled.
+    /// Measured by performance counter. May be 0, in which case the counter is almost certainly
+    /// disabled.
     pub instructions_retired: u64,
-    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
-    // disabled.
+    /// Measured by performance counter. May be 0, in which case the counter is almost certainly
+    /// disabled.
     pub cache_accesses: u64,
-    // Measured by performance counter. Maybe 0, in which case the counter is almost certainly
-    // disabled.
+    /// Measured by performance counter. May be 0, in which case the counter is almost certainly
+    /// disabled.
     pub cache_misses: u64,
-}
-
-impl Sample {
-    pub fn empty() -> Self {
-        Sample {
-            clock_time: Elapsed::from_ticks(0),
-            cpu_cycles: 0,
-            instructions_retired: 0,
-            cache_accesses: 0,
-            cache_misses: 0,
-        }
-    }
 }
 
 impl std::ops::Div<u64> for Sample {
@@ -266,7 +257,7 @@ impl<'a> AdaptiveRunner<'a> {
         let mut sample_id = 0;
         loop {
             let mut bodies_sample_vec: Vec<Sample> = Vec::with_capacity(bodies.len());
-            bodies_sample_vec.resize_with(bodies.len(), || Sample::empty());
+            bodies_sample_vec.resize_with(bodies.len(), || Sample::default());
             for _ in 0..round_size {
                 for (body_id, body) in bodies.iter().enumerate() {
                     bodies_sample_vec[body_id] = self.counters.sample(|| {
@@ -274,7 +265,7 @@ impl<'a> AdaptiveRunner<'a> {
                     });
                 }
             }
-            let mut sample_for_all_bodies = Sample::empty();
+            let mut sample_for_all_bodies = Sample::default();
             for (body_id, sample) in bodies_sample_vec.into_iter().enumerate() {
                 samples[body_id].0.push(sample / round_size as u64);
                 sample_for_all_bodies += sample;
