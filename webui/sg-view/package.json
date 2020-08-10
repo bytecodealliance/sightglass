@@ -26,7 +26,7 @@
     "vuetify": "^1.5.14"
   },
   "devDependencies": {
-    "ava": "^2.3.0",
+    "ava": "^3.11.1",
     "babel-eslint": "^10.0.1",
     "eslint": "^5.16.0",
     "eslint-friendly-formatter": "^4.0.1",
