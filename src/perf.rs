@@ -13,15 +13,31 @@ pub struct PerfCounterCollection {
 impl PerfCounterCollection {
     cfg_if::cfg_if! {
         if #[cfg(target_os = "linux")] {
-            pub fn new() -> Result<Self, &'static str> {
+            pub fn new(use_perf_counters: bool) -> Result<Self, &'static str> {
                 use perfcnt::linux::HardwareEventType;
 
                 let precision = Precision::new(precision::Config::default())?;
 
-                let cpu_cycles = linux::create_hardware_counter(HardwareEventType::CPUCycles);
-                let instructions_retired = linux::create_hardware_counter(HardwareEventType::Instructions);
-                let cache_accesses = linux::create_hardware_counter(HardwareEventType::CacheReferences);
-                let cache_misses = linux::create_hardware_counter(HardwareEventType::CacheMisses);
+                let cpu_cycles = if use_perf_counters {
+                    linux::create_hardware_counter(HardwareEventType::CPUCycles)
+                } else {
+                    None
+                };
+                let instructions_retired = if use_perf_counters {
+                    linux::create_hardware_counter(HardwareEventType::Instructions)
+                } else {
+                    None
+                };
+                let cache_accesses = if use_perf_counters {
+                    linux::create_hardware_counter(HardwareEventType::CacheReferences)
+                } else {
+                    None
+                };
+                let cache_misses = if use_perf_counters {
+                    linux::create_hardware_counter(HardwareEventType::CacheMisses)
+                } else {
+                    None
+                };
                 Ok(PerfCounterCollection {
                     precision,
                     cpu_cycles,
@@ -31,7 +47,9 @@ impl PerfCounterCollection {
                 })
             }
         } else {
-            pub fn new() -> Result<Self, &'static str> {
+            pub fn new(use_perf_counters: bool) -> Result<Self, &'static str> {
+                assert!(!use_perf_counters, "performance counters are not supported on non-Linux platforms");
+
                 let precision = Precision::new(precision::Config::default())?;
 
                 // Don't currently support performance counter use on non-linux targets.

@@ -359,7 +359,7 @@ fn run_tests(
 ) -> Result<Vec<TestResult>, BenchError> {
     let mut test_results: Vec<TestResult> = vec![];
 
-    let mut counters = PerfCounterCollection::new()?;
+    let mut counters = PerfCounterCollection::new(config.use_perf_counters())?;
 
     for test in tests {
         eprintln!("  - {}", test.name);

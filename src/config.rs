@@ -41,6 +41,7 @@ pub struct Config {
     pub min_sample_size: Option<usize>,
     pub min_run_time_ms: Option<u64>,
     pub max_run_time_ms: Option<u64>,
+    pub use_perf_counters: Option<bool>,
 }
 
 #[derive(Default)]
@@ -102,5 +103,11 @@ impl Config {
             env::set_var(ENV_QUICK_MODE, "1");
         }
         Ok(config)
+    }
+
+    /// Should Sightglass attempt to use hardware performance counters? Defaults to `false`, if not
+    /// explicitly provided.
+    pub fn use_perf_counters(&self) -> bool {
+        self.use_perf_counters.unwrap_or(false)
     }
 }
