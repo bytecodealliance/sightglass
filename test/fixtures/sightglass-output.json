@@ -1,18 +1,78 @@
 {
   "a": {
     "b": {
-      "mean": 0.0,
-      "median": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "std_dev": 0.0
+      "elapsed": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cpu_cycles": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "instructions_retired": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cache_accesses": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cache_misses": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      }
     },
     "c": {
-      "mean": 0.0,
-      "median": 0.0,
-      "min": 0.0,
-      "max": 0.0,
-      "std_dev": 0.0
+      "elapsed": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cpu_cycles": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "instructions_retired": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cache_accesses": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      },
+      "cache_misses": {
+        "mean": 0.0,
+        "median": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "std_dev": 0.0
+      }
     }
   }
 }

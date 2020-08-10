@@ -431,7 +431,6 @@ mod tests {
     use crate::bench::AnonymousTestResult;
     use crate::out::Serializable;
     use crate::out::JSON;
-    use std::io::{Read, Write};
 
     macro_rules! hashmap {
         ($( $key: expr => $val: expr ),*) => {{
@@ -447,13 +446,28 @@ mod tests {
 
     #[test]
     fn serialize_to_json() {
-        let result1 = AnonymousTestResult::default();
-        let result2 = AnonymousTestResult::default();
+        fn dummy_test_result() -> AnonymousTestResult {
+            use bencher::stats::Summary;
+            use crate::bench::SummarySet;
+            AnonymousTestResult {
+                grand_summary: SummarySet {
+                    elapsed: Summary::new(&[0.0]),
+                    cpu_cycles: Summary::new(&[0.0]),
+                    instructions_retired: Summary::new(&[0.0]),
+                    cache_accesses: Summary::new(&[0.0]),
+                    cache_misses: Summary::new(&[0.0]),
+                },
+                bodies_summary: Vec::new(),
+            }
+        }
+
+        let result1 = dummy_test_result();
+        let result2 = dummy_test_result();
         let data = hashmap!["a".to_string() => hashmap!["c".to_string() => result1, "b".to_string() => result2]]; // note the out-of-order keys
         let json = Box::new(JSON);
         let mut output = vec![];
 
-        json.out(&mut output, &data, false);
+        json.out(&mut output, &data, false, false).expect("can write json");
 
         let fixture_path = "test/fixtures/sightglass-output.json";
         let expected = remove_whitespace(&std::fs::read_to_string(fixture_path).unwrap());
