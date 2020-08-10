@@ -167,7 +167,7 @@
               for(const runtime of Object.keys(run.results[benchmark])){
                 let name = `${benchmark}-${runtime}`;
                 points[name] = points[name] || {name: name, data: {}};
-                const slowdown = run.results[benchmark][runtime].mean / run.results[benchmark][run.meta.reference_runtime].mean;
+                const slowdown = run.results[benchmark][runtime].elapsed.mean / run.results[benchmark][run.meta.reference_runtime].elapsed.mean;
                 const date = run.meta.timestamp.toISOString();
                 points[name].data[date] = slowdown
               }

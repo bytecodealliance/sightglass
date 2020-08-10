@@ -59,6 +59,14 @@ pub type Benchmark = String;
 pub type Runtime = String;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Summary {
+    elapsed: Stat,
+    cpu_cycles: Stat,
+    instructions_retired: Stat,
+    cache_accesses: Stat,
+    cache_misses: Stat,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Stat {
     mean: f64,
     median: f64,
     min: f64,

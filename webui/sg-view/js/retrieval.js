@@ -25,8 +25,8 @@ export function calculate_average_slowdown_ratio(target, reference, run) {
       console.warn(`Missing ${benchmark} results for either ${target} or ${reference} (timestamp: ${run.meta.timestamp}):`, run.results);
       continue; // we want to avoid including missing results in the calculation
     }
-    target_means.push(benchmark_results[target].mean);
-    reference_means.push(benchmark_results[reference].mean);
+    target_means.push(benchmark_results[target].elapsed.mean);
+    reference_means.push(benchmark_results[reference].elapsed.mean);
   }
 
   return calculate_geometric_mean(target_means) / calculate_geometric_mean(reference_means);
