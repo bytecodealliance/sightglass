@@ -28,466 +28,2206 @@
       "results": {
         "ackermann": {
           "native": {
-            "mean": 2207444.0,
-            "median": 2038070.0,
-            "min": 1964066.0,
-            "max": 3739473.0,
-            "std_dev": 540159.4440389286
+            "elapsed": {
+              "mean": 2207444.0,
+              "median": 2038070.0,
+              "min": 1964066.0,
+              "max": 3739473.0,
+              "std_dev": 540159.4440389286
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 7743325.4,
-            "median": 6475162.5,
-            "min": 6268641.0,
-            "max": 12035279.0,
-            "std_dev": 2108577.81676103
+            "elapsed": {
+              "mean": 7743325.4,
+              "median": 6475162.5,
+              "min": 6268641.0,
+              "max": 12035279.0,
+              "std_dev": 2108577.81676103
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "base64": {
           "native": {
-            "mean": 126278457.66666669,
-            "median": 125526817.5,
-            "min": 125199472.0,
-            "max": 130254496.0,
-            "std_dev": 1962959.3126903744
+            "elapsed": {
+              "mean": 126278457.66666669,
+              "median": 125526817.5,
+              "min": 125199472.0,
+              "max": 130254496.0,
+              "std_dev": 1962959.3126903744
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 276724784.0,
-            "median": 276423196.0,
-            "min": 275618232.0,
-            "max": 278132924.0,
-            "std_dev": 1284186.6900976663
+            "elapsed": {
+              "mean": 276724784.0,
+              "median": 276423196.0,
+              "min": 275618232.0,
+              "max": 278132924.0,
+              "std_dev": 1284186.6900976663
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "ctype": {
           "native": {
-            "mean": 235353102.33333337,
-            "median": 235431340.0,
-            "min": 235106135.0,
-            "max": 235521832.0,
-            "std_dev": 218613.46782925643
+            "elapsed": {
+              "mean": 235353102.33333337,
+              "median": 235431340.0,
+              "min": 235106135.0,
+              "max": 235521832.0,
+              "std_dev": 218613.46782925643
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 1045328871.0,
-            "median": 1045328871.0,
-            "min": 1045328871.0,
-            "max": 1045328871.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 1045328871.0,
+              "median": 1045328871.0,
+              "min": 1045328871.0,
+              "max": 1045328871.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "ed25519": {
           "native": {
-            "mean": 684945595.0,
-            "median": 684945595.0,
-            "min": 684945595.0,
-            "max": 684945595.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 684945595.0,
+              "median": 684945595.0,
+              "min": 684945595.0,
+              "max": 684945595.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 8198835841.0,
-            "median": 8198835841.0,
-            "min": 8198835841.0,
-            "max": 8198835841.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 8198835841.0,
+              "median": 8198835841.0,
+              "min": 8198835841.0,
+              "max": 8198835841.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "fib2": {
           "native": {
-            "mean": 3852285761.0,
-            "median": 3852285761.0,
-            "min": 3852285761.0,
-            "max": 3852285761.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 3852285761.0,
+              "median": 3852285761.0,
+              "min": 3852285761.0,
+              "max": 3852285761.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 6276975860.0,
-            "median": 6276975860.0,
-            "min": 6276975860.0,
-            "max": 6276975860.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 6276975860.0,
+              "median": 6276975860.0,
+              "min": 6276975860.0,
+              "max": 6276975860.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "gimli": {
           "native": {
-            "mean": 1337620.0,
-            "median": 1338573.0,
-            "min": 1326152.0,
-            "max": 1350775.0,
-            "std_dev": 6971.641198455353
+            "elapsed": {
+              "mean": 1337620.0,
+              "median": 1338573.0,
+              "min": 1326152.0,
+              "max": 1350775.0,
+              "std_dev": 6971.641198455353
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 9989084.9,
-            "median": 9974580.0,
-            "min": 9959853.0,
-            "max": 10115520.0,
-            "std_dev": 45443.13365185107
+            "elapsed": {
+              "mean": 9989084.9,
+              "median": 9974580.0,
+              "min": 9959853.0,
+              "max": 10115520.0,
+              "std_dev": 45443.13365185107
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "heapsort": {
           "native": {
-            "mean": 732620702.0,
-            "median": 732620702.0,
-            "min": 732620702.0,
-            "max": 732620702.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 732620702.0,
+              "median": 732620702.0,
+              "min": 732620702.0,
+              "max": 732620702.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 1381484432.0,
-            "median": 1381484432.0,
-            "min": 1381484432.0,
-            "max": 1381484432.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 1381484432.0,
+              "median": 1381484432.0,
+              "min": 1381484432.0,
+              "max": 1381484432.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "keccak": {
           "native": {
-            "mean": 6030615.0,
-            "median": 6030161.5,
-            "min": 6025207.0,
-            "max": 6037415.0,
-            "std_dev": 3861.591266707432
+            "elapsed": {
+              "mean": 6030615.0,
+              "median": 6030161.5,
+              "min": 6025207.0,
+              "max": 6037415.0,
+              "std_dev": 3861.591266707432
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 49867091.3,
-            "median": 49858342.0,
-            "min": 49807094.0,
-            "max": 49946759.0,
-            "std_dev": 48674.18700582248
+            "elapsed": {
+              "mean": 49867091.3,
+              "median": 49858342.0,
+              "min": 49807094.0,
+              "max": 49946759.0,
+              "std_dev": 48674.18700582248
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "matrix": {
           "native": {
-            "mean": 174629577.5,
-            "median": 174445303.0,
-            "min": 174314520.0,
-            "max": 175313184.0,
-            "std_dev": 472030.9085116496
+            "elapsed": {
+              "mean": 174629577.5,
+              "median": 174445303.0,
+              "min": 174314520.0,
+              "max": 175313184.0,
+              "std_dev": 472030.9085116496
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 1081742548.0,
-            "median": 1081742548.0,
-            "min": 1081742548.0,
-            "max": 1081742548.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 1081742548.0,
+              "median": 1081742548.0,
+              "min": 1081742548.0,
+              "max": 1081742548.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "matrix2": {
           "native": {
-            "mean": 99816494.42857143,
-            "median": 99648545.0,
-            "min": 99513283.0,
-            "max": 100647473.0,
-            "std_dev": 407252.20386670186
+            "elapsed": {
+              "mean": 99816494.42857143,
+              "median": 99648545.0,
+              "min": 99513283.0,
+              "max": 100647473.0,
+              "std_dev": 407252.20386670186
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 707164899.0,
-            "median": 707164899.0,
-            "min": 707164899.0,
-            "max": 707164899.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 707164899.0,
+              "median": 707164899.0,
+              "min": 707164899.0,
+              "max": 707164899.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "memmove": {
           "native": {
-            "mean": 13733619.3,
-            "median": 13733991.5,
-            "min": 13722238.0,
-            "max": 13741892.0,
-            "std_dev": 6321.742622797047
+            "elapsed": {
+              "mean": 13733619.3,
+              "median": 13733991.5,
+              "min": 13722238.0,
+              "max": 13741892.0,
+              "std_dev": 6321.742622797047
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 881828097.0,
-            "median": 881828097.0,
-            "min": 881828097.0,
-            "max": 881828097.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 881828097.0,
+              "median": 881828097.0,
+              "min": 881828097.0,
+              "max": 881828097.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "minicsv": {
           "native": {
-            "mean": 299470258.0,
-            "median": 299748622.0,
-            "min": 296747593.0,
-            "max": 301914559.0,
-            "std_dev": 2594706.013917762
+            "elapsed": {
+              "mean": 299470258.0,
+              "median": 299748622.0,
+              "min": 296747593.0,
+              "max": 301914559.0,
+              "std_dev": 2594706.013917762
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 1045849194.0,
-            "median": 1045849194.0,
-            "min": 1045849194.0,
-            "max": 1045849194.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 1045849194.0,
+              "median": 1045849194.0,
+              "min": 1045849194.0,
+              "max": 1045849194.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "nestedloop": {
           "native": {
-            "mean": 643178.5,
-            "median": 642600.5,
-            "min": 634170.0,
-            "max": 670265.0,
-            "std_dev": 9337.372898003145
+            "elapsed": {
+              "mean": 643178.5,
+              "median": 642600.5,
+              "min": 634170.0,
+              "max": 670265.0,
+              "std_dev": 9337.372898003145
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 5076770.9,
-            "median": 5071903.5,
-            "min": 5056261.0,
-            "max": 5127460.0,
-            "std_dev": 20572.774557382603
+            "elapsed": {
+              "mean": 5076770.9,
+              "median": 5071903.5,
+              "min": 5056261.0,
+              "max": 5127460.0,
+              "std_dev": 20572.774557382603
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "nestedloop2": {
           "native": {
-            "mean": 640790.1666666666,
-            "median": 641055.5,
-            "min": 635363.0,
-            "max": 647084.0,
-            "std_dev": 3962.9254766312897
+            "elapsed": {
+              "mean": 640790.1666666666,
+              "median": 641055.5,
+              "min": 635363.0,
+              "max": 647084.0,
+              "std_dev": 3962.9254766312897
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 4822374.7,
-            "median": 4818808.5,
-            "min": 4807081.0,
-            "max": 4867000.0,
-            "std_dev": 17476.154058538676
+            "elapsed": {
+              "mean": 4822374.7,
+              "median": 4818808.5,
+              "min": 4807081.0,
+              "max": 4867000.0,
+              "std_dev": 17476.154058538676
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "nestedloop3": {
           "native": {
-            "mean": 781342.9166666666,
-            "median": 781829.5,
-            "min": 775914.0,
-            "max": 786310.0,
-            "std_dev": 3472.2392161604334
+            "elapsed": {
+              "mean": 781342.9166666666,
+              "median": 781829.5,
+              "min": 775914.0,
+              "max": 786310.0,
+              "std_dev": 3472.2392161604334
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 5518630.4,
-            "median": 5472799.0,
-            "min": 5443686.0,
-            "max": 5944000.0,
-            "std_dev": 150912.12803718296
+            "elapsed": {
+              "mean": 5518630.4,
+              "median": 5472799.0,
+              "min": 5443686.0,
+              "max": 5944000.0,
+              "std_dev": 150912.12803718296
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "random": {
           "native": {
-            "mean": 160500666.6,
-            "median": 160376054.0,
-            "min": 160360906.0,
-            "max": 160973207.0,
-            "std_dev": 265762.89764148794
+            "elapsed": {
+              "mean": 160500666.6,
+              "median": 160376054.0,
+              "min": 160360906.0,
+              "max": 160973207.0,
+              "std_dev": 265762.89764148794
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 175436347.25,
-            "median": 175387598.5,
-            "min": 175376636.0,
-            "max": 175593556.0,
-            "std_dev": 104942.36945223792
+            "elapsed": {
+              "mean": 175436347.25,
+              "median": 175387598.5,
+              "min": 175376636.0,
+              "max": 175593556.0,
+              "std_dev": 104942.36945223792
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "random2": {
           "native": {
-            "mean": 160715995.0,
-            "median": 160414595.0,
-            "min": 160302619.0,
-            "max": 161747827.0,
-            "std_dev": 599517.4345087889
+            "elapsed": {
+              "mean": 160715995.0,
+              "median": 160414595.0,
+              "min": 160302619.0,
+              "max": 161747827.0,
+              "std_dev": 599517.4345087889
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 175585031.75,
-            "median": 175569868.0,
-            "min": 175505678.0,
-            "max": 175694713.0,
-            "std_dev": 92042.94821938653
+            "elapsed": {
+              "mean": 175585031.75,
+              "median": 175569868.0,
+              "min": 175505678.0,
+              "max": 175694713.0,
+              "std_dev": 92042.94821938653
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "ratelimit": {
           "native": {
-            "mean": 13075229.4,
-            "median": 12867275.5,
-            "min": 12846461.0,
-            "max": 14805168.0,
-            "std_dev": 609225.6627158773
+            "elapsed": {
+              "mean": 13075229.4,
+              "median": 12867275.5,
+              "min": 12846461.0,
+              "max": 14805168.0,
+              "std_dev": 609225.6627158773
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 99430927.85714284,
-            "median": 99285425.0,
-            "min": 98701748.0,
-            "max": 100332383.0,
-            "std_dev": 646762.8060936582
+            "elapsed": {
+              "mean": 99430927.85714284,
+              "median": 99285425.0,
+              "min": 98701748.0,
+              "max": 100332383.0,
+              "std_dev": 646762.8060936582
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "seqhash": {
           "native": {
-            "mean": 3838355595.0,
-            "median": 3838355595.0,
-            "min": 3838355595.0,
-            "max": 3838355595.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 3838355595.0,
+              "median": 3838355595.0,
+              "min": 3838355595.0,
+              "max": 3838355595.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 13370633364.0,
-            "median": 13370633364.0,
-            "min": 13370633364.0,
-            "max": 13370633364.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 13370633364.0,
+              "median": 13370633364.0,
+              "min": 13370633364.0,
+              "max": 13370633364.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "sieve": {
           "native": {
-            "mean": 320595594.0,
-            "median": 320527348.0,
-            "min": 320402707.0,
-            "max": 320856727.0,
-            "std_dev": 234577.6576893034
+            "elapsed": {
+              "mean": 320595594.0,
+              "median": 320527348.0,
+              "min": 320402707.0,
+              "max": 320856727.0,
+              "std_dev": 234577.6576893034
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 948072242.0,
-            "median": 948072242.0,
-            "min": 948072242.0,
-            "max": 948072242.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 948072242.0,
+              "median": 948072242.0,
+              "min": 948072242.0,
+              "max": 948072242.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "strcat": {
           "native": {
-            "mean": 10488940.2,
-            "median": 10448547.5,
-            "min": 10202298.0,
-            "max": 11077296.0,
-            "std_dev": 238624.6344597864
+            "elapsed": {
+              "mean": 10488940.2,
+              "median": 10448547.5,
+              "min": 10202298.0,
+              "max": 11077296.0,
+              "std_dev": 238624.6344597864
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 336767124.5,
-            "median": 336767124.5,
-            "min": 336763948.0,
-            "max": 336770301.0,
-            "std_dev": 4492.249380878136
+            "elapsed": {
+              "mean": 336767124.5,
+              "median": 336767124.5,
+              "min": 336763948.0,
+              "max": 336770301.0,
+              "std_dev": 4492.249380878136
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "strcat2": {
           "native": {
-            "mean": 1216319.5454545454,
-            "median": 1211480.0,
-            "min": 1203180.0,
-            "max": 1271854.0,
-            "std_dev": 19345.657039054717
+            "elapsed": {
+              "mean": 1216319.5454545454,
+              "median": 1211480.0,
+              "min": 1203180.0,
+              "max": 1271854.0,
+              "std_dev": 19345.657039054717
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 67938528.3,
-            "median": 67881035.5,
-            "min": 67487413.0,
-            "max": 68449014.0,
-            "std_dev": 307085.8869198395
+            "elapsed": {
+              "mean": 67938528.3,
+              "median": 67881035.5,
+              "min": 67487413.0,
+              "max": 68449014.0,
+              "std_dev": 307085.8869198395
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "strchr": {
           "native": {
-            "mean": 18173929.7,
-            "median": 18170551.5,
-            "min": 18133562.0,
-            "max": 18228762.0,
-            "std_dev": 33003.2499849131
+            "elapsed": {
+              "mean": 18173929.7,
+              "median": 18170551.5,
+              "min": 18133562.0,
+              "max": 18228762.0,
+              "std_dev": 33003.2499849131
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 347410474.0,
-            "median": 347410474.0,
-            "min": 347183590.0,
-            "max": 347637358.0,
-            "std_dev": 320862.42988545727
+            "elapsed": {
+              "mean": 347410474.0,
+              "median": 347410474.0,
+              "min": 347183590.0,
+              "max": 347637358.0,
+              "std_dev": 320862.42988545727
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "strlen": {
           "native": {
-            "mean": 16704070.5,
-            "median": 16699895.5,
-            "min": 16665074.0,
-            "max": 16785555.0,
-            "std_dev": 38044.068325065105
+            "elapsed": {
+              "mean": 16704070.5,
+              "median": 16699895.5,
+              "min": 16665074.0,
+              "max": 16785555.0,
+              "std_dev": 38044.068325065105
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 228503273.0,
-            "median": 228659381.0,
-            "min": 228066218.0,
-            "max": 228784220.0,
-            "std_dev": 383613.0846947221
+            "elapsed": {
+              "mean": 228503273.0,
+              "median": 228659381.0,
+              "min": 228066218.0,
+              "max": 228784220.0,
+              "std_dev": 383613.0846947221
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "strtok": {
           "native": {
-            "mean": 83031071.22222222,
-            "median": 82965581.0,
-            "min": 82888222.0,
-            "max": 83368302.0,
-            "std_dev": 152548.00656332565
+            "elapsed": {
+              "mean": 83031071.22222222,
+              "median": 82965581.0,
+              "min": 82888222.0,
+              "max": 83368302.0,
+              "std_dev": 152548.00656332565
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 943434301.0,
-            "median": 943434301.0,
-            "min": 943434301.0,
-            "max": 943434301.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 943434301.0,
+              "median": 943434301.0,
+              "min": 943434301.0,
+              "max": 943434301.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "switch": {
           "native": {
-            "mean": 36375532.4,
-            "median": 36372139.0,
-            "min": 36335561.0,
-            "max": 36447840.0,
-            "std_dev": 36050.695971706904
+            "elapsed": {
+              "mean": 36375532.4,
+              "median": 36372139.0,
+              "min": 36335561.0,
+              "max": 36447840.0,
+              "std_dev": 36050.695971706904
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 560549668.5,
-            "median": 560549668.5,
-            "min": 560353207.0,
-            "max": 560746130.0,
-            "std_dev": 277838.5177841618
+            "elapsed": {
+              "mean": 560549668.5,
+              "median": 560549668.5,
+              "min": 560353207.0,
+              "max": 560746130.0,
+              "std_dev": 277838.5177841618
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "switch2": {
           "native": {
-            "mean": 209040757.75,
-            "median": 208941842.0,
-            "min": 208840590.0,
-            "max": 209438757.0,
-            "std_dev": 277891.95728960924
+            "elapsed": {
+              "mean": 209040757.75,
+              "median": 208941842.0,
+              "min": 208840590.0,
+              "max": 209438757.0,
+              "std_dev": 277891.95728960924
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 1561591611.0,
-            "median": 1561591611.0,
-            "min": 1561591611.0,
-            "max": 1561591611.0,
-            "std_dev": 0.0
+            "elapsed": {
+              "mean": 1561591611.0,
+              "median": 1561591611.0,
+              "min": 1561591611.0,
+              "max": 1561591611.0,
+              "std_dev": 0.0
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "xblabla20": {
           "native": {
-            "mean": 1730410.6363636365,
-            "median": 1723028.0,
-            "min": 1717017.0,
-            "max": 1798432.0,
-            "std_dev": 22922.343493948116
+            "elapsed": {
+              "mean": 1730410.6363636365,
+              "median": 1723028.0,
+              "min": 1717017.0,
+              "max": 1798432.0,
+              "std_dev": 22922.343493948116
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 183391565.25,
-            "median": 183376391.5,
-            "min": 183137857.0,
-            "max": 183675621.0,
-            "std_dev": 221903.50727042748
+            "elapsed": {
+              "mean": 183391565.25,
+              "median": 183376391.5,
+              "min": 183137857.0,
+              "max": 183675621.0,
+              "std_dev": 221903.50727042748
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         },
         "xchacha20": {
           "native": {
-            "mean": 2334809.727272727,
-            "median": 2324656.0,
-            "min": 2321335.0,
-            "max": 2408489.0,
-            "std_dev": 25323.948282568064
+            "elapsed": {
+              "mean": 2334809.727272727,
+              "median": 2324656.0,
+              "min": 2321335.0,
+              "max": 2408489.0,
+              "std_dev": 25323.948282568064
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           },
           "wasmtime": {
-            "mean": 116983001.66666669,
-            "median": 116997493.5,
-            "min": 116218406.0,
-            "max": 117685283.0,
-            "std_dev": 559665.8265049481
+            "elapsed": {
+              "mean": 116983001.66666669,
+              "median": 116997493.5,
+              "min": 116218406.0,
+              "max": 117685283.0,
+              "std_dev": 559665.8265049481
+            },
+            "cpu_cycles": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "instructions_retired": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_accesses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            },
+            "cache_misses": {
+              "mean": 0,
+              "median": 0,
+              "min": 0,
+              "max": 0,
+              "std_dev": 0
+            }
           }
         }
       }
