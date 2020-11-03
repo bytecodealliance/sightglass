@@ -267,12 +267,12 @@ impl<'a> AdaptiveRunner<'a> {
             }
             let mut sample_for_all_bodies = Sample::default();
             for (body_id, sample) in bodies_sample_vec.into_iter().enumerate() {
-                samples[body_id].0.push(sample / round_size as u64);
+                samples[body_id].0.push(sample);
                 sample_for_all_bodies += sample;
             }
             sample_for_all_runs
                 .0
-                .push(sample_for_all_bodies / round_size as u64);
+                .push(sample_for_all_bodies);
 
             let elapsed_total = (self.counters.precision.now() - ts_bench_start)
                 .as_millis(&self.counters.precision);
