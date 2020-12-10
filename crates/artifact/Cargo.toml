@@ -1,0 +1,18 @@
+[package]
+name = "sightglass-artifact"
+version = "0.1.0"
+description = "Tools for building and describing Wasm benchmark artifacts"
+authors = ["Andrew Brown <andrew.brown@intel.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+wasmparser = "0.67"
+wasmprinter = "0.2"
+
+[dev-dependencies]
+pretty_env_logger = "0.4"
+serde_json = "1.0"

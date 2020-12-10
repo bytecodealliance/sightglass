@@ -29,3 +29,15 @@ core_affinity="0.5.9"
 
 [target.'cfg(not(any(target_os="windows",target_os="macos",target_os="linux")))'.dependencies]
 hwloc = "0.5"
+
+[workspace]
+members = [
+    "crates/artifact",
+    "crates/cli",
+    "crates/recorder",
+    "webui/sg-history"
+]
+default-members = [
+    "crates/cli"
+]
+

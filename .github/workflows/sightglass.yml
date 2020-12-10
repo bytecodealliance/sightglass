@@ -8,6 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_LOG: info
 
 jobs:
   build:
@@ -16,13 +17,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
+    - name: Install nightly
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
-    - run: cargo build --verbose
-    - name: Run tests
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-    - run: cargo test --verbose
+    - name: Build all
+      run: cargo +nightly build --verbose --all
+    - name: Test all
+      run: cargo +nightly test --verbose --all

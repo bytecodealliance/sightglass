@@ -1,0 +1,15 @@
+[package]
+name = "sightglass-cli"
+version = "0.1.0"
+authors = ["Andrew Brown <andrew.brown@intel.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0"
+log = "0.4"
+pretty_env_logger = "0.4"
+sightglass-artifact = { path = "../artifact" }
+sightglass-recorder = { path = "../recorder" }
+structopt = { version = "0.3", features = ["color", "suggestions"] }
+thiserror = "1.0"
+serde_json = "1.0"
