@@ -1,0 +1,9 @@
+[package]
+name = "blake3-wasm-benchmark"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+blake3 = "0.3.7"
+
+[workspace]
