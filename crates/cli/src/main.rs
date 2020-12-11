@@ -4,7 +4,9 @@ use sightglass_artifact::{Dockerfile, WasmBenchmark};
 use sightglass_recorder::{benchmark::benchmark, measure::MeasureType};
 use std::ffi::OsString;
 use std::fs;
+use std::io;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::{clap::AppSettings, StructOpt};
 
 /// Main entry point for CLI.
@@ -89,6 +91,28 @@ struct BenchmarkCommand {
         parse(from_os_str)
     )]
     wasmfile: PathBuf,
+
+    /// The format of the output data. Either 'json' or 'csv'.
+    #[structopt(short = "f", long = "output-format", default_value = "json")]
+    output_format: OutputFormat,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum OutputFormat {
+    Json,
+    Csv,
+}
+
+impl FromStr for OutputFormat {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, &'static str> {
+        match s {
+            "json" => Ok(OutputFormat::Json),
+            "csv" => Ok(OutputFormat::Csv),
+            _ => Err("output format must be either 'json' or 'csv'"),
+        }
+    }
 }
 
 impl SightglassCommand {
@@ -111,7 +135,16 @@ impl SightglassCommand {
             SightglassCommand::Benchmark(c) => {
                 let bytes = fs::read(&c.wasmfile).context("Attempting to read Wasm bytes")?;
                 let measurement = benchmark(bytes, &c.engine, c.measure)?;
-                println!("{}", serde_json::to_string(&measurement)?);
+                match c.output_format {
+                    OutputFormat::Json => {
+                        println!("{}", serde_json::to_string(&measurement)?);
+                    }
+                    OutputFormat::Csv => {
+                        let mut csv = csv::Writer::from_writer(io::stdout());
+                        csv.serialize(&measurement)?;
+                        csv.flush()?;
+                    }
+                }
             }
             SightglassCommand::Validate(c) => validate(WasmBenchmark::from(&c.benchmark)),
         }
