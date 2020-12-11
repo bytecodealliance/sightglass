@@ -14,6 +14,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+/// The sightglass benchmark runner.
 #[derive(StructOpt, Debug)]
 #[structopt(
     version = env!("CARGO_PKG_VERSION"),
