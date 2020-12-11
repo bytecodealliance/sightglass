@@ -3,26 +3,15 @@ use log::trace;
 use sightglass_artifact::{Dockerfile, WasmBenchmark};
 use sightglass_recorder::{benchmark::benchmark, measure::MeasureType};
 use std::ffi::OsString;
+use std::fs;
 use std::path::PathBuf;
-use std::{fs, process};
-use structopt::{clap::AppSettings, clap::ErrorKind, StructOpt};
+use structopt::{clap::AppSettings, StructOpt};
 
 /// Main entry point for CLI.
-fn main() {
-    let command =
-        SightglassCommand::from_iter_safe(std::env::args()).unwrap_or_else(|e| match e.kind {
-            ErrorKind::HelpDisplayed
-            | ErrorKind::VersionDisplayed
-            | ErrorKind::MissingArgumentOrSubcommand => e.exit(),
-            _ => e.exit(),
-        });
-    match command.execute() {
-        Err(e) => {
-            eprintln!("Error: {:?}", e);
-            process::exit(1);
-        }
-        Ok(()) => {}
-    }
+fn main() -> Result<()> {
+    let command = SightglassCommand::from_args();
+    command.execute()?;
+    Ok(())
 }
 
 #[derive(StructOpt, Debug)]
