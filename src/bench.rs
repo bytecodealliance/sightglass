@@ -338,7 +338,7 @@ fn bench_library(config: &Config, library_path: &Path) -> Result<Vec<TestResult>
     let tests_runner: Symbol<'_, &TestsConfig> =
         unsafe { library.get(TEST_LIBRARIES_TABLE_SYMBOL) }.map_err(BenchError::from)?;
     if tests_runner.version != TEST_ABI_VERSION {
-        xbail!(BenchError::ABIError("Incompatible ABI version"));
+        return Err(BenchError::ABIError("Incompatible ABI version"));
     }
     let tests = symbols::resolve(&tests_symbols, &library);
     let mut global_ctx: TestCtx = ptr::null_mut();

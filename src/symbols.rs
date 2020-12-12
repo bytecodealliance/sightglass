@@ -62,7 +62,7 @@ fn exported_names_from_library<P: AsRef<Path>>(path: P) -> Result<Vec<String>, B
                 }
             }
         }
-        _ => xbail!(BenchError::Unsupported),
+        _ => return Err(BenchError::Unsupported),
     }
     Ok(names)
 }
