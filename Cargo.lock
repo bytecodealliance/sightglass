@@ -381,28 +381,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "failure"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "795bd83d3abeb9220f257e597aa0080a508b27533824adf336529648f6abf7e2"
-dependencies = [
- "backtrace",
- "failure_derive",
-]
-
-[[package]]
-name = "failure_derive"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea1063915fd7ef4309e222a5a07cf9c319fb9c7836b1f89b85458672dbb127e1"
-dependencies = [
- "proc-macro2 0.4.27",
- "quote 0.6.11",
- "syn 0.15.30",
- "synstructure",
-]
-
-[[package]]
 name = "filetime"
 version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1270,7 +1248,6 @@ dependencies = [
  "bencher",
  "clap",
  "core_affinity",
- "failure",
  "goblin",
  "hwloc",
  "libc 0.2.81",
@@ -1281,7 +1258,6 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "toml",
- "xfailure",
 ]
 
 [[package]]
@@ -1391,18 +1367,6 @@ dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.7",
  "unicode-xid 0.2.1",
-]
-
-[[package]]
-name = "synstructure"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73687139bf99285483c96ac0add482c3776528beac1d97d444f6e91f203a2015"
-dependencies = [
- "proc-macro2 0.4.27",
- "quote 0.6.11",
- "syn 0.15.30",
- "unicode-xid 0.1.0",
 ]
 
 [[package]]
@@ -1739,9 +1703,3 @@ dependencies = [
  "raw-cpuid",
  "serde_json",
 ]
-
-[[package]]
-name = "xfailure"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da90eac47bf1d7871b75004b9b631d107df15f37669383b23f0b5297bc7516b6"
