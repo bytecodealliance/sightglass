@@ -319,7 +319,6 @@ mod tests {
     use crate::bench::AnonymousTestResult;
     use crate::out::Serializable;
     use crate::out::JSON;
-    use std::io::{Read, Write};
 
     macro_rules! hashmap {
         ($( $key: expr => $val: expr ),*) => {{
@@ -341,7 +340,7 @@ mod tests {
         let json = Box::new(JSON);
         let mut output = vec![];
 
-        json.out(&mut output, &data, false);
+        json.out(&mut output, &data, false).unwrap();
 
         let fixture_path = "test/fixtures/sightglass-output.json";
         let expected = remove_whitespace(&std::fs::read_to_string(fixture_path).unwrap());
