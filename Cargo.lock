@@ -1303,6 +1303,7 @@ name = "sightglass-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "csv",
  "log 0.4.11",
  "pretty_env_logger",
  "serde_json",

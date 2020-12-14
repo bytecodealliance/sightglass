@@ -13,3 +13,4 @@ sightglass-recorder = { path = "../recorder" }
 structopt = { version = "0.3", features = ["color", "suggestions"] }
 thiserror = "1.0"
 serde_json = "1.0"
+csv = "1.1.5"

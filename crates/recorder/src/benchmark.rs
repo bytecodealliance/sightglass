@@ -1,9 +1,113 @@
 use crate::measure::{Measure, MeasureType, Measurement};
 use anyhow::Result;
-use libloading as lib;
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::ffi::{c_void, OsStr};
+
+/// An shared library that implements our in-process benchmarking API.
+pub struct BenchApi<'a> {
+    engine_create: libloading::Symbol<'a, unsafe extern "C" fn(*const u8, usize) -> *mut c_void>,
+    engine_free: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void)>,
+    engine_compile_module: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void) -> i32>,
+    engine_instantiate_module: libloading::Symbol<
+        'a,
+        unsafe extern "C" fn(*const c_void, extern "C" fn(), extern "C" fn()) -> i32,
+    >,
+    engine_execute_module: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void) -> i32>,
+}
+
+impl<'a> BenchApi<'a> {
+    /// Create a new `BenchApi` from the given shared library.
+    ///
+    /// # Safety
+    ///
+    /// The given shared library must export bench API functions with the
+    /// correct signatures, since we have no way to check that it gets them
+    /// right.
+    pub unsafe fn new(lib: &'a libloading::Library) -> Result<Self> {
+        Ok(BenchApi {
+            engine_create: lib.get(b"engine_create")?,
+            engine_free: lib.get(b"engine_free")?,
+            engine_compile_module: lib.get(b"engine_compile_module")?,
+            engine_instantiate_module: lib.get(b"engine_instantiate_module")?,
+            engine_execute_module: lib.get(b"engine_execute_module")?,
+        })
+    }
+}
+
+/// An engine from a `BenchApi`.
+pub struct Engine<'a> {
+    bench_api: &'a BenchApi<'a>,
+    engine: *mut c_void,
+}
+
+impl<'a> Engine<'a> {
+    /// Construct a new engine from the given `BenchApi`.
+    pub fn new(bench_api: &'a BenchApi<'a>, wasm: &[u8]) -> Self {
+        let engine = unsafe { (bench_api.engine_create)(wasm.as_ptr(), wasm.len()) };
+        Engine { bench_api, engine }
+    }
+
+    /// Compile the Wasm into a module.
+    pub fn compile(self, measure: &mut impl Measure) -> (Module<'a>, Measurement) {
+        measure.start();
+        let result = unsafe { (self.bench_api.engine_compile_module)(self.engine) };
+        let measurement = measure.end();
+        assert_eq!(result, 0);
+        (Module { engine: self }, measurement)
+    }
+}
+
+impl<'a> Drop for Engine<'a> {
+    fn drop(&mut self) {
+        unsafe {
+            (self.bench_api.engine_free)(self.engine);
+        }
+    }
+}
+
+/// A compiled module from a `BenchApi`.
+pub struct Module<'a> {
+    engine: Engine<'a>,
+}
+
+impl<'a> Module<'a> {
+    /// Instantiate this module, returning the resulting `Instance`.
+    pub fn instantiate(self, measure: &mut impl Measure) -> (Instance<'a>, Measurement) {
+        measure.start();
+        let result = unsafe {
+            (self.engine.bench_api.engine_instantiate_module)(
+                self.engine.engine,
+                static_measure::bench_start,
+                static_measure::bench_end,
+            )
+        };
+        let measurement = measure.end();
+        assert_eq!(result, 0);
+        (
+            Instance {
+                engine: self.engine,
+            },
+            measurement,
+        )
+    }
+}
+
+/// An instantiated module from our `BenchApi`.
+pub struct Instance<'a> {
+    engine: Engine<'a>,
+}
+
+impl<'a> Instance<'a> {
+    /// Execute this instance's code, returning the engine it was in.
+    pub fn execute(self, measure: Box<dyn Measure>) -> Measurement {
+        static_measure::setup(measure);
+        let result = unsafe { (self.engine.bench_api.engine_execute_module)(self.engine.engine) };
+        let execution = static_measure::result();
+        assert_eq!(result, 0);
+        execution
+    }
+}
 
 /// Measure various phases of a Wasm module's lifetime. This relies on `engine_lib_path`, the path
 /// to a shared library that implements `engine_*` functions that allow for measurement of each
@@ -22,66 +126,30 @@ pub fn benchmark(
 
     // Retrieve the functions used for benchmarking from the shared library at `engine_lib_path`. We
     // do this prior to benchmarking so that library resolution does not interfere with our results.
-    let lib = lib::Library::new(engine_lib_path)?;
-    let engine_create: lib::Symbol<'_, unsafe extern "C" fn(*const u8, usize) -> *mut c_void> =
-        unsafe { lib.get(b"engine_create")? };
-    let engine_free: lib::Symbol<'_, unsafe extern "C" fn(*const c_void)> =
-        unsafe { lib.get(b"engine_free")? };
-    let engine_compile_module: lib::Symbol<'_, unsafe extern "C" fn(*const c_void) -> i32> =
-        unsafe { lib.get(b"engine_compile_module")? };
-    let engine_instantiate_module: lib::Symbol<
-        '_,
-        unsafe extern "C" fn(*const c_void, extern "C" fn(), extern "C" fn()) -> i32,
-    > = unsafe { lib.get(b"engine_instantiate_module")? };
-    let engine_execute_module: lib::Symbol<'_, unsafe extern "C" fn(*const c_void) -> i32> =
-        unsafe { lib.get(b"engine_execute_module")? };
+    let lib = libloading::Library::new(engine_lib_path)?;
+    let bench_api = unsafe { BenchApi::new(&lib)? };
 
     let mut measure = measure_type.build();
-    unsafe {
-        let engine = engine_create(wasm_bytes.as_ptr(), wasm_bytes.len());
+    let engine = Engine::new(&bench_api, wasm_bytes);
 
-        // Measure the module compilation.
-        measure.start();
-        let result = engine_compile_module(engine);
-        let compilation = measure.end();
-        assert_eq!(
-            result, 0,
-            "`engine_compile_module` did not return a success exit code"
-        );
-        info!("Compiled successfully: {:?}", compilation);
+    // Measure the module compilation.
+    let (module, compilation) = engine.compile(&mut measure);
+    info!("Compiled successfully: {:?}", compilation);
 
-        // Measure the module instantiation.
-        measure.start();
-        let result = engine_instantiate_module(
-            engine,
-            static_measure::bench_start,
-            static_measure::bench_end,
-        );
-        let instantiation = measure.end();
-        assert_eq!(
-            result, 0,
-            "`engine_instantiate_module` did not return a success exit code"
-        );
-        info!("Instantiated successfully: {:?}", instantiation);
+    // Measure the module instantiation.
+    let (instance, instantiation) = module.instantiate(&mut measure);
+    info!("Instantiated successfully: {:?}", instantiation);
 
-        // Measure the module execution; note that, because bench_start and bench_end are passed in to the Wasm module
-        // as imports, we must retain the measurement state here, in the host code--see `static_measure`.
-        static_measure::setup(measure);
-        let result = engine_execute_module(engine);
-        let execution = static_measure::result();
-        assert_eq!(
-            result, 0,
-            "`engine_execute_module` did not return a success exit code"
-        );
-        info!("Executed successfully (bench time): {:?}", execution);
+    // Measure the module execution; note that, because bench_start and bench_end are passed in to the Wasm module
+    // as imports, we must retain the measurement state here, in the host code--see `static_measure`.
+    let execution = instance.execute(measure);
+    info!("Executed successfully (bench time): {:?}", execution);
 
-        engine_free(engine);
-        Ok(BenchmarkMeasurements {
-            compilation,
-            instantiation,
-            execution,
-        })
-    }
+    Ok(BenchmarkMeasurements {
+        compilation,
+        instantiation,
+        execution,
+    })
 }
 
 #[derive(Debug, Serialize, Deserialize)]

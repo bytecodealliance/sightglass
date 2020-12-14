@@ -59,6 +59,16 @@ impl MeasureType {
     }
 }
 
+impl Measure for Box<dyn Measure> {
+    fn start(&mut self) {
+        (**self).start();
+    }
+
+    fn end(&mut self) -> Measurement {
+        (**self).end()
+    }
+}
+
 /// Enumerate the types of measurements returned by a [Measure]. This would also be possible with a
 /// `Box<dyn Measurement>` where `Measurement` had super-traits `Debug`, `Serialize`, and
 /// `Deserialize` but that would involve more complexity (e.g. using the `typetag` and
