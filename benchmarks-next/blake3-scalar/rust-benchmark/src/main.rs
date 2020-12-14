@@ -11,7 +11,7 @@ extern "C" {
 
 fn main() {
     let buffer = [0 as u8; 64 << 10];
-    println!("[blake3] hashing a 64KB, zero-filled buffer");
+    eprintln!("[blake3] hashing a 64KB, zero-filled buffer");
     unsafe {
         start();
     }
@@ -19,5 +19,5 @@ fn main() {
     unsafe {
         end();
     }
-    println!("[blake3] returned {:?}", hash);
+    eprintln!("[blake3] returned {:?}", hash);
 }
