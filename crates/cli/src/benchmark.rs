@@ -1,6 +1,5 @@
 use anyhow::{Context, Result};
 use sightglass_recorder::{benchmark::benchmark, measure::MeasureType};
-use std::ffi::OsString;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
@@ -12,8 +11,8 @@ use structopt::StructOpt;
 #[structopt(name = "benchmark")]
 pub struct BenchmarkCommand {
     /// The location at which to store the generated Wasm benchmark.
-    #[structopt(long, short, value_name = "ENGINE")]
-    engine: OsString,
+    #[structopt(long, short, value_name = "ENGINE", parse(from_os_str))]
+    engine: PathBuf,
 
     /// The type of measurement to use (wall-cycles, perf-counters, noop) when recording the
     /// benchmark performance.
