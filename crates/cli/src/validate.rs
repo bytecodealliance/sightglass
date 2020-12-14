@@ -21,6 +21,7 @@ pub struct ValidateCommand {
 impl ValidateCommand {
     pub fn execute(&self) -> Result<()> {
         WasmBenchmark::from(&self.benchmark).is_valid()?;
+        log::info!("benchmark is valid");
         Ok(())
     }
 }
