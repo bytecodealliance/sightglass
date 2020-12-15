@@ -11,10 +11,8 @@ env:
   RUST_LOG: info
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Install nightly
@@ -25,3 +23,16 @@ jobs:
       run: cargo +nightly build --verbose --all
     - name: Test all
       run: cargo +nightly test --verbose --all
+
+  rebuild_benchmarks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install nightly
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: nightly
+    - name: Rebuild benchmarks
+      run: benchmarks-next/build.sh
+    - name: Verify no benchmarks have changed
+      run: git diff --no-ext-diff --name-only --exit-code
