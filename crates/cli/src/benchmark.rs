@@ -118,7 +118,6 @@ impl BenchmarkCommand {
 
 /// Spawn a benchmark process.
 #[derive(StructOpt, Debug)]
-#[structopt(name = "benchmark")]
 pub struct InProcessBenchmarkCommand {
     /// The location at which to store the generated Wasm benchmark.
     #[structopt(long("engine"), short("e"), value_name = "ENGINE", parse(from_os_str))]
