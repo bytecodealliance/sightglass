@@ -10,7 +10,7 @@ use structopt::StructOpt;
 /// Measure compilation, instantiation, and execution of a Wasm file.
 ///
 /// The total number of samples taken for each Wasm benchmark is `PROCESSES *
-/// SAMPLES_PER_PROCESS`.
+/// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(StructOpt, Debug)]
 pub struct BenchmarkCommand {
     /// The path to the shared library implementing the benchmark API.
@@ -27,13 +27,13 @@ pub struct BenchmarkCommand {
     #[structopt(long = "processes", default_value = "30", value_name = "PROCESSES")]
     processes: usize,
 
-    /// How many samples should we take from a single process?
+    /// How many times should we run a benchmark in a single process?
     #[structopt(
-        long = "samples-per-process",
+        long = "num-iterations-per-process",
         default_value = "1",
-        value_name = "SAMPLES_PER_PROCESS"
+        value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
     )]
-    samples_per_process: usize,
+    iterations_per_process: usize,
 
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
@@ -60,8 +60,8 @@ impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
         anyhow::ensure!(self.processes > 0, "processes must be greater than zero");
         anyhow::ensure!(
-            self.samples_per_process > 0,
-            "samples-per-process must be greater than zero"
+            self.iterations_per_process > 0,
+            "num-iterations-per-process must be greater than zero"
         );
 
         let this_exe =
@@ -96,6 +96,8 @@ impl BenchmarkCommand {
                 .arg("--measure")
                 .arg(self.measure.to_string())
                 .arg("--output-format")
+                .arg(self.output_format.to_string())
+                .arg("--num-iterations")
                 .arg(self.output_format.to_string())
                 .arg(wasm)
                 .status()
