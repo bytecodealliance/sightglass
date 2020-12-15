@@ -74,7 +74,7 @@ pub fn build_image<P: AsRef<Path>>(dockerfile: P) -> Result<ImageId> {
 /// Create a container from a Docker image ID.
 pub fn create_container(image: &ImageId) -> Result<ContainerId> {
     let mut command = Command::new(docker_binary());
-    command.arg("create").arg("-q").arg(&image.0);
+    command.arg("create").arg(&image.0);
     execute_and_capture_last_line(command)
 }
 
@@ -172,7 +172,7 @@ pub struct DockerId(String);
 
 impl From<String> for DockerId {
     fn from(s: String) -> Self {
-        DockerId(s.trim().to_string())
+        DockerId(s.trim().split_whitespace().last().unwrap().to_string())
     }
 }
 

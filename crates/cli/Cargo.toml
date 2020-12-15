@@ -14,3 +14,4 @@ structopt = { version = "0.3", features = ["color", "suggestions"] }
 thiserror = "1.0"
 serde_json = "1.0.60"
 csv = "1.1.5"
+rand = { version = "0.7.3", features = ["small_rng"] }

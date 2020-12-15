@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::{fmt::Debug, str::FromStr};
+use std::{fmt, fmt::Debug, str::FromStr};
 
 /// This is primary trait for implementing different measurement mechanisms. The idea is that
 /// instantiating a measurement may take some time so it should be done once in `new` and data is
@@ -35,6 +35,17 @@ pub enum MeasureType {
     /// Measure a combination of HW counters using `perf_event_open`.
     PerfCounters,
 }
+
+impl fmt::Display for MeasureType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            MeasureType::Noop => write!(f, "noop"),
+            MeasureType::WallCycles => write!(f, "wall-cycles"),
+            MeasureType::PerfCounters => write!(f, "perf-counters"),
+        }
+    }
+}
+
 impl FromStr for MeasureType {
     type Err = &'static str;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -46,6 +57,7 @@ impl FromStr for MeasureType {
         }
     }
 }
+
 impl MeasureType {
     /// Build a dynamic instance of a [Measure]. The recording infrastructure does not need to know
     /// exactly what type of [Measure] we want to use, just that it can `start` and `end`
