@@ -6,14 +6,15 @@ use std::ffi::{c_void, OsStr};
 
 /// An shared library that implements our in-process benchmarking API.
 pub struct BenchApi<'a> {
-    engine_create: libloading::Symbol<'a, unsafe extern "C" fn(*const u8, usize) -> *mut c_void>,
-    engine_free: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void)>,
-    engine_compile_module: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void) -> i32>,
-    engine_instantiate_module: libloading::Symbol<
+    wasm_bench_create: libloading::Symbol<'a, unsafe extern "C" fn() -> *mut c_void>,
+    wasm_bench_free: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void)>,
+    wasm_bench_compile:
+        libloading::Symbol<'a, unsafe extern "C" fn(*const c_void, *const u8, usize) -> i32>,
+    wasm_bench_instantiate: libloading::Symbol<
         'a,
         unsafe extern "C" fn(*const c_void, extern "C" fn(), extern "C" fn()) -> i32,
     >,
-    engine_execute_module: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void) -> i32>,
+    wasm_bench_execute: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void) -> i32>,
 }
 
 impl<'a> BenchApi<'a> {
@@ -26,11 +27,11 @@ impl<'a> BenchApi<'a> {
     /// right.
     pub unsafe fn new(lib: &'a libloading::Library) -> Result<Self> {
         Ok(BenchApi {
-            engine_create: lib.get(b"engine_create")?,
-            engine_free: lib.get(b"engine_free")?,
-            engine_compile_module: lib.get(b"engine_compile_module")?,
-            engine_instantiate_module: lib.get(b"engine_instantiate_module")?,
-            engine_execute_module: lib.get(b"engine_execute_module")?,
+            wasm_bench_create: lib.get(b"wasm_bench_create")?,
+            wasm_bench_free: lib.get(b"wasm_bench_free")?,
+            wasm_bench_compile: lib.get(b"wasm_bench_compile")?,
+            wasm_bench_instantiate: lib.get(b"wasm_bench_instantiate")?,
+            wasm_bench_execute: lib.get(b"wasm_bench_execute")?,
         })
     }
 }
@@ -43,15 +44,16 @@ pub struct Engine<'a> {
 
 impl<'a> Engine<'a> {
     /// Construct a new engine from the given `BenchApi`.
-    pub fn new(bench_api: &'a BenchApi<'a>, wasm: &[u8]) -> Self {
-        let engine = unsafe { (bench_api.engine_create)(wasm.as_ptr(), wasm.len()) };
+    pub fn new(bench_api: &'a BenchApi<'a>) -> Self {
+        let engine = unsafe { (bench_api.wasm_bench_create)() };
         Engine { bench_api, engine }
     }
 
     /// Compile the Wasm into a module.
-    pub fn compile(self, measure: &mut impl Measure) -> (Module<'a>, Measurement) {
+    pub fn compile(self, wasm: &[u8], measure: &mut impl Measure) -> (Module<'a>, Measurement) {
         measure.start();
-        let result = unsafe { (self.bench_api.engine_compile_module)(self.engine) };
+        let result =
+            unsafe { (self.bench_api.wasm_bench_compile)(self.engine, wasm.as_ptr(), wasm.len()) };
         let measurement = measure.end();
         assert_eq!(result, 0);
         (Module { engine: self }, measurement)
@@ -61,7 +63,7 @@ impl<'a> Engine<'a> {
 impl<'a> Drop for Engine<'a> {
     fn drop(&mut self) {
         unsafe {
-            (self.bench_api.engine_free)(self.engine);
+            (self.bench_api.wasm_bench_free)(self.engine);
         }
     }
 }
@@ -76,7 +78,7 @@ impl<'a> Module<'a> {
     pub fn instantiate(self, measure: &mut impl Measure) -> (Instance<'a>, Measurement) {
         measure.start();
         let result = unsafe {
-            (self.engine.bench_api.engine_instantiate_module)(
+            (self.engine.bench_api.wasm_bench_instantiate)(
                 self.engine.engine,
                 static_measure::bench_start,
                 static_measure::bench_end,
@@ -102,7 +104,7 @@ impl<'a> Instance<'a> {
     /// Execute this instance's code, returning the engine it was in.
     pub fn execute(self, measure: Box<dyn Measure>) -> Measurement {
         static_measure::setup(measure);
-        let result = unsafe { (self.engine.bench_api.engine_execute_module)(self.engine.engine) };
+        let result = unsafe { (self.engine.bench_api.wasm_bench_execute)(self.engine.engine) };
         let execution = static_measure::result();
         assert_eq!(result, 0);
         execution
@@ -110,7 +112,7 @@ impl<'a> Instance<'a> {
 }
 
 /// Measure various phases of a Wasm module's lifetime. This relies on `engine_lib_path`, the path
-/// to a shared library that implements `engine_*` functions that allow for measurement of each
+/// to a shared library that implements `wasm_bench_*` functions that allow for measurement of each
 /// phase.
 pub fn benchmark(
     wasm_bytes: impl AsRef<[u8]>,
@@ -130,10 +132,10 @@ pub fn benchmark(
     let bench_api = unsafe { BenchApi::new(&lib)? };
 
     let mut measure = measure_type.build();
-    let engine = Engine::new(&bench_api, wasm_bytes);
+    let engine = Engine::new(&bench_api);
 
     // Measure the module compilation.
-    let (module, compilation) = engine.compile(&mut measure);
+    let (module, compilation) = engine.compile(wasm_bytes, &mut measure);
     info!("Compiled successfully: {:?}", compilation);
 
     // Measure the module instantiation.
