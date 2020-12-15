@@ -29,6 +29,10 @@ pub struct BenchmarkCommand {
     )]
     wasmfile: PathBuf,
 
+    /// The number of times to re-run the benchmark.
+    #[structopt(short = "n", long = "num-iterations", default_value = "1")]
+    iterations: usize,
+
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
     output_format: OutputFormat,
@@ -37,14 +41,17 @@ pub struct BenchmarkCommand {
 impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
-        let measurement = benchmark(bytes, &self.engine, self.measure)?;
+        let mut measurements = Vec::with_capacity(self.iterations);
+        for _ in 0..self.iterations {
+            measurements.push(benchmark(&bytes, &self.engine, self.measure)?);
+        }
         match self.output_format {
             OutputFormat::Json => {
-                println!("{}", serde_json::to_string(&measurement)?);
+                println!("{}", serde_json::to_string(&measurements)?);
             }
             OutputFormat::Csv => {
                 let mut csv = csv::Writer::from_writer(io::stdout());
-                csv.serialize(&measurement)?;
+                csv.serialize(&measurements)?;
                 csv.flush()?;
             }
         }
