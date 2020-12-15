@@ -2,7 +2,7 @@ use crate::measure::{Measure, MeasureType, Measurement};
 use anyhow::Result;
 use log::info;
 use serde::{Deserialize, Serialize};
-use std::ffi::{c_void, OsStr};
+use std::ffi::c_void;
 
 /// An shared library that implements our in-process benchmarking API.
 pub struct BenchApi<'a> {
@@ -37,20 +37,22 @@ impl<'a> BenchApi<'a> {
 }
 
 /// An engine from a `BenchApi`.
-pub struct Engine<'a> {
-    bench_api: &'a BenchApi<'a>,
+pub struct Engine<'a, 'b> {
+    bench_api: &'a mut BenchApi<'b>,
     engine: *mut c_void,
 }
 
-impl<'a> Engine<'a> {
+impl<'a, 'b> Engine<'a, 'b> {
     /// Construct a new engine from the given `BenchApi`.
-    pub fn new(bench_api: &'a BenchApi<'a>) -> Self {
+    // NB: take a mutable reference to the `BenchApi` so that no one else can
+    // call its API methods out of order.
+    pub fn new(bench_api: &'a mut BenchApi<'b>) -> Self {
         let engine = unsafe { (bench_api.wasm_bench_create)() };
         Engine { bench_api, engine }
     }
 
     /// Compile the Wasm into a module.
-    pub fn compile(self, wasm: &[u8], measure: &mut impl Measure) -> (Module<'a>, Measurement) {
+    pub fn compile(self, wasm: &[u8], measure: &mut impl Measure) -> (Module<'a, 'b>, Measurement) {
         measure.start();
         let result =
             unsafe { (self.bench_api.wasm_bench_compile)(self.engine, wasm.as_ptr(), wasm.len()) };
@@ -60,7 +62,7 @@ impl<'a> Engine<'a> {
     }
 }
 
-impl<'a> Drop for Engine<'a> {
+impl<'a, 'b> Drop for Engine<'a, 'b> {
     fn drop(&mut self) {
         unsafe {
             (self.bench_api.wasm_bench_free)(self.engine);
@@ -69,13 +71,13 @@ impl<'a> Drop for Engine<'a> {
 }
 
 /// A compiled module from a `BenchApi`.
-pub struct Module<'a> {
-    engine: Engine<'a>,
+pub struct Module<'a, 'b> {
+    engine: Engine<'a, 'b>,
 }
 
-impl<'a> Module<'a> {
+impl<'a, 'b> Module<'a, 'b> {
     /// Instantiate this module, returning the resulting `Instance`.
-    pub fn instantiate(self, measure: &mut impl Measure) -> (Instance<'a>, Measurement) {
+    pub fn instantiate(self, measure: &mut impl Measure) -> (Instance<'a, 'b>, Measurement) {
         measure.start();
         let result = unsafe {
             (self.engine.bench_api.wasm_bench_instantiate)(
@@ -96,11 +98,11 @@ impl<'a> Module<'a> {
 }
 
 /// An instantiated module from our `BenchApi`.
-pub struct Instance<'a> {
-    engine: Engine<'a>,
+pub struct Instance<'a, 'b> {
+    engine: Engine<'a, 'b>,
 }
 
-impl<'a> Instance<'a> {
+impl<'a, 'b> Instance<'a, 'b> {
     /// Execute this instance's code, returning the engine it was in.
     pub fn execute(self, measure: Box<dyn Measure>) -> Measurement {
         static_measure::setup(measure);
@@ -115,24 +117,12 @@ impl<'a> Instance<'a> {
 /// to a shared library that implements `wasm_bench_*` functions that allow for measurement of each
 /// phase.
 pub fn benchmark(
-    wasm_bytes: impl AsRef<[u8]>,
-    engine_lib_path: impl AsRef<OsStr>,
+    bench_api: &mut BenchApi,
+    wasm_bytes: &[u8],
     measure_type: MeasureType,
 ) -> Result<BenchmarkMeasurements> {
-    let wasm_bytes = wasm_bytes.as_ref();
-    info!(
-        "Attempting to run benchmark of {} bytes with engine at {:?}",
-        wasm_bytes.len(),
-        engine_lib_path.as_ref()
-    );
-
-    // Retrieve the functions used for benchmarking from the shared library at `engine_lib_path`. We
-    // do this prior to benchmarking so that library resolution does not interfere with our results.
-    let lib = libloading::Library::new(engine_lib_path)?;
-    let bench_api = unsafe { BenchApi::new(&lib)? };
-
     let mut measure = measure_type.build();
-    let engine = Engine::new(&bench_api);
+    let engine = Engine::new(bench_api);
 
     // Measure the module compilation.
     let (module, compilation) = engine.compile(wasm_bytes, &mut measure);

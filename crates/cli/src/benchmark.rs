@@ -1,6 +1,9 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_recorder::{benchmark::benchmark, measure::MeasureType};
+use sightglass_recorder::{
+    benchmark::{benchmark, BenchApi},
+    measure::MeasureType,
+};
 use std::str::FromStr;
 use std::{fmt, io};
 use std::{fs, process::Command};
@@ -149,10 +152,15 @@ pub struct InProcessBenchmarkCommand {
 impl InProcessBenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
+
+        let lib = libloading::Library::new(&self.engine)?;
+        let mut bench_api = unsafe { BenchApi::new(&lib)? };
+
         let mut measurements = Vec::with_capacity(self.iterations);
         for _ in 0..self.iterations {
-            measurements.push(benchmark(&bytes, &self.engine, self.measure)?);
+            measurements.push(benchmark(&mut bench_api, &bytes, self.measure)?);
         }
+
         match self.output_format {
             OutputFormat::Json => {
                 println!("{}", serde_json::to_string(&measurements)?);
