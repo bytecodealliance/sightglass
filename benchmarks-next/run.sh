@@ -11,5 +11,5 @@ for BENCH_FILE in $(find $PROJECT_DIR/benchmarks-next -name benchmark.wasm); do
     BENCH_NAME=$(basename $BENCH_DIR)
 
     # Run the Wasm benchmark.
-    $SIGHTGLASS benchmark $BENCH_FILE --engine $ENGINE
+    $SIGHTGLASS benchmark $BENCH_FILE --engine $ENGINE --num-iterations 3
 done
