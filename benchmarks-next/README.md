@@ -40,7 +40,8 @@ record its execution, it must:
   `bench.start` has already been called. This is when the benchmark runner will
   stop recording execution time and performance counters.
 
-* Not use `stdout`. It may use `stderr` for logging, if necessary.
+* Not use `stdout`. It may use `stderr` for logging, if necessary. This helps
+  the runner differentiate between recorded measurements and logging.
 
 * Provide reproducible builds via Docker.
 
