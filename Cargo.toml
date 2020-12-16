@@ -33,10 +33,10 @@ hwloc = "0.5"
 members = [
     "crates/artifact",
     "crates/cli",
+    "crates/data",
     "crates/recorder",
     "webui/sg-history"
 ]
 default-members = [
     "crates/cli"
 ]
-

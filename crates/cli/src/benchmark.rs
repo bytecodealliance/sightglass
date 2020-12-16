@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
+use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{
     benchmark::{benchmark, BenchApi},
     measure::MeasureType,
@@ -87,11 +88,14 @@ impl BenchmarkCommand {
             }
         }
 
+        let mut csv_header = true;
+
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
             let (engine, wasm, procs_left) = &mut choices[index];
 
-            let status = Command::new(&this_exe)
+            let mut command = Command::new(&this_exe);
+            command
                 .stdin(Stdio::null())
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
@@ -103,8 +107,13 @@ impl BenchmarkCommand {
                 .arg("--output-format")
                 .arg(self.output_format.to_string())
                 .arg("--num-iterations")
-                .arg(self.output_format.to_string())
-                .arg(wasm)
+                .arg(self.iterations_per_process.to_string())
+                .arg(wasm);
+            if csv_header {
+                command.arg("--csv-header");
+            }
+
+            let status = command
                 .status()
                 .context("failed to spawn benchmark process")?;
 
@@ -117,6 +126,10 @@ impl BenchmarkCommand {
             if *procs_left == 0 {
                 choices.swap_remove(index);
             }
+
+            // We only want to write the CSV header for the very first
+            // subprocess.
+            csv_header = false;
         }
 
         Ok(())
@@ -153,6 +166,12 @@ pub struct InProcessBenchmarkCommand {
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
     output_format: OutputFormat,
+
+    /// If we are using the CSV output format, should we write a CSV header?
+    ///
+    /// Has no effect if the output format is not CSV.
+    #[structopt(long)]
+    csv_header: bool,
 }
 
 impl InProcessBenchmarkCommand {
@@ -166,22 +185,45 @@ impl InProcessBenchmarkCommand {
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
         log::debug!("Wasm benchmark size: {} bytes", bytes.len());
 
-        let mut measurements = Vec::with_capacity(self.iterations);
+        let arch = this_arch();
+        let engine = self.engine.to_string();
+        let wasm = self.wasmfile.display().to_string();
+        let mut measurements = Measurements::new(arch, &engine, &wasm);
+
+        let mut measure = self.measure.build();
+
         for _ in 0..self.iterations {
-            measurements.push(benchmark(&mut bench_api, &bytes, self.measure)?);
+            benchmark(&mut bench_api, &bytes, &mut measure, &mut measurements)?;
+            measurements.next_iteration();
         }
+
+        let measurements = measurements.finish();
 
         match self.output_format {
             OutputFormat::Json => {
                 println!("{}", serde_json::to_string(&measurements)?);
             }
             OutputFormat::Csv => {
-                let mut csv = csv::Writer::from_writer(io::stdout());
-                csv.serialize(&measurements)?;
+                let mut csv = csv::WriterBuilder::new()
+                    .has_headers(self.csv_header)
+                    .from_writer(io::stdout());
+                for m in &measurements {
+                    csv.serialize(m)?;
+                }
                 csv.flush()?;
             }
         }
         Ok(())
+    }
+}
+
+fn this_arch() -> &'static str {
+    if cfg!(target_arch = "x86_64") {
+        "x86_64"
+    } else if cfg!(target_arch = "aarch64") {
+        "aarch64"
+    } else {
+        unimplemented!("please add support for the current target architecture")
     }
 }
 

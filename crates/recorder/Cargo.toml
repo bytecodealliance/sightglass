@@ -13,6 +13,7 @@ perf-event = "0.4"
 precision = "0.1"
 serde = { version = "1.0.118", features = ["derive"] }
 sightglass-artifact = { path = "../artifact" }
+sightglass-data = { path = "../data" }
 thiserror = "1.0"
 
 [dev-dependencies]
