@@ -1,7 +1,7 @@
-use crate::measure::{Measure, MeasureType, Measurement};
+use crate::measure::{Measure, Measurements};
 use anyhow::Result;
 use log::info;
-use serde::{Deserialize, Serialize};
+use sightglass_data::Phase;
 use std::ffi::c_void;
 
 /// An shared library that implements our in-process benchmarking API.
@@ -52,13 +52,18 @@ impl<'a, 'b> Engine<'a, 'b> {
     }
 
     /// Compile the Wasm into a module.
-    pub fn compile(self, wasm: &[u8], measure: &mut impl Measure) -> (Module<'a, 'b>, Measurement) {
+    pub fn compile(
+        self,
+        wasm: &[u8],
+        measure: &mut impl Measure,
+        measurements: &mut Measurements,
+    ) -> Module<'a, 'b> {
         measure.start();
         let result =
             unsafe { (self.bench_api.wasm_bench_compile)(self.engine, wasm.as_ptr(), wasm.len()) };
-        let measurement = measure.end();
+        measure.end(Phase::Compilation, measurements);
         assert_eq!(result, 0);
-        (Module { engine: self }, measurement)
+        Module { engine: self }
     }
 }
 
@@ -77,7 +82,11 @@ pub struct Module<'a, 'b> {
 
 impl<'a, 'b> Module<'a, 'b> {
     /// Instantiate this module, returning the resulting `Instance`.
-    pub fn instantiate(self, measure: &mut impl Measure) -> (Instance<'a, 'b>, Measurement) {
+    pub fn instantiate(
+        self,
+        measure: &mut impl Measure,
+        measurements: &mut Measurements,
+    ) -> Instance<'a, 'b> {
         measure.start();
         let result = unsafe {
             (self.engine.bench_api.wasm_bench_instantiate)(
@@ -86,14 +95,11 @@ impl<'a, 'b> Module<'a, 'b> {
                 static_measure::bench_end,
             )
         };
-        let measurement = measure.end();
+        measure.end(Phase::Instantiation, measurements);
         assert_eq!(result, 0);
-        (
-            Instance {
-                engine: self.engine,
-            },
-            measurement,
-        )
+        Instance {
+            engine: self.engine,
+        }
     }
 }
 
@@ -104,12 +110,11 @@ pub struct Instance<'a, 'b> {
 
 impl<'a, 'b> Instance<'a, 'b> {
     /// Execute this instance's code, returning the engine it was in.
-    pub fn execute(self, measure: Box<dyn Measure>) -> Measurement {
-        static_measure::setup(measure);
-        let result = unsafe { (self.engine.bench_api.wasm_bench_execute)(self.engine.engine) };
-        let execution = static_measure::result();
-        assert_eq!(result, 0);
-        execution
+    pub fn execute(self, measure: &mut impl Measure, measurements: &mut Measurements) {
+        static_measure::with(measure, measurements, || {
+            let result = unsafe { (self.engine.bench_api.wasm_bench_execute)(self.engine.engine) };
+            assert_eq!(result, 0);
+        });
     }
 }
 
@@ -119,68 +124,100 @@ impl<'a, 'b> Instance<'a, 'b> {
 pub fn benchmark(
     bench_api: &mut BenchApi,
     wasm_bytes: &[u8],
-    measure_type: MeasureType,
-) -> Result<BenchmarkMeasurements> {
-    let mut measure = measure_type.build();
+    measure: &mut impl Measure,
+    measurements: &mut Measurements,
+) -> Result<()> {
     let engine = Engine::new(bench_api);
 
     // Measure the module compilation.
-    let (module, compilation) = engine.compile(wasm_bytes, &mut measure);
-    info!("Compiled successfully: {:?}", compilation);
+    let module = engine.compile(wasm_bytes, measure, measurements);
+    info!("Compiled successfully");
 
     // Measure the module instantiation.
-    let (instance, instantiation) = module.instantiate(&mut measure);
-    info!("Instantiated successfully: {:?}", instantiation);
+    let instance = module.instantiate(measure, measurements);
+    info!("Instantiated successfully");
 
     // Measure the module execution; note that, because bench_start and bench_end are passed in to the Wasm module
     // as imports, we must retain the measurement state here, in the host code--see `static_measure`.
-    let execution = instance.execute(measure);
-    info!("Executed successfully (bench time): {:?}", execution);
+    instance.execute(measure, measurements);
+    info!("Executed successfully");
 
-    Ok(BenchmarkMeasurements {
-        compilation,
-        instantiation,
-        execution,
-    })
+    Ok(())
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BenchmarkMeasurements {
-    compilation: Measurement,
-    instantiation: Measurement,
-    execution: Measurement,
-}
-
-// Because this recorder cedes control to the Wasm module during execution, giving it the responsibility for calling
-// `bench_start` and `bench_end` at the appropriate times, we need to maintain any recording state here. This Rust
-// module does so using static variables, naturally resulting in unsafe behavior. This module should be safe if used
-// correctly:
-//  - `setup()` the static values
-//  - call `bench_start()` and then `bench_end()`
-//  - retrieve the measurement with `result()`
+/// Because this recorder cedes control to the Wasm module during execution,
+/// giving it the responsibility for calling `bench_start` and `bench_end` at
+/// the appropriate times, we need to maintain any recording state here. This
+/// Rust module does so using atomic pointers and internal unsafe code. A safe
+/// interface is provided via the `with` function.
 mod static_measure {
     use super::*;
-    static mut MEASURE: Option<Box<dyn Measure>> = None;
-    static mut MEASUREMENT: Option<Measurement> = None;
-    pub(crate) fn setup(measure: Box<dyn Measure>) {
-        unsafe {
-            MEASURE = Some(measure);
-            MEASUREMENT = None;
+    use std::ptr;
+    use std::sync::atomic::{AtomicPtr, Ordering};
+
+    static STATE: AtomicPtr<MeasureState> = AtomicPtr::new(ptr::null_mut());
+
+    /// Call `f` with the static measurement state used by `bench_{start,end}`
+    /// initialized to the given measure and measurements pair.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the static measurment state is already initialized, which
+    /// could only happen if this function were called on multiple threads
+    /// concurrently, which is not allowed.
+    pub(crate) fn with<T>(
+        measure: &mut dyn Measure,
+        measurements: &mut Measurements,
+        f: impl FnOnce() -> T + std::panic::UnwindSafe,
+    ) -> T {
+        let measure: *mut dyn Measure = measure as _;
+        let measure = ptr::NonNull::new(measure).unwrap();
+        let measurements = ptr::NonNull::new(measurements).unwrap();
+        let measurements = measurements.cast();
+
+        let state = &mut MeasureState {
+            measure,
+            measurements,
+        };
+
+        let old_state = STATE.swap(state, Ordering::SeqCst);
+        assert!(old_state.is_null());
+
+        let result = std::panic::catch_unwind(f);
+
+        let state_ptr = STATE.swap(ptr::null_mut(), Ordering::SeqCst);
+        assert_eq!(state_ptr, state as *mut _);
+
+        match result {
+            Ok(x) => x,
+            Err(e) => std::panic::resume_unwind(e),
         }
     }
+
+    #[derive(Debug)]
+    struct MeasureState {
+        measure: ptr::NonNull<dyn Measure>,
+        measurements: ptr::NonNull<Measurements<'static>>,
+    }
+
     pub(crate) extern "C" fn bench_start() {
         info!("bench_start was called");
         unsafe {
-            MEASURE.as_mut().unwrap().start();
+            let state = STATE.load(Ordering::SeqCst);
+            let state = state.as_mut().unwrap();
+            state.measure.as_mut().start();
         }
     }
+
     pub(crate) extern "C" fn bench_end() {
         info!("bench_end was called");
         unsafe {
-            MEASUREMENT = Some(MEASURE.as_mut().unwrap().end());
+            let state = STATE.load(Ordering::SeqCst);
+            let state = state.as_mut().unwrap();
+            state
+                .measure
+                .as_mut()
+                .end(Phase::Execution, state.measurements.as_mut());
         }
-    }
-    pub(crate) fn result() -> Measurement {
-        unsafe { MEASUREMENT.take().unwrap() }
     }
 }

@@ -1,18 +1,80 @@
-use serde::{Deserialize, Serialize};
-use std::{fmt, fmt::Debug, str::FromStr};
+use sightglass_data::{Measurement, Phase};
+use std::{
+    borrow::Cow,
+    fmt::{self, Debug},
+    str::FromStr,
+};
 
+/// An in-progress collection of measurements that are currently being recorded.
+pub struct Measurements<'a> {
+    arch: &'a str,
+    engine: &'a str,
+    wasm: &'a str,
+    process: u32,
+    iteration: u32,
+    measurements: Vec<Measurement<'a>>,
+}
+
+impl<'a> Measurements<'a> {
+    /// Construct a new `Measurements`.
+    pub fn new(arch: &'a str, engine: &'a str, wasm: &'a str) -> Self {
+        Measurements {
+            arch,
+            engine,
+            wasm,
+            process: std::process::id(),
+            iteration: 0,
+            measurements: vec![],
+        }
+    }
+
+    /// Advance the iteration counter.
+    pub fn next_iteration(&mut self) {
+        self.iteration += 1;
+    }
+
+    /// Reserve additional capacity for more measurements internally.
+    pub fn reserve(&mut self, capacity: usize) {
+        self.measurements.reserve(capacity);
+    }
+
+    /// Add a measurement of the given event for the given phase to this
+    /// `Measurements` collection.
+    pub fn add(&mut self, phase: Phase, event: Cow<'a, str>, count: u64) {
+        self.measurements.push(Measurement {
+            arch: self.arch.into(),
+            engine: self.engine.into(),
+            wasm: self.wasm.into(),
+            process: self.process,
+            iteration: self.iteration,
+            phase,
+            event,
+            count,
+        });
+    }
+
+    /// When all measurements have been recorded, call this method to get the
+    /// underlying measurements data.
+    pub fn finish(self) -> Vec<Measurement<'a>> {
+        self.measurements
+    }
+}
+
+/// Recording measurements.
+///
 /// This is primary trait for implementing different measurement mechanisms. The idea is that
 /// instantiating a measurement may take some time so it should be done once in `new` and data is
 /// collected by calling `start` and `end`. In a recording library like this one an error from
 /// implementors of this should result in a panic--not much point in recording anything if our
 /// measurement mechanism is broken. The same logic applies to misuse of the API (e.g. calling `end`
 /// before `start`).
-pub trait Measure {
+pub trait Measure: 'static {
     /// Start measuring.
     fn start(&mut self);
 
-    /// Finish measuring and return the measurement between `start` and `end`.
-    fn end(&mut self) -> Measurement;
+    /// Finish measuring and add the measurements taken between `start` and
+    /// `end` to `measurements`.
+    fn end(&mut self, phase: Phase, measurements: &mut Measurements);
 }
 
 pub mod counters;
@@ -76,21 +138,7 @@ impl Measure for Box<dyn Measure> {
         (**self).start();
     }
 
-    fn end(&mut self) -> Measurement {
-        (**self).end()
+    fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
+        (**self).end(phase, measurements)
     }
-}
-
-/// Enumerate the types of measurements returned by a [Measure]. This would also be possible with a
-/// `Box<dyn Measurement>` where `Measurement` had super-traits `Debug`, `Serialize`, and
-/// `Deserialize` but that would involve more complexity (e.g. using the `typetag` and
-/// `erased_serde` crates to properly implement `Serialize` and `Deserialize`).
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Measurement {
-    #[serde(rename = "noop")]
-    Noop,
-    #[serde(rename = "wall-cycles")]
-    WallCycles(u64),
-    #[serde(rename = "perf-counters")]
-    PerfCounters(counters::PerfCounters),
 }
