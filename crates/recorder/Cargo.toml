@@ -10,7 +10,7 @@ anyhow = "1.0"
 cfg-if = "1.0"
 libloading = "0.6"
 log = "0.4"
-perfcnt = "0.6"
+perf-event = "0.4"
 precision = "0.1"
 serde = { version = "1.0.118", features = ["derive"] }
 sightglass-artifact = { path = "../artifact" }
