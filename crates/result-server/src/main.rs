@@ -50,6 +50,7 @@ impl HistoryServer {
 
     /// Start running the server by binding to the listen_address; only exits on failure
     fn start(self, listen_address: &str) -> ! {
+        println!("Starting server at {}", listen_address);
         start_server(listen_address, move |request| {
             router!(request,
                 (GET) (/history) => { self.retrieve_history(request) },
