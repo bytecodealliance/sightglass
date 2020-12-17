@@ -1,5 +1,5 @@
 [package]
-name = "sg-history"
+name = "sightglass-result-server"
 version = "0.1.0"
 authors = ["Frank Denis <fdenis@fastly.com>"]
 edition = "2018"

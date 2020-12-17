@@ -1283,17 +1283,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sg-history"
-version = "0.1.0"
-dependencies = [
- "mvdb",
- "rouille",
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
 name = "sha1"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1389,6 +1378,17 @@ dependencies = [
  "sightglass-data",
  "thiserror",
  "wat",
+]
+
+[[package]]
+name = "sightglass-result-server"
+version = "0.1.0"
+dependencies = [
+ "mvdb",
+ "rouille",
+ "serde",
+ "serde_derive",
+ "serde_json",
 ]
 
 [[package]]
