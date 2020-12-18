@@ -14,5 +14,5 @@ for DOCKERFILE in $(find $PROJECT_DIR/benchmarks-next -name Dockerfile); do
     cp $PROJECT_DIR/include/sightglass-next.h $BENCH_DIR/sightglass.h
 
     # Build the Wasm benchmark.
-    $SIGHTGLASS build $DOCKERFILE -d $BENCH_DIR/benchmark.wasm --emit-wat
+    $SIGHTGLASS build-benchmark $DOCKERFILE -d $BENCH_DIR/benchmark.wasm --emit-wat
 done

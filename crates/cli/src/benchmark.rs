@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
+use sightglass_artifact::Engine;
 use sightglass_recorder::{
     benchmark::{benchmark, BenchApi},
     measure::MeasureType,
@@ -16,15 +17,16 @@ use structopt::StructOpt;
 /// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(StructOpt, Debug)]
 pub struct BenchmarkCommand {
-    /// The path to the shared library implementing the benchmark API.
+    /// The benchmark engine with which to run the benchmark. This can be either the path to a
+    /// shared library implementing the benchmarking engine specification or an engine reference:
+    /// `[engine name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
     #[structopt(
-        short("e"),
         long("engine"),
-        value_name = "ENGINE",
-        parse(from_os_str),
-        empty_values(false)
+        short("e"),
+        value_name = "ENGINE-REF OR PATH",
+        empty_values = false
     )]
-    engines: Vec<PathBuf>,
+    engines: Vec<Engine>,
 
     /// How many processes should we use for each Wasm benchmark?
     #[structopt(long = "processes", default_value = "30", value_name = "PROCESSES")]
@@ -95,7 +97,7 @@ impl BenchmarkCommand {
                 .stderr(Stdio::inherit())
                 .arg("in-process-benchmark")
                 .arg("--engine")
-                .arg(engine)
+                .arg(engine.to_string())
                 .arg("--measure")
                 .arg(self.measure.to_string())
                 .arg("--output-format")
@@ -124,16 +126,18 @@ impl BenchmarkCommand {
 /// Spawn a benchmark process.
 #[derive(StructOpt, Debug)]
 pub struct InProcessBenchmarkCommand {
-    /// The location at which to store the generated Wasm benchmark.
-    #[structopt(long("engine"), short("e"), value_name = "ENGINE", parse(from_os_str))]
-    engine: PathBuf,
+    /// The benchmark engine with which to run the benchmark. This can be either the path to a
+    /// shared library implementing the benchmarking engine specification or an engine reference:
+    /// `[engine name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
+    #[structopt(long("engine"), short("e"), value_name = "ENGINE-REF OR PATH")]
+    engine: Engine,
 
     /// The type of measurement to use (wall-cycles, perf-counters, noop) when recording the
     /// benchmark performance.
     #[structopt(long, short, default_value = "wall-cycles")]
     measure: MeasureType,
 
-    /// The path to the Wasm file to compile.
+    /// The path to the Wasm file to benchmark.
     #[structopt(
         index = 1,
         required = true,
@@ -153,14 +157,15 @@ pub struct InProcessBenchmarkCommand {
 
 impl InProcessBenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
-        log::info!(
-            "Using benchmarking shared library at {}",
-            self.engine.display()
-        );
-        let lib = libloading::Library::new(&self.engine)?;
+        if !self.engine.exists() {
+            log::info!("Unable to find engine at {}", self.engine.to_string());
+            self.engine.build()?
+        }
+        log::info!("Using benchmark engine: {}", self.engine.path().display());
+        let lib = libloading::Library::new(&self.engine.path())?;
         let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
-        log::info!("Using Wasm benchmark at {}", self.wasmfile.display());
+        log::info!("Using Wasm benchmark: {}", self.wasmfile.display());
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
         log::debug!("Wasm benchmark size: {} bytes", bytes.len());
 
