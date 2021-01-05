@@ -14,7 +14,7 @@
     "test": "ava"
   },
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "chart.js": "^2.8.0",
     "dayjs": "^1.8.14",
     "numeral": "^2.0.6",
