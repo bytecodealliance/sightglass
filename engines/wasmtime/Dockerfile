@@ -7,4 +7,4 @@ RUN git clone ${REPOSITORY}
 WORKDIR /usr/src/wasmtime
 RUN git checkout ${REVISION} && git submodule update --init
 RUN cargo build -p wasmtime-bench-api --release
-RUN mv target/release/libwasmtime_bench_api.so /engine.so
+RUN mv target/release/libwasmtime_bench_api.so /libengine.so
