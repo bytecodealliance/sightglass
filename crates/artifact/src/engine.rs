@@ -135,11 +135,13 @@ impl FromStr for EngineRef {
 #[derive(Clone, Debug)]
 pub enum WellKnownEngine {
     Wasmtime,
+    V8,
 }
 impl fmt::Display for WellKnownEngine {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
             Self::Wasmtime => "wasmtime",
+            Self::V8 => "v8",
         };
         write!(f, "{}", s)
     }
@@ -149,6 +151,7 @@ impl FromStr for WellKnownEngine {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "wasmtime" => Ok(Self::Wasmtime),
+            "v8" => Ok(Self::V8),
             _ => Err(anyhow!("unable to parse an unknown engine: {}", s)),
         }
     }
