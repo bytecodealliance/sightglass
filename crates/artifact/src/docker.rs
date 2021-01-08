@@ -3,19 +3,19 @@
 //!
 //! Use the `DOCKER` environment variable to change the binary to use for this; the default is
 //! `"docker"`.
-use crate::wasm::WasmBenchmark;
 use log::{debug, error, info};
-use std::ffi::OsStr;
 use std::fmt::{Display, Formatter};
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::string::FromUtf8Error;
+use std::{collections::HashMap, ffi::OsStr};
 use std::{convert::TryFrom, path::PathBuf};
-use std::{env, fmt, io};
+use std::{env, fmt, fs, io};
 use thiserror::Error;
 
 /// Represents a Dockerfile that can build a Wasm benchmark.
+#[derive(Clone, Debug)]
 pub struct Dockerfile(PathBuf);
 
 impl Dockerfile {
@@ -24,7 +24,8 @@ impl Dockerfile {
         Self(p.canonicalize().expect("a valid path"))
     }
 
-    /// Find the parent directory of the Dockerfile; this is useful for determining the default context directory.
+    /// Find the parent directory of the Dockerfile; this is useful for determining the default
+    /// context directory.
     pub fn parent_dir(&self) -> PathBuf {
         self.0
             .parent()
@@ -32,31 +33,56 @@ impl Dockerfile {
             .to_path_buf()
     }
 
-    /// Build the Dockerfile and extract the file placed at `/benchmark.wasm` inside the container to `destination`. The
-    /// returned [Wasmfile] contains the extracted file.
-    pub fn build(&self, destination: PathBuf) -> Result<WasmBenchmark> {
+    /// Build the Dockerfile and extract the file placed at `source` inside the container to
+    /// `destination` in the host. Optionally pass arguments to the build process (equivalent to
+    /// `docker --arg ...`).
+    pub fn extract<P1: AsRef<Path>, P2: AsRef<Path>>(
+        &self,
+        source: P1,
+        destination: P2,
+        args: Option<DockerBuildArgs>,
+    ) -> Result<()> {
         info!("Building Dockerfile: {}", self.0.display());
-        let image_id = build_image(&self.0)?;
+        let image_id = build_image(&self.0, args)?;
         let container_id = create_container(&image_id)?;
-        let expected_build_path = PathBuf::from("/benchmark.wasm");
-        copy_file_from_container(&container_id, &expected_build_path, &destination)?;
+        copy_file_from_container(&container_id, source.as_ref(), destination.as_ref())?;
         remove_container(&container_id)?;
         remove_image(&image_id)?;
-        assert!(destination.exists());
-        Ok(WasmBenchmark::from(destination))
+        assert!(destination.as_ref().exists());
+        Ok(())
     }
 }
-
 impl Into<PathBuf> for Dockerfile {
     fn into(self) -> PathBuf {
         self.0
+    }
+}
+/// Create a single-string identifier for the Dockerfile: `dockerfile@[hash of file bytes]`.
+impl fmt::Display for Dockerfile {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let bytes = fs::read(&self.0).expect("a readable file");
+        let hash = blake3::hash(&bytes);
+        write!(f, "dockerfile@{:?}", hash)
+    }
+}
+
+pub struct DockerBuildArgs(HashMap<String, String>);
+impl DockerBuildArgs {
+    pub fn new() -> Self {
+        Self(HashMap::new())
+    }
+    pub fn set(&mut self, key: String, value: String) {
+        self.0.insert(key, value);
     }
 }
 
 pub type Result<T> = std::result::Result<T, DockerError>;
 
 /// Build an image from a Dockerfile with the Dockerfile's parent directory as context.
-pub fn build_image<P: AsRef<Path>>(dockerfile: P) -> Result<ImageId> {
+pub fn build_image<P: AsRef<Path>>(
+    dockerfile: P,
+    args: Option<DockerBuildArgs>,
+) -> Result<ImageId> {
     let context_dir = dockerfile
         .as_ref()
         .parent()
@@ -68,6 +94,13 @@ pub fn build_image<P: AsRef<Path>>(dockerfile: P) -> Result<ImageId> {
         .arg("-f")
         .arg(dockerfile.as_ref())
         .arg(context_dir);
+
+    if let Some(args) = args {
+        for (k, v) in args.0 {
+            command.arg("--build-arg").arg(format!("{}={}", k, v));
+        }
+    }
+
     execute_and_capture_last_line(command)
 }
 

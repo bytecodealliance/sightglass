@@ -1,12 +1,12 @@
 use anyhow::Result;
-use sightglass_artifact::Dockerfile;
+use sightglass_artifact::{Dockerfile, WasmBenchmark};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
 /// Build a Wasm benchmark from a Dockerfile.
 #[derive(StructOpt, Debug)]
-#[structopt(name = "build")]
-pub struct BuildCommand {
+#[structopt(name = "build-benchmark")]
+pub struct BuildBenchmarkCommand {
     /// The location at which to store the generated Wasm benchmark.
     #[structopt(long, short, value_name = "WASMFILE", parse(from_os_str))]
     destination: Option<PathBuf>,
@@ -27,14 +27,16 @@ pub struct BuildCommand {
     dockerfile: PathBuf,
 }
 
-impl BuildCommand {
+impl BuildBenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
         let dockerfile = Dockerfile::from(self.dockerfile.clone());
         let destination = match self.destination.clone() {
             None => dockerfile.parent_dir().join("benchmark.wasm"),
             Some(p) => p,
         };
-        let wasmfile = dockerfile.build(destination)?;
+
+        dockerfile.extract(WasmBenchmark::source(), &destination, None)?;
+        let wasmfile = WasmBenchmark::from(destination);
         if self.emit_wat {
             wasmfile.emit_wat()?;
         }

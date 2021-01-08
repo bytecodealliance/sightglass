@@ -1,7 +1,7 @@
 use anyhow::Result;
 use log::info;
 use pretty_env_logger;
-use sightglass_artifact::{Artifact, Dockerfile};
+use sightglass_artifact::{Artifact, Dockerfile, WasmBenchmark};
 use std::env;
 use std::path::PathBuf;
 
@@ -13,8 +13,9 @@ fn e2e() -> Result<()> {
 
     // Build a Wasm benchmark using its Dockerfile.
     let dockerfile = Dockerfile::from(PathBuf::from("./tests/Dockerfile"));
-    let benchmark_wasm = env::temp_dir().join("benchmark.wasm");
-    let wasmfile = dockerfile.build(benchmark_wasm)?;
+    let destination_wasm = env::temp_dir().join("benchmark.wasm");
+    dockerfile.extract(WasmBenchmark::source(), &destination_wasm, None)?;
+    let wasmfile = WasmBenchmark::from(destination_wasm);
 
     // Verify that the benchmark is a valid one.
     assert!(wasmfile.is_valid().is_ok());

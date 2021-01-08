@@ -1,10 +1,12 @@
 mod benchmark;
-mod build;
+mod build_benchmark;
+mod build_engine;
 mod validate;
 
 use anyhow::Result;
 use benchmark::{BenchmarkCommand, InProcessBenchmarkCommand};
-use build::BuildCommand;
+use build_benchmark::BuildBenchmarkCommand;
+use build_engine::BuildEngineCommand;
 use log::trace;
 use structopt::{clap::AppSettings, StructOpt};
 use validate::ValidateCommand;
@@ -27,7 +29,8 @@ fn main() -> Result<()> {
     ],
 )]
 enum SightglassCommand {
-    Build(BuildCommand),
+    BuildBenchmark(BuildBenchmarkCommand),
+    BuildEngine(BuildEngineCommand),
     Benchmark(BenchmarkCommand),
     InProcessBenchmark(InProcessBenchmarkCommand),
     Validate(ValidateCommand),
@@ -37,7 +40,8 @@ impl SightglassCommand {
     fn execute(&self) -> Result<()> {
         trace!("Executing command: {:?}", &self);
         match self {
-            SightglassCommand::Build(build) => build.execute(),
+            SightglassCommand::BuildBenchmark(build) => build.execute(),
+            SightglassCommand::BuildEngine(build) => build.execute(),
             SightglassCommand::Benchmark(benchmark) => benchmark.execute(),
             SightglassCommand::InProcessBenchmark(benchmark) => benchmark.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),

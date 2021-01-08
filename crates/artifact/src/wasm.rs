@@ -17,6 +17,11 @@ use wasmprinter;
 pub struct WasmBenchmark(PathBuf);
 
 impl WasmBenchmark {
+    /// Return the expected source location of a Wasm benchmark inside a benchmark Docker image.
+    pub fn source() -> PathBuf {
+        PathBuf::from("/benchmark.wasm")
+    }
+
     pub fn from<P: AsRef<Path>>(path: P) -> Self {
         Self(path.as_ref().canonicalize().expect("a valid path"))
     }
