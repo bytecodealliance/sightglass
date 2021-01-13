@@ -4,14 +4,20 @@
 //! Use the `DOCKER` environment variable to change the binary to use for this; the default is
 //! `"docker"`.
 use log::{debug, error, info};
-use std::fmt::{Display, Formatter};
-use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::string::FromUtf8Error;
+use std::{
+    borrow::Cow,
+    fmt::{Display, Formatter},
+};
 use std::{collections::HashMap, ffi::OsStr};
 use std::{convert::TryFrom, path::PathBuf};
 use std::{env, fmt, fs, io};
+use std::{
+    io::{BufRead, BufReader, Write},
+    thread,
+};
 use thiserror::Error;
 
 /// Represents a Dockerfile that can build a Wasm benchmark.
@@ -21,7 +27,7 @@ pub struct Dockerfile(PathBuf);
 impl Dockerfile {
     /// Construct a new Dockerfile from its path.
     pub fn from(p: PathBuf) -> Self {
-        Self(p.canonicalize().expect("a valid path"))
+        Self(p)
     }
 
     /// Find the parent directory of the Dockerfile; this is useful for determining the default
@@ -66,13 +72,16 @@ impl fmt::Display for Dockerfile {
     }
 }
 
-pub struct DockerBuildArgs(HashMap<String, String>);
-impl DockerBuildArgs {
+pub struct DockerBuildArgs<'a>(HashMap<Cow<'a, str>, Cow<'a, str>>);
+impl<'a> DockerBuildArgs<'a> {
     pub fn new() -> Self {
         Self(HashMap::new())
     }
-    pub fn set(&mut self, key: String, value: String) {
-        self.0.insert(key, value);
+    pub fn set<S>(&mut self, key: S, value: S)
+    where
+        S: Into<Cow<'a, str>>,
+    {
+        self.0.insert(key.into(), value.into());
     }
 }
 
@@ -81,19 +90,18 @@ pub type Result<T> = std::result::Result<T, DockerError>;
 /// Build an image from a Dockerfile with the Dockerfile's parent directory as context.
 pub fn build_image<P: AsRef<Path>>(
     dockerfile: P,
-    args: Option<DockerBuildArgs>,
+    args: Option<DockerBuildArgs<'_>>,
 ) -> Result<ImageId> {
     let context_dir = dockerfile
         .as_ref()
         .parent()
         .expect("a Dockerfile to exist within a parent directory");
+    let tar_context_dir = tar_dir(context_dir)?;
 
     let mut command = Command::new(docker_binary());
-    command
-        .arg("build")
-        .arg("-f")
-        .arg(dockerfile.as_ref())
-        .arg(context_dir);
+    // Read the context from a tar directory,
+    // https://docs.docker.com/engine/reference/commandline/build/#tarball-contexts
+    command.arg("build").arg("-");
 
     if let Some(args) = args {
         for (k, v) in args.0 {
@@ -101,14 +109,14 @@ pub fn build_image<P: AsRef<Path>>(
         }
     }
 
-    execute_and_capture_last_line(command)
+    execute_and_capture_last_line(command, Some(tar_context_dir))
 }
 
 /// Create a container from a Docker image ID.
 pub fn create_container(image: &ImageId) -> Result<ContainerId> {
     let mut command = Command::new(docker_binary());
     command.arg("create").arg(&image.0);
-    execute_and_capture_last_line(command)
+    execute_and_capture_last_line(command, None)
 }
 
 /// Copy a file from a Docker container.
@@ -144,10 +152,23 @@ fn docker_binary() -> String {
 }
 
 // Execute a Docker command and capture the last line as a Docker ID.
-fn execute_and_capture_last_line(mut command: Command) -> Result<DockerId> {
+fn execute_and_capture_last_line(mut command: Command, input: Option<Vec<u8>>) -> Result<DockerId> {
     info!("Executing: {:?}", &command);
-    let mut child = command.stdout(Stdio::piped()).spawn()?;
+    command.stdout(Stdio::piped());
+    if input.is_some() {
+        command.stdin(Stdio::piped());
+    }
+
+    let mut child = command.spawn()?;
     // TODO pipe stderr to the same place somehow.
+
+    // If we need to pipe input to stdin, do so in a separate thread to avoid deadlocking.
+    if let Some(bytes) = input {
+        let mut child_stdin = child.stdin.take().unwrap();
+        thread::spawn(move || {
+            child_stdin.write_all(&bytes).unwrap();
+        });
+    }
 
     // Capture all printed lines to the logger and the last one as the ID.
     let reader = BufReader::new(child.stdout.take().unwrap());
@@ -225,5 +246,44 @@ impl Display for DockerId {
 impl AsRef<OsStr> for DockerId {
     fn as_ref(&self) -> &OsStr {
         self.0.as_ref()
+    }
+}
+
+/// Construct a TAR archive from a given path, returning the uncompressed bytes. This allows us to
+/// use symlinks in Docker contexts, which otherwise are forbidden for security reasons; in our
+/// case, the advantage of using symlinks--drastically less duplication of benchmark code--outweighs
+/// any security impact.
+///
+/// Warning: this will store the entire Docker context in memory!
+fn tar_dir<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
+    use tar::Builder;
+    let mut bytes = Vec::new();
+    {
+        let mut builder = Builder::new(&mut bytes);
+        builder.follow_symlinks(true);
+        builder.append_dir_all(".", path)?;
+        builder.finish()?;
+    }
+    Ok(bytes)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tar_directory_will_materialize_symlinks() {
+        use std::path::Path;
+        use tar::Archive;
+        let bytes = tar_dir("./tests").unwrap();
+        let mut archive = Archive::new(&bytes[..]);
+        let linked_file = archive
+            .entries()
+            .unwrap()
+            .into_iter()
+            .find(|e| e.as_ref().unwrap().path().unwrap() == Path::new("sightglass.h"))
+            .unwrap()
+            .unwrap();
+        assert!(linked_file.size() > 100);
     }
 }
