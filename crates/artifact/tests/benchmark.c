@@ -2,8 +2,8 @@
 #include "sightglass.h"
 
 __attribute__((export_name("add")))
-__attribute__((noinline)) int
-add(int a, int b)
+__attribute__((noinline))
+int add(int a, int b)
 {
     return a + b;
 }
