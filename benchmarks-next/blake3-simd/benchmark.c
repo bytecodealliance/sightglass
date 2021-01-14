@@ -11,7 +11,7 @@ int main()
     blake3_hasher_init(&hasher);
 
     // Initialize the 64K buffer.
-    unsigned char buffer[BUFFER_SIZE] = {0};
+    unsigned char buffer[BUFFER_SIZE] = { 0 };
 
     // Define the hash output; BLAKE3_OUT_LEN is the default output length, 32 bytes.
     uint8_t output[BLAKE3_OUT_LEN];
