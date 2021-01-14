@@ -11,6 +11,19 @@ env:
   RUST_LOG: info
 
 jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+    - run: rustup component add rustfmt
+    - run: cargo fmt --all -- --check
+
   test:
     runs-on: ubuntu-latest
     steps:
