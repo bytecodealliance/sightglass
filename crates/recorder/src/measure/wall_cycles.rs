@@ -1,9 +1,8 @@
 //! Measure the wall-clock number of ticks/cycles elapsed (e.g. using RDTSC). This is a small
 //! wrapper around the `precision` crate to adapt it to the [Measure] API.
 
-use super::{Measure, Measurements};
+use super::{Measure, Measurement};
 use precision::{Config, Precision, Timestamp};
-use sightglass_data::Phase;
 
 pub struct WallCycleMeasure(Precision, Option<Timestamp>);
 
@@ -19,9 +18,9 @@ impl Measure for WallCycleMeasure {
         self.1 = Some(self.0.now());
     }
 
-    fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
+    fn end(&mut self) -> Measurement {
         let end = self.0.now();
-        let elapsed = (end - self.1.take().expect("an existing timestamp")).ticks();
-        measurements.add(phase, "wall-cycles".into(), elapsed);
+        let elapsed = (end - self.1.expect("an existing timestamp")).ticks();
+        Measurement::WallCycles(elapsed)
     }
 }

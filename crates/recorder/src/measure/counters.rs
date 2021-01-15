@@ -2,11 +2,9 @@
 //! work (and it will only work on Linux systems currently), you may need to tweak
 //! `/proc/sys/kernel/perf_event_paranoid` by running a command such as: `sudo sysctl -w
 //! kernel.perf_event_paranoid=0`.
-use super::Measure;
-use crate::measure::Measurements;
+use super::{Measure, Measurement};
 use perf_event::{events::Hardware, Builder, Counter, Group};
 use serde::{Deserialize, Serialize};
-use sightglass_data::Phase;
 
 /// Measure CPU counters.
 pub struct CounterMeasure {
@@ -75,17 +73,15 @@ impl Measure for CounterMeasure {
         self.event_group.enable().unwrap()
     }
 
-    fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
+    fn end(&mut self) -> Measurement {
+        self.event_group.disable().unwrap();
         let counts = self.event_group.read().unwrap();
-        measurements.reserve(4);
-        measurements.add(phase, "cpu-cycles".into(), counts[&self.cpu_cycles]);
-        measurements.add(
-            phase,
-            "instructions-retired".into(),
-            counts[&self.instructions_retired],
-        );
-        measurements.add(phase, "cache-accesses".into(), counts[&self.cache_accesses]);
-        measurements.add(phase, "cache-misses".into(), counts[&self.cache_misses]);
+        Measurement::PerfCounters(PerfCounters {
+            cpu_cycles: counts[&self.cpu_cycles],
+            instructions_retired: counts[&self.instructions_retired],
+            cache_accesses: counts[&self.cache_accesses],
+            cache_misses: counts[&self.cache_misses],
+        })
     }
 }
 
@@ -159,16 +155,14 @@ mod tests {
             return;
         }
 
-        let mut measurements = Measurements::new("arch".into(), "engine".into(), "wasm".into());
         let mut measure = CounterMeasure::new();
         measure.start();
         let mut a = 0;
         for i in 0..1_000_000 {
             a = i
         }
-        measure.end(Phase::Compilation, &mut measurements);
-        let measurements = measurements.finish();
+        let measurement = measure.end();
         println!("Result: {}", a);
-        println!("Measurements: {:?}", measurements);
+        println!("Measurement: {:?}", measurement);
     }
 }

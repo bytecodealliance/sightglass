@@ -1,5 +1,4 @@
-use super::{Measure, Measurements};
-use sightglass_data::Phase;
+use super::{Measure, Measurement};
 
 /// For users that may want to record measurements on their own, this mechanism allows the tool to
 /// be used without the overhead of any measurement activity. TODO document example using `perf` and
@@ -13,5 +12,7 @@ impl NoopMeasure {
 
 impl Measure for NoopMeasure {
     fn start(&mut self) {}
-    fn end(&mut self, _phase: Phase, _measurements: &mut Measurements) {}
+    fn end(&mut self) -> Measurement {
+        Measurement::Noop
+    }
 }

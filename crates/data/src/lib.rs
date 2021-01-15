@@ -16,7 +16,7 @@ use std::borrow::Cow;
 /// where we can use string literals for various fields. When reading data, it
 /// can be used with a non-static lifetime to avoid many small allocations.
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Measurement<'a> {
+pub struct ParsedMeasurement<'a> {
     /// The CPU architecture on which this measurement was taken, for example
     /// "aarch64" or "x86_64".
     pub arch: Cow<'a, str>,
@@ -63,4 +63,69 @@ pub enum Phase {
     /// The execution phase, where functions are called and instructions are
     /// executed.
     Execution,
+}
+
+/// An in-progress collection of measurements that are currently being recorded.
+#[derive(Debug)]
+pub struct Measurements<'a> {
+    arch: &'a str,
+    engine: &'a str,
+    wasm: &'a str,
+    process: u32,
+    iteration: u32,
+    measurements: Vec<ParsedMeasurement<'a>>,
+}
+
+impl<'a> Measurements<'a> {
+    /// Construct a new `Measurements`.
+    pub fn new(arch: &'a str, engine: &'a str, wasm: &'a str) -> Self {
+        Measurements {
+            arch,
+            engine,
+            wasm,
+            process: std::process::id(),
+            iteration: 0,
+            measurements: vec![],
+        }
+    }
+
+    /// Advance the iteration counter.
+    pub fn next_iteration(&mut self) {
+        self.iteration += 1;
+    }
+
+    /// Reserve additional capacity for more measurements internally.
+    pub fn reserve(&mut self, capacity: usize) {
+        self.measurements.reserve(capacity);
+    }
+
+    /// Add a measurement of the given event for the given phase to this
+    /// `Measurements` collection.
+    pub fn add(&mut self, phase: Phase, events: impl Into<Vec<Event<'a>>>) {
+        for event in events.into() {
+            self.measurements.push(ParsedMeasurement {
+                arch: self.arch.into(),
+                engine: self.engine.into(),
+                wasm: self.wasm.into(),
+                process: self.process,
+                iteration: self.iteration,
+                phase,
+                event: event.name,
+                count: event.count,
+            });
+        }
+    }
+
+    /// When all measurements have been recorded, call this method to get the
+    /// underlying measurements data.
+    pub fn finish(self) -> Vec<ParsedMeasurement<'a>> {
+        self.measurements
+    }
+}
+
+/// TODO
+#[derive(Debug)]
+pub struct Event<'a> {
+    name: Cow<'a, str>,
+    count: u64,
 }

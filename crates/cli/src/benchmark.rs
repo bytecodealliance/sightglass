@@ -193,7 +193,11 @@ impl InProcessBenchmarkCommand {
         let mut measure = self.measure.build();
 
         for _ in 0..self.iterations {
-            benchmark(&mut bench_api, &bytes, &mut measure, &mut measurements)?;
+            let (compilation, instantiation, execution) =
+                benchmark(&mut bench_api, &bytes, &mut measure)?;
+            measurements.add(Phase::Compilation, compilation);
+            measurements.add(Phase::Instantiation, instantiation);
+            measurements.add(Phase::Execution, execution);
             measurements.next_iteration();
         }
 
