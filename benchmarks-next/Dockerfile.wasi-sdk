@@ -1,0 +1,22 @@
+FROM ubuntu:18.04
+
+WORKDIR /
+
+RUN apt update && apt install -y wget
+
+# Download and extract wasi-sdk.
+RUN wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/wasi-sdk-12.0-linux.tar.gz
+RUN tar xvf wasi-sdk-12.0-linux.tar.gz
+
+# Set common env vars.
+ENV CC=/wasi-sdk-12.0/bin/clang
+ENV CXX=/wasi-sdk-12.0/bin/clang++
+ENV LD=/wasi-sdk-12.0/bin/lld
+ENV CFLAGS=--sysroot=/wasi-sdk-12.0/share/wasi-sysroot
+ENV CXXFLAGS=--sysroot=/wasi-sdk-12.0/share/wasi-sysroot
+ENV PATH /wasi-sdk-12.0
+
+COPY benchmark.c .
+COPY sightglass.h .
+RUN $CC $CFLAGS benchmark.c -O3 -g -DNDEBUG -I. -o benchmark.wasm
+# We output the Wasm file to /benchmark.wasm, where the client expects it.
