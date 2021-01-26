@@ -72,10 +72,12 @@ impl CounterMeasure {
 
 impl Measure for CounterMeasure {
     fn start(&mut self) {
+        self.event_group.reset().unwrap();
         self.event_group.enable().unwrap()
     }
 
     fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
+        self.event_group.disable().unwrap();
         let counts = self.event_group.read().unwrap();
         measurements.reserve(4);
         measurements.add(phase, "cpu-cycles".into(), counts[&self.cpu_cycles]);
