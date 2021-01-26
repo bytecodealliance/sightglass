@@ -3,10 +3,13 @@ use anyhow::Result;
 use log::info;
 use sightglass_data::Phase;
 use std::ffi::c_void;
+use std::path::Path;
+use std::ptr;
 
 /// An shared library that implements our in-process benchmarking API.
 pub struct BenchApi<'a> {
-    wasm_bench_create: libloading::Symbol<'a, unsafe extern "C" fn() -> *mut c_void>,
+    wasm_bench_create:
+        libloading::Symbol<'a, unsafe extern "C" fn(*const u8, usize, *mut *mut c_void) -> i32>,
     wasm_bench_free: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void)>,
     wasm_bench_compile:
         libloading::Symbol<'a, unsafe extern "C" fn(*const c_void, *const u8, usize) -> i32>,
@@ -46,8 +49,15 @@ impl<'a, 'b> Engine<'a, 'b> {
     /// Construct a new engine from the given `BenchApi`.
     // NB: take a mutable reference to the `BenchApi` so that no one else can
     // call its API methods out of order.
-    pub fn new(bench_api: &'a mut BenchApi<'b>) -> Self {
-        let engine = unsafe { (bench_api.wasm_bench_create)() };
+    pub fn new(bench_api: &'a mut BenchApi<'b>, working_dir: &Path) -> Self {
+        let working_dir = working_dir.display().to_string();
+        let mut engine = ptr::null_mut();
+        unsafe {
+            let result =
+                (bench_api.wasm_bench_create)(working_dir.as_ptr(), working_dir.len(), &mut engine);
+            assert_eq!(result, 0);
+            assert!(!engine.is_null());
+        };
         Engine { bench_api, engine }
     }
 
@@ -123,11 +133,12 @@ impl<'a, 'b> Instance<'a, 'b> {
 /// phase.
 pub fn benchmark(
     bench_api: &mut BenchApi,
+    working_dir: &Path,
     wasm_bytes: &[u8],
     measure: &mut impl Measure,
     measurements: &mut Measurements,
 ) -> Result<()> {
-    let engine = Engine::new(bench_api);
+    let engine = Engine::new(bench_api, working_dir);
 
     // Measure the module compilation.
     let module = engine.compile(wasm_bytes, measure, measurements);
