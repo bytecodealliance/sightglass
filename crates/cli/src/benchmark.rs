@@ -53,6 +53,21 @@ pub struct BenchmarkCommand {
     #[structopt(long, short, default_value = "wall-cycles")]
     measure: MeasureType,
 
+    /// Pass this flag to only run benchmarks over "small" workloads (rather
+    /// than the larger, default workloads).
+    ///
+    /// Note that not every benchmark program necessarily has a smaller
+    /// workload, and this flag may be ignored.
+    ///
+    /// This should only be used with local "mini" experiments to save time when
+    /// prototyping a quick performance optimization, or something similar. The
+    /// larger, default workloads should still be considered the ultimate source
+    /// of truth, and any cases where results differ between the small and
+    /// default workloads, the results from the small workloads should be
+    /// ignored.
+    #[structopt(long, alias = "small-workload")]
+    small_workloads: bool,
+
     /// The path to the Wasm file to compile.
     #[structopt(
         index = 1,
@@ -85,9 +100,15 @@ impl BenchmarkCommand {
 
         // Worklist that we randomly sample from.
         let mut choices = vec![];
+
         for engine in &self.engines {
+            // Ensure that each of our engines is built before we spawn any
+            // child processes (potentially in a different working directory,
+            // and therefore potentially invalidating relative paths used here).
+            let engine = get_built_engine(engine)?;
+
             for wasm in &self.wasm_files {
-                choices.push((engine, wasm, self.processes));
+                choices.push((engine.clone(), wasm, self.processes));
             }
         }
 
@@ -104,16 +125,19 @@ impl BenchmarkCommand {
                 .stderr(Stdio::inherit())
                 .arg("in-process-benchmark")
                 .arg("--engine")
-                .arg(engine.to_string())
+                .arg(&engine)
                 .arg("--measure")
                 .arg(self.measure.to_string())
                 .arg("--output-format")
                 .arg(self.output_format.to_string())
                 .arg("--num-iterations")
                 .arg(self.iterations_per_process.to_string())
-                .arg(wasm);
+                .arg(&wasm);
             if csv_header {
                 command.arg("--csv-header");
+            }
+            if self.small_workloads {
+                command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
             }
 
             let status = command
@@ -184,6 +208,12 @@ impl InProcessBenchmarkCommand {
         let lib = libloading::Library::new(&engine_path)?;
         let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
+        let working_dir = if let Some(dir) = self.wasmfile.parent() {
+            dir.into()
+        } else {
+            std::env::current_dir().context("failed to get the current working directory")?
+        };
+
         log::info!("Using Wasm benchmark: {}", self.wasmfile.display());
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
         log::debug!("Wasm benchmark size: {} bytes", bytes.len());
@@ -196,7 +226,13 @@ impl InProcessBenchmarkCommand {
         let mut measure = self.measure.build();
 
         for _ in 0..self.iterations {
-            benchmark(&mut bench_api, &bytes, &mut measure, &mut measurements)?;
+            benchmark(
+                &mut bench_api,
+                &working_dir,
+                &bytes,
+                &mut measure,
+                &mut measurements,
+            )?;
             measurements.next_iteration();
         }
 

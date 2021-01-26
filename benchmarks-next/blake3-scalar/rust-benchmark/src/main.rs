@@ -10,8 +10,14 @@ extern "C" {
 }
 
 fn main() {
-    let buffer = [0 as u8; 64 << 10];
-    eprintln!("[blake3] hashing a 64KB, zero-filled buffer");
+    let buffer = if std::env::var("WASM_BENCH_USE_SMALL_WORKLOAD").is_ok() {
+        eprintln!("[blake3] hashing ./small.input");
+        std::fs::read("./small.input").unwrap()
+    } else {
+        eprintln!("[blake3] hashing ./default.input");
+        std::fs::read("./default.input").unwrap()
+    };
+    eprintln!("[blake3] input size = {}", buffer.len());
     unsafe {
         start();
     }
