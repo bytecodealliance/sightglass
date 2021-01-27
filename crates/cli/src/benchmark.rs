@@ -18,14 +18,17 @@ use structopt::StructOpt;
 /// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(StructOpt, Debug)]
 pub struct BenchmarkCommand {
-    /// The benchmark engine with which to run the benchmark. This can be either the path to a
-    /// shared library implementing the benchmarking engine specification or an engine reference:
-    /// `[engine name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
+    /// The benchmark engine(s) with which to run the benchmark.
+    ///
+    /// This can be either the path to a shared library implementing the
+    /// benchmarking engine specification or an engine reference: `[engine
+    /// name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
     #[structopt(
         long("engine"),
         short("e"),
         value_name = "ENGINE-REF OR PATH",
-        empty_values = false
+        empty_values = false,
+        default_value = "wasmtime"
     )]
     engines: Vec<String>,
 
