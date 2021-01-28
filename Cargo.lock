@@ -1320,6 +1320,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sightglass-analysis"
+version = "0.1.0"
+dependencies = [
+ "sightglass-data",
+]
+
+[[package]]
 name = "sightglass-artifact"
 version = "0.1.0"
 dependencies = [
@@ -1345,6 +1352,7 @@ dependencies = [
  "log 0.4.11",
  "pretty_env_logger",
  "rand 0.7.3",
+ "sightglass-analysis",
  "sightglass-artifact",
  "sightglass-data",
  "sightglass-recorder",

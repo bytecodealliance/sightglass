@@ -55,7 +55,7 @@ pub struct Measurement<'a> {
 }
 
 /// A phase in a Wasm program's lifecycle.
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialOrd, Ord, PartialEq, Eq, Hash)]
 pub enum Phase {
     /// The compilation phase, where Wasm bytes are translated into native
     /// machine code.
@@ -66,4 +66,39 @@ pub enum Phase {
     /// The execution phase, where functions are called and instructions are
     /// executed.
     Execution,
+}
+
+/// A summary of grouped measurements.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct Summary<'a> {
+    /// The CPU architecture on which this measurement was taken, for example
+    /// "aarch64" or "x86_64".
+    pub arch: Cow<'a, str>,
+
+    /// The file path of the wasmtime benchmark API shared library used to
+    /// record this measurement.
+    pub engine: Cow<'a, str>,
+
+    /// The file path of the Wasm benchmark program.
+    pub wasm: Cow<'a, str>,
+
+    /// The phase in a Wasm program's lifecycle that was measured: compilation,
+    /// instantiation, or execution.
+    pub phase: Phase,
+
+    /// The event that was measured: micro seconds of wall time, CPU cycles
+    /// executed, instructions retired, cache misses, etc.
+    pub event: Cow<'a, str>,
+
+    /// The minimum value of the `count` field.
+    pub min: u64,
+
+    /// The maximum value of the `count` field.
+    pub max: u64,
+
+    /// The arithmetic mean of the `count` field.
+    pub mean: f64,
+
+    /// The mean deviation (note: not standard deviation) of the `count` field.
+    pub mean_deviation: f64,
 }
