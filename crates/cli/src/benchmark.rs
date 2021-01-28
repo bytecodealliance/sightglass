@@ -1,15 +1,13 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
+use sightglass_data::Format;
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{
     benchmark::{benchmark, BenchApi},
     measure::MeasureType,
 };
-use std::str::FromStr;
-use std::{fmt, io};
-use std::{fs, process::Command};
-use std::{path::PathBuf, process::Stdio};
+use std::{fs, io, path::PathBuf, process::Command, process::Stdio};
 use structopt::StructOpt;
 
 /// Measure compilation, instantiation, and execution of a Wasm file.
@@ -46,7 +44,7 @@ pub struct BenchmarkCommand {
 
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
-    output_format: OutputFormat,
+    output_format: Format,
 
     /// The type of measurement to use (wall-cycles, perf-counters, noop) when recording the
     /// benchmark performance.
@@ -192,7 +190,7 @@ pub struct InProcessBenchmarkCommand {
 
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
-    output_format: OutputFormat,
+    output_format: Format,
 
     /// If we are using the CSV output format, should we write a CSV header?
     ///
@@ -237,22 +235,7 @@ impl InProcessBenchmarkCommand {
         }
 
         let measurements = measurements.finish();
-
-        match self.output_format {
-            OutputFormat::Json => {
-                println!("{}", serde_json::to_string(&measurements)?);
-            }
-            OutputFormat::Csv => {
-                let mut csv = csv::WriterBuilder::new()
-                    .has_headers(self.csv_header)
-                    .from_writer(io::stdout());
-                for m in &measurements {
-                    csv.serialize(m)?;
-                }
-                csv.flush()?;
-            }
-        }
-        Ok(())
+        self.output_format.write(&measurements, io::stdout())
     }
 }
 
@@ -263,32 +246,5 @@ fn this_arch() -> &'static str {
         "aarch64"
     } else {
         unimplemented!("please add support for the current target architecture")
-    }
-}
-
-#[derive(Clone, Copy, Debug)]
-enum OutputFormat {
-    Json,
-    Csv,
-}
-
-impl fmt::Display for OutputFormat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            OutputFormat::Json => write!(f, "json"),
-            OutputFormat::Csv => write!(f, "csv"),
-        }
-    }
-}
-
-impl FromStr for OutputFormat {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, &'static str> {
-        match s {
-            "json" => Ok(OutputFormat::Json),
-            "csv" => Ok(OutputFormat::Csv),
-            _ => Err("output format must be either 'json' or 'csv'"),
-        }
     }
 }

@@ -1341,13 +1341,12 @@ name = "sightglass-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "csv",
  "libloading 0.6.6",
  "log 0.4.11",
  "pretty_env_logger",
  "rand 0.7.3",
- "serde_json",
  "sightglass-artifact",
+ "sightglass-data",
  "sightglass-recorder",
  "structopt",
  "thiserror",
@@ -1357,7 +1356,10 @@ dependencies = [
 name = "sightglass-data"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "csv",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

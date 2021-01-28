@@ -1,0 +1,92 @@
+[
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "wall-cycles",
+        "count": 37063003
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "wall-cycles",
+        "count": 3386636
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "wall-cycles",
+        "count": 4725
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "wall-cycles",
+        "count": 34267724
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "wall-cycles",
+        "count": 2541521
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "wall-cycles",
+        "count": 4661
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "wall-cycles",
+        "count": 36150712
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "wall-cycles",
+        "count": 2552025
+    },
+    {
+        "arch": "x86_64",
+        "engine": "wasmtime",
+        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "process": 1701529,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "wall-cycles",
+        "count": 4983
+    }
+]
