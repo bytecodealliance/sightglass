@@ -1,1 +1,1 @@
-../Dockerfile.emscripten
+../Dockerfile.wasi-sdk
