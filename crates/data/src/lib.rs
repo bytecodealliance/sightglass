@@ -6,6 +6,9 @@
 
 #![deny(missing_docs, missing_debug_implementations)]
 
+mod format;
+pub use format::Format;
+
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
