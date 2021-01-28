@@ -1,0 +1,8 @@
+[package]
+name = "sightglass-analysis"
+version = "0.1.0"
+authors = ["Andrew Brown <andrew.brown@intel.com>"]
+edition = "2018"
+
+[dependencies]
+sightglass-data = { path = "../data" }
