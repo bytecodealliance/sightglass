@@ -31,13 +31,13 @@ pub struct BenchmarkCommand {
     engines: Vec<String>,
 
     /// How many processes should we use for each Wasm benchmark?
-    #[structopt(long = "processes", default_value = "30", value_name = "PROCESSES")]
+    #[structopt(long = "processes", default_value = "10", value_name = "PROCESSES")]
     processes: usize,
 
     /// How many times should we run a benchmark in a single process?
     #[structopt(
-        long = "num-iterations-per-process",
-        default_value = "1",
+        long = "iterations-per-process",
+        default_value = "10",
         value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
     )]
     iterations_per_process: usize,
