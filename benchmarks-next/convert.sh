@@ -17,8 +17,8 @@ export RUST_LOG=debug
 set -x
 mkdir -p ${BENCHMARKS_DIR}/${BENCHMARK_NAME}
 pushd ${BENCHMARKS_DIR}/${BENCHMARK_NAME}
-ln -sf ../Dockerfile.emscripten Dockerfile
+ln -sf ../Dockerfile.wasi-sdk Dockerfile
 ln -sf ../../include/sightglass-next.h sightglass.h
 cp -n ${BENCHMARK_C} benchmark.c
-$SIGHTGLASS build-benchmark ./Dockerfile -d ./benchmark.wasm --emit-wat
+$SIGHTGLASS build-benchmark ./Dockerfile -d ./benchmark.wasm
 popd
