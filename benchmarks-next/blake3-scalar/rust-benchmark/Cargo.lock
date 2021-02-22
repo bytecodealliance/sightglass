@@ -32,6 +32,7 @@ name = "blake3-wasm-benchmark"
 version = "0.1.0"
 dependencies = [
  "blake3",
+ "sightglass-api",
 ]
 
 [[package]]
@@ -80,6 +81,10 @@ dependencies = [
  "typenum",
  "version_check",
 ]
+
+[[package]]
+name = "sightglass-api"
+version = "0.1.0"
 
 [[package]]
 name = "subtle"

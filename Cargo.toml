@@ -32,6 +32,7 @@ hwloc = "0.5"
 [workspace]
 members = [
     "crates/analysis",
+    "crates/api",
     "crates/artifact",
     "crates/cli",
     "crates/data",
