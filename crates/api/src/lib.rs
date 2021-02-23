@@ -2,7 +2,7 @@
 //! make it easy to instrument Rust code that will be compiled to Wasm and measured with Sightglass.
 //!
 //! For example:
-//! ```
+//! ```compile_fail
 //! use sightglass_api as bench;
 //! bench::start();
 //! let work = 42 * 42;
