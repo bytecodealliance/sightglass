@@ -5,6 +5,6 @@ edition = "2018"
 
 [dependencies]
 blake3 = "0.3.7"
-sightglass-api = { path = "../../../crates/api" }
+sightglass-api = "0.1"
 
 [workspace]

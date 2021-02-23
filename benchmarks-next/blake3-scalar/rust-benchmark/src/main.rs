@@ -10,13 +10,9 @@ fn main() {
     };
     eprintln!("[blake3] input size = {}", buffer.len());
 
-    unsafe {
-        bench::start();
-    }
+    bench::start();
     let hash = blake3::hash(&buffer);
-    unsafe {
-        bench::end();
-    }
+    bench::end();
 
     eprintln!("[blake3] returned {:?}", hash);
 }
