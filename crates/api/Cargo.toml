@@ -2,6 +2,9 @@
 name = "sightglass-api"
 version = "0.1.0"
 authors = ["Sightglass Project Developers"]
+description = "Provides Rust bindings to the sightglass-next API."
+license = "Apache-2.0 WITH LLVM-exception OR MIT"
+repository = "https://github.com/bytecodealliance/sightglass"
 edition = "2018"
 
 [dependencies]
