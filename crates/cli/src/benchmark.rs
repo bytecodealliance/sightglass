@@ -175,6 +175,12 @@ pub struct InProcessBenchmarkCommand {
     #[structopt(long, short, default_value = "wall-cycles")]
     measure: MeasureType,
 
+    /// The directory to preopen as the benchmark's working directory. If the benchmark accesses
+    /// files using WASI, it will see this directory as its current working directory (i.e. `.`). If
+    /// the working directory is not specified, the Wasm file's parent directory is used instead.
+    #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
+    working_dir: Option<PathBuf>,
+
     /// The path to the Wasm file to benchmark.
     #[structopt(
         index = 1,
@@ -206,11 +212,15 @@ impl InProcessBenchmarkCommand {
         let lib = libloading::Library::new(&engine_path)?;
         let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
-        let working_dir = if let Some(dir) = self.wasmfile.parent() {
+        // Use the provided --working-dir, otherwise find the Wasm file's parent directory.
+        let working_dir = if let Some(dir) = self.working_dir.clone() {
+            dir
+        } else if let Some(dir) = self.wasmfile.parent() {
             dir.into()
         } else {
             std::env::current_dir().context("failed to get the current working directory")?
         };
+        log::info!("Using working directory: {}", working_dir.display());
 
         log::info!("Using Wasm benchmark: {}", self.wasmfile.display());
         let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
