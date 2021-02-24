@@ -21,7 +21,8 @@ impl Measure for WallCycleMeasure {
 
     fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
         let end = self.0.now();
-        let elapsed = (end - self.1.take().expect("an existing timestamp")).ticks();
-        measurements.add(phase, "wall-cycles".into(), elapsed);
+        let elapsed = end - self.1.take().expect("an existing timestamp");
+        measurements.add(phase, "cycles".into(), elapsed.ticks());
+        measurements.add(phase, "nanoseconds".into(), elapsed.as_ns(&self.0));
     }
 }
