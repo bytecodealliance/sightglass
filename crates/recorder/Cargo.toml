@@ -2,7 +2,7 @@
 name = "sightglass-recorder"
 version = "0.1.0"
 description = "A measurement tool for compiling and running a single Wasm benchmark"
-authors = ["Andrew Brown <andrew.brown@intel.com>"]
+authors = ["Sightglass Project Developers"]
 edition = "2018"
 
 [dependencies]

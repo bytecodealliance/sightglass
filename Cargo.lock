@@ -1327,6 +1327,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sightglass-api"
+version = "0.1.0"
+
+[[package]]
 name = "sightglass-artifact"
 version = "0.1.0"
 dependencies = [

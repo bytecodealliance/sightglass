@@ -1,13 +1,4 @@
-// This syntax informs the Rust-to-Wasm compiler toolchain that we want to import the `bench.start`
-// and `bench.end` functions.
-#[link(wasm_import_module = "bench")]
-extern "C" {
-    fn start();
-}
-#[link(wasm_import_module = "bench")]
-extern "C" {
-    fn end();
-}
+use sightglass_api as bench;
 
 fn main() {
     let buffer = if std::env::var("WASM_BENCH_USE_SMALL_WORKLOAD").is_ok() {
@@ -18,12 +9,10 @@ fn main() {
         std::fs::read("./default.input").unwrap()
     };
     eprintln!("[blake3] input size = {}", buffer.len());
-    unsafe {
-        start();
-    }
+
+    bench::start();
     let hash = blake3::hash(&buffer);
-    unsafe {
-        end();
-    }
+    bench::end();
+
     eprintln!("[blake3] returned {:?}", hash);
 }
