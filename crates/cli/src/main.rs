@@ -6,7 +6,7 @@ mod validate;
 
 use analyze::AnalyzeCommand;
 use anyhow::Result;
-use benchmark::{BenchmarkCommand, InProcessBenchmarkCommand};
+use benchmark::BenchmarkCommand;
 use build_benchmark::BuildBenchmarkCommand;
 use build_engine::BuildEngineCommand;
 use log::trace;
@@ -34,7 +34,6 @@ enum SightglassCommand {
     BuildBenchmark(BuildBenchmarkCommand),
     BuildEngine(BuildEngineCommand),
     Benchmark(BenchmarkCommand),
-    InProcessBenchmark(InProcessBenchmarkCommand),
     Validate(ValidateCommand),
     Analyze(AnalyzeCommand),
 }
@@ -46,7 +45,6 @@ impl SightglassCommand {
             SightglassCommand::BuildBenchmark(build) => build.execute(),
             SightglassCommand::BuildEngine(build) => build.execute(),
             SightglassCommand::Benchmark(benchmark) => benchmark.execute(),
-            SightglassCommand::InProcessBenchmark(benchmark) => benchmark.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),
             SightglassCommand::Analyze(analyze) => analyze.execute(),
         }

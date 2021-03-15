@@ -66,14 +66,18 @@ pub struct BenchmarkCommand {
     #[structopt(long, alias = "small-workload")]
     small_workloads: bool,
 
+    /// The directory to preopen as the benchmark working directory. If the benchmark accesses
+    /// files using WASI, it will see this directory as its current working directory (i.e. `.`). If
+    /// the working directory is not specified, the Wasm file's parent directory is used instead.
+    #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
+    working_dir: Option<PathBuf>,
+
     /// The path to the Wasm file to compile.
     #[structopt(
         index = 1,
         required = true,
         value_name = "WASMFILE",
-        parse(from_os_str),
-        empty_values(false),
-        last(true)
+        parse(from_os_str)
     )]
     wasm_files: Vec<PathBuf>,
 }
@@ -83,9 +87,62 @@ impl BenchmarkCommand {
         anyhow::ensure!(self.processes > 0, "processes must be greater than zero");
         anyhow::ensure!(
             self.iterations_per_process > 0,
-            "num-iterations-per-process must be greater than zero"
+            "iterations-per-process must be greater than zero"
         );
 
+        if self.processes == 1 {
+            self.execute_in_current_process()
+        } else {
+            self.execute_in_multiple_processes()
+        }
+    }
+
+    /// Execute benchmark(s) in the provided engine(s) using the current process.
+    pub fn execute_in_current_process(&self) -> Result<()> {
+        for engine in &self.engines {
+            let engine_path = get_built_engine(engine)?;
+            log::info!("Using benchmark engine: {}", engine_path.display());
+            let lib = libloading::Library::new(&engine_path)?;
+            let mut bench_api = unsafe { BenchApi::new(&lib)? };
+
+            for wasm_file in &self.wasm_files {
+                log::info!("Using Wasm benchmark: {}", wasm_file.display());
+
+                // Use the provided --working-dir, otherwise find the Wasm file's parent directory.
+                let working_dir = self.get_working_directory(&wasm_file)?;
+                log::info!("Using working directory: {}", working_dir.display());
+
+                // Read the Wasm bytes.
+                let bytes = fs::read(&wasm_file).context("Attempting to read Wasm bytes")?;
+                log::debug!("Wasm benchmark size: {} bytes", bytes.len());
+
+                let wasm = wasm_file.display().to_string();
+                let mut measurements = Measurements::new(this_arch(), engine, &wasm);
+                let mut measure = self.measure.build();
+
+                // Run the benchmark (compilation, instantiation, and execution) several times in
+                // this process.
+                for _ in 0..self.iterations_per_process {
+                    benchmark(
+                        &mut bench_api,
+                        &working_dir,
+                        &bytes,
+                        &mut measure,
+                        &mut measurements,
+                    )?;
+                    measurements.next_iteration();
+                }
+
+                let measurements = measurements.finish();
+                self.output_format.write(&measurements, io::stdout())?
+            }
+        }
+        Ok(())
+    }
+
+    /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
+    /// run the `execute_in_current_process` function above.
+    fn execute_in_multiple_processes(&self) -> Result<()> {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
 
@@ -110,8 +167,6 @@ impl BenchmarkCommand {
             }
         }
 
-        let mut csv_header = true;
-
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
             let (engine, wasm, procs_left) = &mut choices[index];
@@ -121,19 +176,18 @@ impl BenchmarkCommand {
                 .stdin(Stdio::null())
                 .stdout(Stdio::inherit())
                 .stderr(Stdio::inherit())
-                .arg("in-process-benchmark")
+                .arg("benchmark")
+                .arg("--processes")
+                .arg("1")
+                .arg("--iterations-per-process")
+                .arg(self.iterations_per_process.to_string())
                 .arg("--engine")
                 .arg(&engine)
                 .arg("--measure")
                 .arg(self.measure.to_string())
                 .arg("--output-format")
                 .arg(self.output_format.to_string())
-                .arg("--num-iterations")
-                .arg(self.iterations_per_process.to_string())
                 .arg(&wasm);
-            if csv_header {
-                command.arg("--csv-header");
-            }
             if self.small_workloads {
                 command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
             }
@@ -151,101 +205,24 @@ impl BenchmarkCommand {
             if *procs_left == 0 {
                 choices.swap_remove(index);
             }
-
-            // We only want to write the CSV header for the very first
-            // subprocess.
-            csv_header = false;
         }
 
         Ok(())
     }
-}
 
-/// Spawn a benchmark process.
-#[derive(StructOpt, Debug)]
-pub struct InProcessBenchmarkCommand {
-    /// The benchmark engine with which to run the benchmark. This can be either the path to a
-    /// shared library implementing the benchmarking engine specification or an engine reference:
-    /// `[engine name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
-    #[structopt(long("engine"), short("e"), value_name = "ENGINE-REF OR PATH")]
-    engine: String,
-
-    /// The type of measurement to use (wall-cycles, perf-counters, noop) when recording the
-    /// benchmark performance.
-    #[structopt(long, short, default_value = "wall-cycles")]
-    measure: MeasureType,
-
-    /// The directory to preopen as the benchmark's working directory. If the benchmark accesses
-    /// files using WASI, it will see this directory as its current working directory (i.e. `.`). If
-    /// the working directory is not specified, the Wasm file's parent directory is used instead.
-    #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
-    working_dir: Option<PathBuf>,
-
-    /// The path to the Wasm file to benchmark.
-    #[structopt(
-        index = 1,
-        required = true,
-        value_name = "WASMFILE",
-        parse(from_os_str)
-    )]
-    wasmfile: PathBuf,
-
-    /// The number of times to re-run the benchmark.
-    #[structopt(short = "n", long = "num-iterations", default_value = "1")]
-    iterations: usize,
-
-    /// The format of the output data. Either 'json' or 'csv'.
-    #[structopt(short = "f", long = "output-format", default_value = "json")]
-    output_format: Format,
-
-    /// If we are using the CSV output format, should we write a CSV header?
-    ///
-    /// Has no effect if the output format is not CSV.
-    #[structopt(long)]
-    csv_header: bool,
-}
-
-impl InProcessBenchmarkCommand {
-    pub fn execute(&self) -> Result<()> {
-        let engine_path = get_built_engine(&self.engine)?;
-        log::info!("Using benchmark engine: {}", engine_path.display());
-        let lib = libloading::Library::new(&engine_path)?;
-        let mut bench_api = unsafe { BenchApi::new(&lib)? };
-
-        // Use the provided --working-dir, otherwise find the Wasm file's parent directory.
+    /// Determine the working directory in which to run the benchmark using:
+    /// - first, any directory specified with `--working-dir`
+    /// - then, the parent directory of the Wasm file
+    /// - and if all else fails, the current working directory of the process.
+    fn get_working_directory(&self, wasm_file: &PathBuf) -> Result<PathBuf> {
         let working_dir = if let Some(dir) = self.working_dir.clone() {
             dir
-        } else if let Some(dir) = self.wasmfile.parent() {
+        } else if let Some(dir) = wasm_file.parent() {
             dir.into()
         } else {
             std::env::current_dir().context("failed to get the current working directory")?
         };
-        log::info!("Using working directory: {}", working_dir.display());
-
-        log::info!("Using Wasm benchmark: {}", self.wasmfile.display());
-        let bytes = fs::read(&self.wasmfile).context("Attempting to read Wasm bytes")?;
-        log::debug!("Wasm benchmark size: {} bytes", bytes.len());
-
-        let arch = this_arch();
-        let engine = self.engine.to_string();
-        let wasm = self.wasmfile.display().to_string();
-        let mut measurements = Measurements::new(arch, &engine, &wasm);
-
-        let mut measure = self.measure.build();
-
-        for _ in 0..self.iterations {
-            benchmark(
-                &mut bench_api,
-                &working_dir,
-                &bytes,
-                &mut measure,
-                &mut measurements,
-            )?;
-            measurements.next_iteration();
-        }
-
-        let measurements = measurements.finish();
-        self.output_format.write(&measurements, io::stdout())
+        Ok(working_dir)
     }
 }
 
