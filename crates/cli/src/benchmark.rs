@@ -7,7 +7,13 @@ use sightglass_recorder::{
     benchmark::{benchmark, BenchApi},
     measure::MeasureType,
 };
-use std::{fs, io, path::PathBuf, process::Command, process::Stdio};
+use std::{
+    fs,
+    io::{self, BufWriter, Write},
+    path::PathBuf,
+    process::Command,
+    process::Stdio,
+};
 use structopt::StructOpt;
 
 /// Measure compilation, instantiation, and execution of a Wasm file.
@@ -45,6 +51,10 @@ pub struct BenchmarkCommand {
     /// The format of the output data. Either 'json' or 'csv'.
     #[structopt(short = "f", long = "output-format", default_value = "json")]
     output_format: Format,
+
+    /// Path to a file which will contain the output data, or nothing to print to stdout (default).
+    #[structopt(short = "o", long = "output-file")]
+    output_file: Option<String>,
 
     /// The type of measurement to use (wall-cycles, perf-counters, noop) when recording the
     /// benchmark performance.
@@ -99,6 +109,12 @@ impl BenchmarkCommand {
 
     /// Execute benchmark(s) in the provided engine(s) using the current process.
     pub fn execute_in_current_process(&self) -> Result<()> {
+        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
+            Box::new(BufWriter::new(fs::File::create(file)?))
+        } else {
+            Box::new(io::stdout())
+        };
+
         for engine in &self.engines {
             let engine_path = get_built_engine(engine)?;
             log::info!("Using benchmark engine: {}", engine_path.display());
@@ -134,7 +150,7 @@ impl BenchmarkCommand {
                 }
 
                 let measurements = measurements.finish();
-                self.output_format.write(&measurements, io::stdout())?
+                self.output_format.write(&measurements, &mut output_file)?
             }
         }
         Ok(())
