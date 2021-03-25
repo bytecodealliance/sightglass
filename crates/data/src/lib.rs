@@ -10,7 +10,7 @@ mod format;
 pub use format::Format;
 
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
+use std::{borrow::Cow, str::FromStr};
 
 /// A single measurement, for example instructions retired when compiling a Wasm
 /// module.
@@ -66,6 +66,18 @@ pub enum Phase {
     /// The execution phase, where functions are called and instructions are
     /// executed.
     Execution,
+}
+
+impl FromStr for Phase {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "compilation" => Ok(Self::Compilation),
+            "instantiation" => Ok(Self::Instantiation),
+            "execution" => Ok(Self::Execution),
+            _ => Err("invalid phase".into()),
+        }
+    }
 }
 
 /// A summary of grouped measurements.

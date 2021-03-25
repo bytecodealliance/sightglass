@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
-use sightglass_data::Format;
+use sightglass_data::{Format, Phase};
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{
     benchmark::{benchmark, BenchApi},
@@ -90,6 +90,10 @@ pub struct BenchmarkCommand {
         parse(from_os_str)
     )]
     wasm_files: Vec<PathBuf>,
+
+    /// Stop measuring after the given phase (compilation/instantiation/execution).
+    #[structopt(long("stop-after"))]
+    stop_after_phase: Option<Phase>,
 }
 
 impl BenchmarkCommand {
@@ -143,6 +147,7 @@ impl BenchmarkCommand {
                         &mut bench_api,
                         &working_dir,
                         &bytes,
+                        self.stop_after_phase.clone(),
                         &mut measure,
                         &mut measurements,
                     )?;
