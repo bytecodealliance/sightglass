@@ -96,6 +96,9 @@ pub struct Summary<'a> {
     /// The maximum value of the `count` field.
     pub max: u64,
 
+    /// The median value of the `count` field.
+    pub median: u64,
+
     /// The arithmetic mean of the `count` field.
     pub mean: f64,
 
