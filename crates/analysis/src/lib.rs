@@ -5,7 +5,7 @@ use std::{borrow::Cow, collections::BTreeSet};
 pub fn summarize<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
     for k in keys(&measurements) {
-        let grouped_counts: Vec<_> = measurements
+        let mut grouped_counts: Vec<_> = measurements
             .iter()
             .filter(|m| k.matches(m))
             .map(|m| m.count)
@@ -28,6 +28,7 @@ pub fn summarize<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
                 .expect("at least one element"),
             mean: mean(&grouped_counts),
             mean_deviation: mean_deviation(&grouped_counts),
+            median: median(grouped_counts.as_mut_slice()),
         })
     }
     summaries
@@ -81,6 +82,14 @@ fn mean_deviation(numbers: &[u64]) -> f64 {
         / numbers.len() as f64
 }
 
+/// Returns the median value of a group.
+fn median(numbers: &mut [u64]) -> u64 {
+    numbers.sort();
+    // Note this index is *the* right one for odd lengths (the median value among 2p+1 values is at
+    // index p), and *a* right one for even lengths.
+    numbers[numbers.len() / 2]
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,7 +109,8 @@ mod tests {
                 count,
             }
         }
-        let measurements = vec![measurement(0), measurement(1), measurement(2)];
+
+        let measurements = vec![measurement(1), measurement(0), measurement(2)];
 
         assert_eq!(
             summarize(&measurements),
@@ -112,8 +122,9 @@ mod tests {
                 event: "wall-cycles".into(),
                 mean: 1.0,
                 min: 0,
+                median: 1,
                 max: 2,
-                mean_deviation: 2f64 / 3f64
+                mean_deviation: 2f64 / 3f64,
             }]
         );
     }
