@@ -135,6 +135,8 @@ pub fn benchmark(
     bench_api: &mut BenchApi,
     working_dir: &Path,
     wasm_bytes: &[u8],
+    // Optionally stop after the given phase, rather than running all phases.
+    stop_after_phase: Option<Phase>,
     measure: &mut impl Measure,
     measurements: &mut Measurements,
 ) -> Result<()> {
@@ -144,9 +146,17 @@ pub fn benchmark(
     let module = engine.compile(wasm_bytes, measure, measurements);
     info!("Compiled successfully");
 
+    if stop_after_phase == Some(Phase::Compilation) {
+        return Ok(());
+    }
+
     // Measure the module instantiation.
     let instance = module.instantiate(measure, measurements);
     info!("Instantiated successfully");
+
+    if stop_after_phase == Some(Phase::Instantiation) {
+        return Ok(());
+    }
 
     // Measure the module execution; note that, because bench_start and bench_end are passed in to the Wasm module
     // as imports, we must retain the measurement state here, in the host code--see `static_measure`.
