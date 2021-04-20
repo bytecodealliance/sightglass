@@ -18,7 +18,6 @@ pub struct CounterMeasure {
 }
 
 impl CounterMeasure {
-    #[cfg(target_os = "linux")]
     pub fn new() -> Self {
         let mut group = Group::new().expect(
             "Unable to create event group; try setting /proc/sys/kernel/perf_event_paranoid to 2 \
@@ -60,13 +59,6 @@ impl CounterMeasure {
                 ),
             event_group: group,
         }
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    pub fn new() -> Self {
-        // This Measure doesn't currently support performance counter use on non-linux
-        // targets but it could in the future.
-        unimplemented!("`perf_event_open` is only available on Linux systems");
     }
 }
 
@@ -142,7 +134,7 @@ impl std::ops::AddAssign<PerfCounters> for PerfCounters {
     }
 }
 
-#[cfg(all(test, target_os = "linux"))]
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::env;
