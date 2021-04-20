@@ -13,7 +13,7 @@ effectively duplicate workloads.
 Build an individual benchmark program via:
 
 ```
-$ cargo run -p sightglass-cli -- build path/to/benchmark/Dockerfile
+$ cargo run -p sightglass-cli -- build-benchmark path/to/benchmark/Dockerfile
 ```
 
 Build all benchmark programs by entering this directory

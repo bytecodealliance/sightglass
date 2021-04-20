@@ -77,6 +77,7 @@ pub trait Measure: 'static {
     fn end(&mut self, phase: Phase, measurements: &mut Measurements);
 }
 
+#[cfg(target_os = "linux")]
 pub mod counters;
 pub mod noop;
 pub mod wall_cycles;
@@ -95,6 +96,7 @@ pub enum MeasureType {
     /// Measure wall-clock time using, e.g., `RDTSC`.
     WallCycles,
     /// Measure a combination of HW counters using `perf_event_open`.
+    #[cfg(target_os = "linux")]
     PerfCounters,
 }
 
@@ -103,6 +105,7 @@ impl fmt::Display for MeasureType {
         match self {
             MeasureType::Noop => write!(f, "noop"),
             MeasureType::WallCycles => write!(f, "wall-cycles"),
+            #[cfg(target_os = "linux")]
             MeasureType::PerfCounters => write!(f, "perf-counters"),
         }
     }
@@ -114,6 +117,7 @@ impl FromStr for MeasureType {
         match s {
             "noop" => Ok(Self::Noop),
             "wall-cycles" => Ok(Self::WallCycles),
+            #[cfg(target_os = "linux")]
             "perf-counters" => Ok(Self::PerfCounters),
             _ => Err("unknown measure type"),
         }
@@ -128,6 +132,7 @@ impl MeasureType {
         match self {
             Self::Noop => Box::new(noop::NoopMeasure::new()),
             Self::WallCycles => Box::new(wall_cycles::WallCycleMeasure::new()),
+            #[cfg(target_os = "linux")]
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),
         }
     }
