@@ -1,16 +1,18 @@
-mod analyze;
 mod benchmark;
 mod build_benchmark;
 mod build_engine;
+mod effect_size;
+mod summarize;
 mod validate;
 
-use analyze::AnalyzeCommand;
 use anyhow::Result;
 use benchmark::BenchmarkCommand;
 use build_benchmark::BuildBenchmarkCommand;
 use build_engine::BuildEngineCommand;
+use effect_size::EffectSizeCommand;
 use log::trace;
 use structopt::{clap::AppSettings, StructOpt};
+use summarize::SummarizeCommand;
 use validate::ValidateCommand;
 
 /// Main entry point for CLI.
@@ -35,7 +37,8 @@ enum SightglassCommand {
     BuildEngine(BuildEngineCommand),
     Benchmark(BenchmarkCommand),
     Validate(ValidateCommand),
-    Analyze(AnalyzeCommand),
+    Summarize(SummarizeCommand),
+    EffectSize(EffectSizeCommand),
 }
 
 impl SightglassCommand {
@@ -46,7 +49,8 @@ impl SightglassCommand {
             SightglassCommand::BuildEngine(build) => build.execute(),
             SightglassCommand::Benchmark(benchmark) => benchmark.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),
-            SightglassCommand::Analyze(analyze) => analyze.execute(),
+            SightglassCommand::Summarize(summarize) => summarize.execute(),
+            SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
         }
     }
 }
