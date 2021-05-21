@@ -1,21 +1,21 @@
-use sightglass_data::{Measurement, Phase, Summary};
-use std::{borrow::Cow, collections::BTreeSet};
+use crate::keys::KeyBuilder;
+use sightglass_data::{Measurement, Summary};
 
 /// Summarize measurements grouped by: architecture, engine, benchmark file, phase and event.
 pub fn summarize<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
-    for k in keys(&measurements) {
+    for k in KeyBuilder::all().keys(&measurements) {
         let mut grouped_counts: Vec<_> = measurements
             .iter()
             .filter(|m| k.matches(m))
             .map(|m| m.count)
             .collect();
         summaries.push(Summary {
-            arch: k.arch,
-            engine: k.engine,
-            wasm: k.wasm,
-            phase: k.phase,
-            event: k.event,
+            arch: k.arch.unwrap(),
+            engine: k.engine.unwrap(),
+            wasm: k.wasm.unwrap(),
+            phase: k.phase.unwrap(),
+            event: k.event.unwrap(),
             min: grouped_counts
                 .iter()
                 .cloned()
@@ -32,39 +32,6 @@ pub fn summarize<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
         })
     }
     summaries
-}
-
-/// Extract the keys (i.e. `phase` and `event`) for the groups of measurements to aggregate.
-fn keys<'a>(measurements: &[Measurement<'a>]) -> Vec<Key<'a>> {
-    let set: BTreeSet<_> = measurements
-        .iter()
-        .cloned()
-        .map(|m| Key {
-            arch: m.arch,
-            engine: m.engine,
-            wasm: m.wasm,
-            phase: m.phase,
-            event: m.event,
-        })
-        .collect();
-    set.into_iter().collect()
-}
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
-struct Key<'a> {
-    arch: Cow<'a, str>,
-    engine: Cow<'a, str>,
-    wasm: Cow<'a, str>,
-    phase: Phase,
-    event: Cow<'a, str>,
-}
-impl Key<'_> {
-    fn matches(&self, m: &Measurement) -> bool {
-        self.arch == m.arch
-            && self.engine == m.engine
-            && self.wasm == m.wasm
-            && self.phase == m.phase
-            && self.event == m.event
-    }
 }
 
 /// Calculate the arithmetic mean of a slice of numbers.
@@ -150,29 +117,5 @@ mod tests {
         ];
 
         assert_eq!(summarize(&measurements).len(), 2);
-    }
-
-    #[test]
-    fn matching_fields() {
-        let key = Key {
-            arch: "x86".into(),
-            engine: "wasmtime".into(),
-            wasm: "bench.wasm".into(),
-            phase: Phase::Compilation,
-            event: "wall-cycles".into(),
-        };
-
-        // More test cases are needed, but this provides a sanity check for the matched key and
-        // measurement fields.
-        assert!(key.matches(&Measurement {
-            arch: "x86".into(),
-            engine: "wasmtime".into(),
-            wasm: "bench.wasm".into(),
-            process: 42,
-            iteration: 0,
-            phase: Phase::Compilation,
-            event: "wall-cycles".into(),
-            count: 42,
-        }));
     }
 }

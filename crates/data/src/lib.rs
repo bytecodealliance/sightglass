@@ -117,3 +117,75 @@ pub struct Summary<'a> {
     /// The mean deviation (note: not standard deviation) of the `count` field.
     pub mean_deviation: f64,
 }
+
+/// The effect size (and confidence interval) of between two different engines
+/// (i.e. two different commits of Wasmtime).
+///
+/// This allows us to justify statements like "we are 99% confident that the new
+/// register allocator is 13.6% faster (± 1.7%) than the old register
+/// allocator."
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EffectSize<'a> {
+    /// The CPU architecture on which this measurement was taken, for example
+    /// "aarch64" or "x86_64".
+    pub arch: Cow<'a, str>,
+
+    /// The file path of the Wasm benchmark program.
+    pub wasm: Cow<'a, str>,
+
+    /// The phase in a Wasm program's lifecycle that was measured: compilation,
+    /// instantiation, or execution.
+    pub phase: Phase,
+
+    /// The event that was measured: micro seconds of wall time, CPU cycles
+    /// executed, instructions retired, cache misses, etc.
+    pub event: Cow<'a, str>,
+
+    /// The first engine variant.
+    pub a: EffectSizeVariant<'a>,
+
+    /// The second engine variant.
+    pub b: EffectSizeVariant<'a>,
+
+    /// The significance level for the confidence interval.
+    ///
+    /// This is always between 0.0 and 1.0. Typical values are 0.01 and 0.05
+    /// which correspond to 99% confidence and 95% confidence respectively.
+    pub significance_level: f64,
+
+    /// The half-width confidence interval, i.e. the `i` in
+    ///
+    /// ```text
+    /// b.mean - a.mean ± i
+    /// ```
+    pub half_width_confidence_interval: f64,
+}
+
+/// One of two engine variants used in an effect size experiment.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EffectSizeVariant<'a> {
+    /// The file path of the wasmtime benchmark API shared library used to
+    /// record this measurement.
+    pub engine: Cow<'a, str>,
+
+    /// The arithmetic mean of the `count` field.
+    pub mean: f64,
+}
+
+impl EffectSize<'_> {
+    /// Return `b`'s speed up over `a` and the speed up's confidence interval.
+    pub fn b_speed_up_over_a(&self) -> (f64, f64) {
+        (
+            self.b.mean / self.a.mean,
+            self.half_width_confidence_interval / self.a.mean,
+        )
+    }
+
+    /// Return `a`'s speed up over `b` and the speed up's confidence interval.
+    pub fn a_speed_up_over_b(&self) -> (f64, f64) {
+        (
+            self.a.mean / self.b.mean,
+            self.half_width_confidence_interval / self.b.mean,
+        )
+    }
+}
