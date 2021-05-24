@@ -173,7 +173,7 @@ pub struct EffectSizeVariant<'a> {
 }
 
 impl EffectSize<'_> {
-    /// Return `b`'s speed up over `a` and the speed up's confidence interval.
+    /// Return `b`'s speedup over `a` and the speedup's confidence interval.
     pub fn b_speed_up_over_a(&self) -> (f64, f64) {
         (
             self.b.mean / self.a.mean,
