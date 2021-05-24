@@ -117,3 +117,76 @@ pub struct Summary<'a> {
     /// The mean deviation (note: not standard deviation) of the `count` field.
     pub mean_deviation: f64,
 }
+
+/// The effect size (and confidence interval) between two different engines
+/// (i.e. two different commits of Wasmtime).
+///
+/// This allows us to justify statements like "we are 99% confident that the new
+/// register allocator is 13.6% faster (± 1.7%) than the old register
+/// allocator."
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EffectSize<'a> {
+    /// The CPU architecture on which this measurement was taken, for example
+    /// "aarch64" or "x86_64".
+    pub arch: Cow<'a, str>,
+
+    /// The file path of the Wasm benchmark program.
+    pub wasm: Cow<'a, str>,
+
+    /// The phase in a Wasm program's lifecycle that was measured: compilation,
+    /// instantiation, or execution.
+    pub phase: Phase,
+
+    /// The event that was measured: micro seconds of wall time, CPU cycles
+    /// executed, instructions retired, cache misses, etc.
+    pub event: Cow<'a, str>,
+
+    /// The first engine being compared.
+    ///
+    /// This is the file path of the wasmtime benchmark API shared library used
+    /// to record this measurement.
+    pub a_engine: Cow<'a, str>,
+
+    /// The first engine's result's arithmetic mean of the `count` field.
+    pub a_mean: f64,
+
+    /// The second engine being compared.
+    ///
+    /// This is the file path of the wasmtime benchmark API shared library used
+    /// to record this measurement.
+    pub b_engine: Cow<'a, str>,
+
+    /// The second engine's result's arithmetic mean of the `count` field.
+    pub b_mean: f64,
+
+    /// The significance level for the confidence interval.
+    ///
+    /// This is always between 0.0 and 1.0. Typical values are 0.01 and 0.05
+    /// which correspond to 99% confidence and 95% confidence respectively.
+    pub significance_level: f64,
+
+    /// The half-width confidence interval, i.e. the `i` in
+    ///
+    /// ```text
+    /// b_mean - a_mean ± i
+    /// ```
+    pub half_width_confidence_interval: f64,
+}
+
+impl EffectSize<'_> {
+    /// Return `b`'s speedup over `a` and the speedup's confidence interval.
+    pub fn b_speed_up_over_a(&self) -> (f64, f64) {
+        (
+            self.b_mean / self.a_mean,
+            self.half_width_confidence_interval / self.a_mean,
+        )
+    }
+
+    /// Return `a`'s speed up over `b` and the speed up's confidence interval.
+    pub fn a_speed_up_over_b(&self) -> (f64, f64) {
+        (
+            self.a_mean / self.b_mean,
+            self.half_width_confidence_interval / self.b_mean,
+        )
+    }
+}
