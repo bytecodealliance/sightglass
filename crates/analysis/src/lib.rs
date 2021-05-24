@@ -1,9 +1,9 @@
+mod effect_size;
 mod keys;
 mod summarize;
-mod effect_size;
 
 pub use {
+    effect_size::effect_size,
     keys::{Key, KeyBuilder},
     summarize::summarize,
-    effect_size::effect_size,
 };
