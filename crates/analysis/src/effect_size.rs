@@ -1,6 +1,6 @@
 use crate::KeyBuilder;
 use anyhow::Result;
-use sightglass_data::{EffectSize, EffectSizeVariant, Measurement};
+use sightglass_data::{EffectSize, Measurement};
 use std::collections::BTreeSet;
 
 /// Find the effect size (and confidence interval) of between two different
@@ -61,14 +61,10 @@ pub fn effect_size<'a>(
             wasm: key.wasm.unwrap(),
             phase: key.phase.unwrap(),
             event: key.event.unwrap(),
-            a: EffectSizeVariant {
-                engine: engine_a.clone(),
-                mean: a.mean,
-            },
-            b: EffectSizeVariant {
-                engine: engine_b.clone(),
-                mean: b.mean,
-            },
+            a_engine: engine_a.clone(),
+            a_mean: a.mean,
+            b_engine: engine_b.clone(),
+            b_mean: b.mean,
             significance_level,
             half_width_confidence_interval: ci,
         });

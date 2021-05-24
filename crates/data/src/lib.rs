@@ -141,11 +141,23 @@ pub struct EffectSize<'a> {
     /// executed, instructions retired, cache misses, etc.
     pub event: Cow<'a, str>,
 
-    /// The first engine variant.
-    pub a: EffectSizeVariant<'a>,
+    /// The first engine being compared.
+    ///
+    /// This is the file path of the wasmtime benchmark API shared library used
+    /// to record this measurement.
+    pub a_engine: Cow<'a, str>,
 
-    /// The second engine variant.
-    pub b: EffectSizeVariant<'a>,
+    /// The first engine's result's arithmetic mean of the `count` field.
+    pub a_mean: f64,
+
+    /// The second engine being compared.
+    ///
+    /// This is the file path of the wasmtime benchmark API shared library used
+    /// to record this measurement.
+    pub b_engine: Cow<'a, str>,
+
+    /// The second engine's result's arithmetic mean of the `count` field.
+    pub b_mean: f64,
 
     /// The significance level for the confidence interval.
     ///
@@ -156,36 +168,25 @@ pub struct EffectSize<'a> {
     /// The half-width confidence interval, i.e. the `i` in
     ///
     /// ```text
-    /// b.mean - a.mean ± i
+    /// b_mean - a_mean ± i
     /// ```
     pub half_width_confidence_interval: f64,
-}
-
-/// One of two engine variants used in an effect size experiment.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct EffectSizeVariant<'a> {
-    /// The file path of the wasmtime benchmark API shared library used to
-    /// record this measurement.
-    pub engine: Cow<'a, str>,
-
-    /// The arithmetic mean of the `count` field.
-    pub mean: f64,
 }
 
 impl EffectSize<'_> {
     /// Return `b`'s speedup over `a` and the speedup's confidence interval.
     pub fn b_speed_up_over_a(&self) -> (f64, f64) {
         (
-            self.b.mean / self.a.mean,
-            self.half_width_confidence_interval / self.a.mean,
+            self.b_mean / self.a_mean,
+            self.half_width_confidence_interval / self.a_mean,
         )
     }
 
     /// Return `a`'s speed up over `b` and the speed up's confidence interval.
     pub fn a_speed_up_over_b(&self) -> (f64, f64) {
         (
-            self.a.mean / self.b.mean,
-            self.half_width_confidence_interval / self.b.mean,
+            self.a_mean / self.b_mean,
+            self.half_width_confidence_interval / self.b_mean,
         )
     }
 }
