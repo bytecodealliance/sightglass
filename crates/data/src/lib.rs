@@ -118,7 +118,7 @@ pub struct Summary<'a> {
     pub mean_deviation: f64,
 }
 
-/// The effect size (and confidence interval) of between two different engines
+/// The effect size (and confidence interval) between two different engines
 /// (i.e. two different commits of Wasmtime).
 ///
 /// This allows us to justify statements like "we are 99% confident that the new
