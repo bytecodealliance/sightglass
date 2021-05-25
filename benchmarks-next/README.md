@@ -40,9 +40,6 @@ record its execution, it must:
   `bench.start` has already been called. This is when the benchmark runner will
   stop recording execution time and performance counters.
 
-* Not use `stdout`. It may use `stderr` for logging, if necessary. This helps
-  the runner differentiate between recorded measurements and logging.
-
 * Provide reproducible builds via Docker.
 
 * Be located at `sightglass/benchmarks-next/$BENCHMARK_NAME/benchmark.wasm`
@@ -55,6 +52,14 @@ record its execution, it must:
   If, for example, the benchmark processes JSON input, then its input workload
   should live at `sightglass/benchmarks-next/$BENCHMARK_NAME/input.json`, and it
   should open that file as `"./input.json"`.
+
+* Define the expected `stdout` output in a `./stdout.expected` sibling file
+  located next to the `benchmark.wasm` file. The runner will assert that the
+  actual execution's output matches the expectation.
+
+* Define the expected `stderr` output in a `./stderr.expected` sibling file
+  located next to the `benchmark.wasm` file. The runner will assert that the
+  actual execution's output matches the expectation.
 
 ## Additional Requirements
 
