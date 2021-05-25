@@ -3,14 +3,11 @@ use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
 use sightglass_data::{Format, Phase};
 use sightglass_recorder::measure::Measurements;
-use sightglass_recorder::{
-    benchmark::{benchmark, BenchApi},
-    measure::MeasureType,
-};
+use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
     fs,
     io::{self, BufWriter, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
     process::Stdio,
 };
@@ -142,15 +139,33 @@ impl BenchmarkCommand {
 
                 // Run the benchmark (compilation, instantiation, and execution) several times in
                 // this process.
-                for _ in 0..self.iterations_per_process {
+                for i in 0..self.iterations_per_process {
+                    let wasm_hash = {
+                        use std::collections::hash_map::DefaultHasher;
+                        use std::hash::{Hash, Hasher};
+                        let mut hasher = DefaultHasher::new();
+                        wasm_file.hash(&mut hasher);
+                        hasher.finish()
+                    };
+                    let stdout = format!("stdout-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+                    let stdout = Path::new(&stdout);
+                    let stderr = format!("stderr-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+                    let stderr = Path::new(&stderr);
+                    let stdin = None;
+
                     benchmark(
                         &mut bench_api,
                         &working_dir,
+                        stdout,
+                        stderr,
+                        stdin,
                         &bytes,
                         self.stop_after_phase.clone(),
                         &mut measure,
                         &mut measurements,
                     )?;
+
+                    self.check_output(wasm_file, stdout, stderr)?;
                     measurements.next_iteration();
                 }
 
@@ -158,6 +173,69 @@ impl BenchmarkCommand {
                 self.output_format.write(&measurements, &mut output_file)?
             }
         }
+        Ok(())
+    }
+
+    /// Assert that our actual `stdout` and `stderr` match our expectations.
+    fn check_output(&self, wasm_file: &Path, stdout: &Path, stderr: &Path) -> Result<()> {
+        // If we aren't going through all phases and executing the Wasm, then we
+        // won't have any actual output to check.
+        if self.stop_after_phase.is_some() {
+            return Ok(());
+        }
+
+        let wasm_file_dir: PathBuf = if let Some(dir) = wasm_file.parent() {
+            dir.into()
+        } else {
+            ".".into()
+        };
+
+        let stdout_expected = wasm_file_dir.join("stdout.expected");
+        if stdout_expected.exists() {
+            let stdout_expected_data = std::fs::read(&stdout_expected)
+                .with_context(|| format!("failed to read `{}`", stdout_expected.display()))?;
+            let stdout_actual_data = std::fs::read(stdout)
+                .with_context(|| format!("failed to read `{}`", stdout.display()))?;
+            anyhow::ensure!(
+                stdout_expected_data == stdout_actual_data,
+                "Actual `stdout` does not match the expected `stdout`!\n\
+                               * Actual `stdout` is located at `{}`\n\
+                               * Expected `stdout` is located at `{}`",
+                stdout.display(),
+                stdout_expected.display(),
+            );
+        } else {
+            log::warn!(
+                "Did not find `{}` for `{}`! Cannot assert that actual \
+                 `stdout` matches expectation.",
+                stdout_expected.display(),
+                wasm_file.display()
+            );
+        }
+
+        let stderr_expected = wasm_file_dir.join("stderr.expected");
+        if stderr_expected.exists() {
+            let stderr_expected_data = std::fs::read(&stderr_expected)
+                .with_context(|| format!("failed to read `{}`", stderr_expected.display()))?;
+            let stderr_actual_data = std::fs::read(stderr)
+                .with_context(|| format!("failed to read `{}`", stderr.display()))?;
+            anyhow::ensure!(
+                stderr_expected_data == stderr_actual_data,
+                "Actual `stderr` does not match the expected `stderr`!\n\
+                               * Actual `stderr` is located at `{}`\n\
+                               * Expected `stderr` is located at `{}`",
+                stderr.display(),
+                stderr_expected.display(),
+            );
+        } else {
+            log::warn!(
+                "Did not find `{}` for `{}`! Cannot assert that actual \
+                 `stderr` matches expectation.",
+                stderr_expected.display(),
+                wasm_file.display()
+            );
+        }
+
         Ok(())
     }
 
