@@ -64,7 +64,7 @@ impl<'a> BenchApi<'a> {
     }
 }
 
-/// An engine from a `BenchApin`.
+/// An engine from a `BenchApi`.
 pub struct Engine<'a, 'b, 'c, M> {
     bench_api: &'a mut BenchApi<'b>,
     measurement_data: *mut UnsafeCell<(&'a mut M, &'a mut Measurements<'c>)>,
