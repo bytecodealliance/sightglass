@@ -3,14 +3,11 @@ use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
 use sightglass_data::{Format, Phase};
 use sightglass_recorder::measure::Measurements;
-use sightglass_recorder::{
-    benchmark::{benchmark, BenchApi},
-    measure::MeasureType,
-};
+use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
     fs,
     io::{self, BufWriter, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
     process::Command,
     process::Stdio,
 };
@@ -142,10 +139,26 @@ impl BenchmarkCommand {
 
                 // Run the benchmark (compilation, instantiation, and execution) several times in
                 // this process.
-                for _ in 0..self.iterations_per_process {
+                for i in 0..self.iterations_per_process {
+                    let wasm_hash = {
+                        use std::collections::hash_map::DefaultHasher;
+                        use std::hash::{Hash, Hasher};
+                        let mut hasher = DefaultHasher::new();
+                        wasm_file.hash(&mut hasher);
+                        hasher.finish()
+                    };
+                    let stdout = format!("stdout-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+                    let stdout = Path::new(&stdout);
+                    let stderr = format!("stderr-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+                    let stderr = Path::new(&stderr);
+                    let stdin = None;
+
                     benchmark(
                         &mut bench_api,
                         &working_dir,
+                        stdout,
+                        stderr,
+                        stdin,
                         &bytes,
                         self.stop_after_phase.clone(),
                         &mut measure,

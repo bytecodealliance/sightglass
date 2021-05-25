@@ -14,3 +14,7 @@ webui/history.json
 !webui_runner/results/shootout.html
 !webui_runner/results/polybench.html
 !webui_runner/results/send.sh
+
+# Log files produced by running sightglass benchmarks.
+**/stdout-*-*-*.log
+**/stderr-*-*-*.log
