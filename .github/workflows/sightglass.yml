@@ -10,6 +10,10 @@ env:
   CARGO_TERM_COLOR: always
   RUST_LOG: info
 
+  # The Wasmtime commit that we build the bench API from for testing. Bumping
+  # this will automatically cause us to update our CI cache on the next run.
+  WASMTIME_COMMIT: "a2e71dafac4d2e42ed6edbc77081d39a40f4c3ff"
+
 jobs:
   format:
     runs-on: ubuntu-latest
@@ -31,13 +35,46 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v2
+
     - name: Install nightly
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
-    - uses: docker-practice/actions-setup-docker@v1
-      if: matrix.os == 'macos-latest'
+
+    - name: Download Cached Wasmtime Bench API
+      uses: actions/cache@v2
+      id: wasmtime-cache
+      with:
+        path: wasmtime/target/release/*wasmtime_bench_api.*
+        key: wasmtime-${{ runner.os }}-${{ env.WASMTIME_COMMIT }}
+
+    - name: Clone Wasmtime
+      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
+      uses: actions/checkout@v2
+      with:
+        repository: "bytecodealliance/wasmtime"
+        ref: ${{ env.WASMTIME_COMMIT }}
+        submodules: recursive
+        path: wasmtime
+
+    - name: Build Wasmtime Bench API
+      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
+      run: cargo build --manifest-path wasmtime/crates/bench-api/Cargo.toml --release
+
+    - name: Configure Wasmtime Bench API (linux)
+      if: runner.os == 'Linux'
+      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.so" >> $GITHUB_ENV
+
+    - name: Configure Wasmtime Bench API (macos)
+      if: runner.os == 'macOS'
+      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.dylib" >> $GITHUB_ENV
+
+    - name: Configure Wasmtime Bench API (windows)
+      if: runner.os == 'Windows'
+      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
+
     - name: Build all
       run: cargo +nightly build --verbose --all
+
     - name: Test all
       run: cargo +nightly test --verbose --all
