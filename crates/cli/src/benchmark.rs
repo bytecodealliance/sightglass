@@ -192,15 +192,18 @@ impl BenchmarkCommand {
 
         let stdout_expected = wasm_file_dir.join("stdout.expected");
         if stdout_expected.exists() {
-            let stdout_expected_data = std::fs::read(&stdout_expected)
+            let stdout_expected_data = std::fs::read_to_string(&stdout_expected)
                 .with_context(|| format!("failed to read `{}`", stdout_expected.display()))?;
-            let stdout_actual_data = std::fs::read(stdout)
+            let stdout_actual_data = std::fs::read_to_string(stdout)
                 .with_context(|| format!("failed to read `{}`", stdout.display()))?;
+            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
+            let stdout_expected_data = stdout_expected_data.lines().collect::<Vec<_>>();
+            let stdout_actual_data = stdout_actual_data.lines().collect::<Vec<_>>();
             anyhow::ensure!(
                 stdout_expected_data == stdout_actual_data,
                 "Actual `stdout` does not match the expected `stdout`!\n\
-                               * Actual `stdout` is located at `{}`\n\
-                               * Expected `stdout` is located at `{}`",
+                 * Actual `stdout` is located at `{}`\n\
+                 * Expected `stdout` is located at `{}`",
                 stdout.display(),
                 stdout_expected.display(),
             );
@@ -215,15 +218,18 @@ impl BenchmarkCommand {
 
         let stderr_expected = wasm_file_dir.join("stderr.expected");
         if stderr_expected.exists() {
-            let stderr_expected_data = std::fs::read(&stderr_expected)
+            let stderr_expected_data = std::fs::read_to_string(&stderr_expected)
                 .with_context(|| format!("failed to read `{}`", stderr_expected.display()))?;
-            let stderr_actual_data = std::fs::read(stderr)
+            let stderr_actual_data = std::fs::read_to_string(stderr)
                 .with_context(|| format!("failed to read `{}`", stderr.display()))?;
+            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
+            let stderr_expected_data = stderr_expected_data.lines().collect::<Vec<_>>();
+            let stderr_actual_data = stderr_actual_data.lines().collect::<Vec<_>>();
             anyhow::ensure!(
                 stderr_expected_data == stderr_actual_data,
                 "Actual `stderr` does not match the expected `stderr`!\n\
-                               * Actual `stderr` is located at `{}`\n\
-                               * Expected `stderr` is located at `{}`",
+                 * Actual `stderr` is located at `{}`\n\
+                 * Expected `stderr` is located at `{}`",
                 stderr.display(),
                 stderr_expected.display(),
             );
