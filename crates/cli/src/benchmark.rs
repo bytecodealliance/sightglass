@@ -315,7 +315,7 @@ impl BenchmarkCommand {
                 Format::Json => {
                     measurements.extend(
                         serde_json::from_slice::<Vec<Measurement<'_>>>(&output.stdout)
-                            .context("failed to read benchmakr subprocess's results")?,
+                            .context("failed to read benchmark subprocess's results")?,
                     );
                 }
                 Format::Csv { .. } => {
