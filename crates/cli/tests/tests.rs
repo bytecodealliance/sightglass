@@ -12,13 +12,14 @@ fn sightglass_cli() -> Command {
     // system.
     static BUILD_WASMTIME: std::sync::Once = std::sync::Once::new();
     BUILD_WASMTIME.call_once(|| {
-        Command::cargo_bin("sightglass-cli")
+        let status = Command::cargo_bin("sightglass-cli")
             .unwrap()
             .current_dir("../..") // Run in the root of the repo.
             .arg("build-engine")
             .arg("wasmtime")
-            .assert()
-            .success();
+            .status()
+            .expect("failed to run `sightglass-cli build-engine`");
+        assert!(status.success());
     });
 
     Command::cargo_bin("sightglass-cli").unwrap()
