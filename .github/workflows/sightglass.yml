@@ -35,6 +35,8 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
+    - uses: docker-practice/actions-setup-docker@v1
+      if: matrix.os == 'macos-latest'
     - name: Build all
       run: cargo +nightly build --verbose --all
     - name: Test all
