@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_artifact::get_built_engine;
-use sightglass_data::{Format, Phase};
+use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
@@ -192,15 +192,18 @@ impl BenchmarkCommand {
 
         let stdout_expected = wasm_file_dir.join("stdout.expected");
         if stdout_expected.exists() {
-            let stdout_expected_data = std::fs::read(&stdout_expected)
+            let stdout_expected_data = std::fs::read_to_string(&stdout_expected)
                 .with_context(|| format!("failed to read `{}`", stdout_expected.display()))?;
-            let stdout_actual_data = std::fs::read(stdout)
+            let stdout_actual_data = std::fs::read_to_string(stdout)
                 .with_context(|| format!("failed to read `{}`", stdout.display()))?;
+            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
+            let stdout_expected_data = stdout_expected_data.lines().collect::<Vec<_>>();
+            let stdout_actual_data = stdout_actual_data.lines().collect::<Vec<_>>();
             anyhow::ensure!(
                 stdout_expected_data == stdout_actual_data,
                 "Actual `stdout` does not match the expected `stdout`!\n\
-                               * Actual `stdout` is located at `{}`\n\
-                               * Expected `stdout` is located at `{}`",
+                 * Actual `stdout` is located at `{}`\n\
+                 * Expected `stdout` is located at `{}`",
                 stdout.display(),
                 stdout_expected.display(),
             );
@@ -215,15 +218,18 @@ impl BenchmarkCommand {
 
         let stderr_expected = wasm_file_dir.join("stderr.expected");
         if stderr_expected.exists() {
-            let stderr_expected_data = std::fs::read(&stderr_expected)
+            let stderr_expected_data = std::fs::read_to_string(&stderr_expected)
                 .with_context(|| format!("failed to read `{}`", stderr_expected.display()))?;
-            let stderr_actual_data = std::fs::read(stderr)
+            let stderr_actual_data = std::fs::read_to_string(stderr)
                 .with_context(|| format!("failed to read `{}`", stderr.display()))?;
+            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
+            let stderr_expected_data = stderr_expected_data.lines().collect::<Vec<_>>();
+            let stderr_actual_data = stderr_actual_data.lines().collect::<Vec<_>>();
             anyhow::ensure!(
                 stderr_expected_data == stderr_actual_data,
                 "Actual `stderr` does not match the expected `stderr`!\n\
-                               * Actual `stderr` is located at `{}`\n\
-                               * Expected `stderr` is located at `{}`",
+                 * Actual `stderr` is located at `{}`\n\
+                 * Expected `stderr` is located at `{}`",
                 stderr.display(),
                 stderr_expected.display(),
             );
@@ -242,6 +248,12 @@ impl BenchmarkCommand {
     /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
     /// run the `execute_in_current_process` function above.
     fn execute_in_multiple_processes(&self) -> Result<()> {
+        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
+            Box::new(BufWriter::new(fs::File::create(file)?))
+        } else {
+            Box::new(io::stdout())
+        };
+
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
 
@@ -266,6 +278,9 @@ impl BenchmarkCommand {
             }
         }
 
+        // Accumulated measurements from all of our subprocesses.
+        let mut measurements = vec![];
+
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
             let (engine, wasm, procs_left) = &mut choices[index];
@@ -273,7 +288,7 @@ impl BenchmarkCommand {
             let mut command = Command::new(&this_exe);
             command
                 .stdin(Stdio::null())
-                .stdout(Stdio::inherit())
+                .stdout(Stdio::piped())
                 .stderr(Stdio::inherit())
                 .arg("benchmark")
                 .arg("--processes")
@@ -291,14 +306,33 @@ impl BenchmarkCommand {
                 command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
             }
 
-            let status = command
-                .status()
-                .context("failed to spawn benchmark process")?;
+            let output = command
+                .output()
+                .context("failed to run benchmark subprocess")?;
 
             anyhow::ensure!(
-                status.success(),
-                "benchmark process did not exit successfully"
+                output.status.success(),
+                "benchmark subprocess did not exit successfully"
             );
+
+            // Parse the subprocess's output and add its measurements to our
+            // accumulation.
+            match self.output_format {
+                Format::Json => {
+                    measurements.extend(
+                        serde_json::from_slice::<Vec<Measurement<'_>>>(&output.stdout)
+                            .context("failed to read benchmark subprocess's results")?,
+                    );
+                }
+                Format::Csv { .. } => {
+                    let mut reader = csv::Reader::from_reader(&output.stdout[..]);
+                    for measurement in reader.deserialize() {
+                        let measurement =
+                            measurement.context("failed to deserialize CSV measurement record")?;
+                        measurements.push(measurement);
+                    }
+                }
+            };
 
             *procs_left -= 1;
             if *procs_left == 0 {
@@ -306,6 +340,7 @@ impl BenchmarkCommand {
             }
         }
 
+        self.output_format.write(&measurements, &mut output_file)?;
         Ok(())
     }
 

@@ -42,3 +42,6 @@ members = [
 default-members = [
     "crates/cli"
 ]
+
+[dev-dependencies]
+serde_json = "1.0.64"
