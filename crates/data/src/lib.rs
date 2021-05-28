@@ -81,7 +81,8 @@ impl std::fmt::Display for Phase {
 impl FromStr for Phase {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+        let s = s.to_ascii_lowercase();
+        match s.as_str() {
             "compilation" => Ok(Self::Compilation),
             "instantiation" => Ok(Self::Instantiation),
             "execution" => Ok(Self::Execution),
