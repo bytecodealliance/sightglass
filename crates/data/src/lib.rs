@@ -68,6 +68,16 @@ pub enum Phase {
     Execution,
 }
 
+impl std::fmt::Display for Phase {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Phase::Compilation => write!(f, "compilation"),
+            Phase::Instantiation => write!(f, "instantiation"),
+            Phase::Execution => write!(f, "execution"),
+        }
+    }
+}
+
 impl FromStr for Phase {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
