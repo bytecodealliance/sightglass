@@ -1,6 +1,7 @@
 mod benchmark;
 mod build_benchmark;
 mod build_engine;
+mod clean;
 mod effect_size;
 mod summarize;
 mod validate;
@@ -9,6 +10,7 @@ use anyhow::Result;
 use benchmark::BenchmarkCommand;
 use build_benchmark::BuildBenchmarkCommand;
 use build_engine::BuildEngineCommand;
+use clean::CleanCommand;
 use effect_size::EffectSizeCommand;
 use log::trace;
 use structopt::{clap::AppSettings, StructOpt};
@@ -39,6 +41,7 @@ enum SightglassCommand {
     Validate(ValidateCommand),
     Summarize(SummarizeCommand),
     EffectSize(EffectSizeCommand),
+    Clean(CleanCommand),
 }
 
 impl SightglassCommand {
@@ -51,6 +54,7 @@ impl SightglassCommand {
             SightglassCommand::Validate(validate) => validate.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),
             SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
+            SightglassCommand::Clean(clean) => clean.execute(),
         }
     }
 }

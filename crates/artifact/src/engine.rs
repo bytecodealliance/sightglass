@@ -1,6 +1,5 @@
 use crate::{DockerBuildArgs, Dockerfile, GitLocation};
 use anyhow::{anyhow, Result};
-use dirs;
 use log;
 use std::{env, fmt, fs, path::Path, path::PathBuf, str::FromStr};
 
@@ -29,11 +28,7 @@ pub fn get_built_engine(engine: &str) -> Result<PathBuf> {
 /// Calculate the path to an engine library: e.g. `<user's app data
 /// dir>/sightglass/wasmtime@ab1234ef/libengine.so`.
 pub fn get_known_engine_path(slug: &str) -> Result<PathBuf> {
-    let mut p = dirs::data_local_dir().ok_or(anyhow!(
-        "missing an application data folder for storing sightglass engines; e.g. \
-        /home/.../.local/share, C:\\Users\\...\\AppData\\Local"
-    ))?;
-    p.push("sightglass");
+    let mut p = super::sightglass_data_dir()?;
     p.push(slug);
     p.push(get_engine_filename());
     Ok(p)
