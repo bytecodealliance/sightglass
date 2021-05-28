@@ -300,11 +300,17 @@ impl BenchmarkCommand {
                 .arg("--measure")
                 .arg(self.measure.to_string())
                 .arg("--output-format")
-                .arg(self.output_format.to_string())
-                .arg(&wasm);
+                .arg(self.output_format.to_string());
+
             if self.small_workloads {
                 command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
             }
+
+            if let Some(phase) = self.stop_after_phase {
+                command.arg("--stop-after").arg(phase.to_string());
+            }
+
+            command.arg("--").arg(&wasm);
 
             let output = command
                 .output()
