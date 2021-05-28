@@ -48,6 +48,44 @@ fn help() {
 }
 
 #[test]
+fn benchmark_stop_after_compilation() {
+    sightglass_cli_benchmark()
+        .arg("--processes")
+        .arg("2")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--stop-after")
+        .arg("compilation")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("Compilation")
+                .and(predicate::str::contains("Instantiation").not())
+                .and(predicate::str::contains("Execution").not()),
+        );
+}
+
+#[test]
+fn benchmark_stop_after_instantiation() {
+    sightglass_cli_benchmark()
+        .arg("--processes")
+        .arg("2")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--stop-after")
+        .arg("instantiation")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("Compilation")
+                .and(predicate::str::contains("Instantiation"))
+                .and(predicate::str::contains("Execution").not()),
+        );
+}
+
+#[test]
 fn benchmark_json() {
     let assert = sightglass_cli_benchmark()
         .arg("--processes")
