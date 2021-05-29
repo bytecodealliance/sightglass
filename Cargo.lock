@@ -1486,6 +1486,7 @@ name = "sightglass-recorder"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "lazy_static",
  "libloading 0.6.6",
  "log 0.4.11",
  "perf-event",
