@@ -18,8 +18,10 @@ structopt = { version = "0.3", features = ["color", "suggestions"] }
 thiserror = "1.0"
 rand = { version = "0.7.3", features = ["small_rng"] }
 csv = "1.1.6"
+regex = "1.5.4"
 
 [dev-dependencies]
 assert_cmd = "1.0.4"
 env_logger = "0.8.3"
 predicates = "1.0.8"
+tempfile = "3.2.0"
