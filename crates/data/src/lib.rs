@@ -185,6 +185,12 @@ pub struct EffectSize<'a> {
 }
 
 impl EffectSize<'_> {
+    /// Is the difference between `self.a_mean` and `self.b_mean` statistically
+    /// significant?
+    pub fn is_significant(&self) -> bool {
+        (self.a_mean - self.b_mean).abs() > self.half_width_confidence_interval.abs()
+    }
+
     /// Return `b`'s speedup over `a` and the speedup's confidence interval.
     pub fn b_speed_up_over_a(&self) -> (f64, f64) {
         (

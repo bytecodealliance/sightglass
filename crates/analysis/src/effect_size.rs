@@ -55,7 +55,7 @@ pub fn effect_size<'a>(
             .map(|m| m.count as f64)
             .collect();
 
-        let ci = behrens_fisher::confidence_interval(significance_level, a, b)?;
+        let ci = behrens_fisher::confidence_interval(1.0 - significance_level, a, b)?;
         results.push(EffectSize {
             arch: key.arch.unwrap(),
             wasm: key.wasm.unwrap(),
