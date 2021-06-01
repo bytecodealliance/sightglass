@@ -23,6 +23,24 @@ fn sightglass_cli_benchmark() -> Command {
         // system.
         static BUILD_WASMTIME: std::sync::Once = std::sync::Once::new();
         BUILD_WASMTIME.call_once(|| {
+            if sightglass_artifact::get_known_engine_path("wasmtime")
+                .unwrap()
+                .is_file()
+            {
+                // A wasmtime engine is already built!
+                return;
+            }
+
+            // Use this instead of `eprintln!` to avoid `cargo test`'s stdio
+            // capturing.
+            use std::io::Write;
+            drop(writeln!(
+                std::io::stderr(),
+                "**************************************************************\n\
+                 *** Building Wasmtime engine; this may take a few minutes. ***\n\
+                 **************************************************************"
+            ));
+
             let status = Command::cargo_bin("sightglass-cli")
                 .unwrap()
                 .current_dir("../..") // Run in the root of the repo.
