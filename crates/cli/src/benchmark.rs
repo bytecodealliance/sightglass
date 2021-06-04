@@ -463,14 +463,9 @@ fn display_effect_size(
             let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
             writeln!(
                 output_file,
-                "  {a_engine} is {ratio_min:.2}x to {ratio_max:.2}x {faster_slower} than {b_engine}!",
+                "  {a_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_engine}!",
                 a_engine = a_engine,
                 b_engine = b_engine,
-                faster_slower = if effect_size.a_mean < effect_size.b_mean {
-                    "FASTER"
-                } else {
-                    "SLOWER"
-                },
                 ratio_min = ratio - ratio_ci,
                 ratio_max = ratio + ratio_ci,
             )?;
@@ -479,14 +474,9 @@ fn display_effect_size(
 
             writeln!(
                 output_file,
-                "  {b_engine} is {ratio_min:.2}x to {ratio_max:.2}x {faster_slower} than {a_engine}!",
+                "  {b_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_engine}!",
                 a_engine = a_engine,
                 b_engine = b_engine,
-                faster_slower = if effect_size.b_mean < effect_size.a_mean {
-                    "FASTER"
-                } else {
-                    "SLOWER"
-                },
                 ratio_min = ratio - ratio_ci,
                 ratio_max = ratio + ratio_ci,
             )?;
@@ -644,8 +634,8 @@ compilation :: cycles :: benchmarks-next/pulldown-cmark/benchmark.wasm
 
   Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
 
-  new_backend.so is 0.75x to 0.76x SLOWER than old_backend.so!
-  old_backend.so is 1.32x to 1.34x FASTER than new_backend.so!
+  new_backend.so is 0.75x to 0.76x faster than old_backend.so!
+  old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
   [889384088 935555419.78 1045075629] new_backend.so
   [688072501 703675480.90 826253416] old_backend.so
@@ -654,8 +644,8 @@ compilation :: nanoseconds :: benchmarks-next/pulldown-cmark/benchmark.wasm
 
   Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
 
-  new_backend.so is 0.75x to 0.76x SLOWER than old_backend.so!
-  old_backend.so is 1.32x to 1.34x FASTER than new_backend.so!
+  new_backend.so is 0.75x to 0.76x faster than old_backend.so!
+  old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
   [306252409 322151144.14 359863566] new_backend.so
   [236932712 242305483.57 284514295] old_backend.so
@@ -664,8 +654,8 @@ execution :: nanoseconds :: benchmarks-next/pulldown-cmark/benchmark.wasm
 
   Δ = 467229.61 ± 57708.35 (confidence = 95%)
 
-  new_backend.so is 1.13x to 1.16x FASTER than old_backend.so!
-  old_backend.so is 0.86x to 0.89x SLOWER than new_backend.so!
+  new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+  old_backend.so is 0.86x to 0.89x faster than new_backend.so!
 
   [3061587 3240065.98 4419514] new_backend.so
   [3510983 3707295.59 5811112] old_backend.so
@@ -674,8 +664,8 @@ execution :: cycles :: benchmarks-next/pulldown-cmark/benchmark.wasm
 
   Δ = 1356859.60 ± 167590.00 (confidence = 95%)
 
-  new_backend.so is 1.13x to 1.16x FASTER than old_backend.so!
-  old_backend.so is 0.86x to 0.89x SLOWER than new_backend.so!
+  new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+  old_backend.so is 0.86x to 0.89x faster than new_backend.so!
 
   [8891120 9409439.69 12834660] new_backend.so
   [10196192 10766299.29 16875960] old_backend.so
