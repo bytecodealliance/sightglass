@@ -229,6 +229,7 @@ impl BenchmarkCommand {
         stdout
             .write_all(&[b'\n'])
             .context("failed to write a byte to stdout")?;
+        stdout.flush().context("failed to flush stdout")?;
         Ok(())
     }
 
@@ -476,6 +477,9 @@ impl Child {
         child_stdin
             .write_all(&[b'\n'])
             .context("failed to write to benchmarking child process's stdin")?;
+        child_stdin
+            .flush()
+            .context("failed to flush benchmarking child process's stdin")?;
         Ok(())
     }
 
