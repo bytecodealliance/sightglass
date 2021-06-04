@@ -5,7 +5,7 @@ use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
-    fs,
+    env, fs,
     io::{self, BufWriter, Write},
     path::{Path, PathBuf},
     process::Command,
@@ -116,85 +116,84 @@ impl BenchmarkCommand {
             "iterations-per-process must be greater than zero"
         );
 
-        if self.processes == 1 {
-            self.execute_in_current_process()
+        if env::var("__SIGHTGLASS_CHILD").is_ok() {
+            self.execute_child()
         } else {
-            self.execute_in_multiple_processes()
+            self.execute_parent()
         }
     }
 
-    /// Execute benchmark(s) in the provided engine(s) using the current process.
-    pub fn execute_in_current_process(&self) -> Result<()> {
-        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
-            Box::new(BufWriter::new(fs::File::create(file)?))
-        } else {
-            Box::new(io::stdout())
-        };
+    /// Execute a single Wasm benchmark with a single Engine in the current
+    /// child process.
+    pub fn execute_child(&self) -> Result<()> {
+        // The parent process is responsible for ensuring that all these things
+        // are true for child processes.
+        assert_eq!(self.processes, 1);
+        assert_eq!(self.engines.len(), 1);
+        assert_eq!(self.wasm_files.len(), 1);
+        assert!(self.output_file.is_none());
+        assert!(self.raw);
+        assert_eq!(self.output_format, Format::Json);
 
-        let wasm_files: Vec<_> = self
-            .wasm_files
-            .iter()
-            .map(|f| f.display().to_string())
-            .collect();
-        let mut all_measurements = vec![];
+        let engine = &self.engines[0];
+        let engine_path = Path::new(engine);
+        assert!(
+            engine_path.is_file(),
+            "parent should have already built the engine, if necessary"
+        );
 
-        for engine in &self.engines {
-            let engine_path = get_built_engine(engine)?;
-            log::info!("Using benchmark engine: {}", engine_path.display());
-            let lib = libloading::Library::new(&engine_path)?;
-            let mut bench_api = unsafe { BenchApi::new(&lib)? };
+        log::info!("Using benchmark engine: {}", engine_path.display());
+        let lib = libloading::Library::new(&engine_path)?;
+        let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
-            for wasm_file in &wasm_files {
-                log::info!("Using Wasm benchmark: {}", wasm_file);
+        let wasm_file = self.wasm_files[0].display().to_string();
+        log::info!("Using Wasm benchmark: {}", wasm_file);
 
-                // Use the provided --working-dir, otherwise find the Wasm file's parent directory.
-                let working_dir = self.get_working_directory(&wasm_file)?;
-                log::info!("Using working directory: {}", working_dir.display());
+        let working_dir = self.get_working_directory(&wasm_file)?;
+        log::info!("Using working directory: {}", working_dir.display());
 
-                // Read the Wasm bytes.
-                let bytes = fs::read(&wasm_file).context("Attempting to read Wasm bytes")?;
-                log::debug!("Wasm benchmark size: {} bytes", bytes.len());
+        let wasm_bytes = fs::read(&wasm_file).context("Attempting to read Wasm bytes")?;
+        log::debug!("Wasm benchmark size: {} bytes", wasm_bytes.len());
 
-                let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
-                let mut measure = self.measure.build();
+        let mut measurements = Measurements::new(this_arch(), engine, &wasm_file);
+        let mut measure = self.measure.build();
 
-                // Run the benchmark (compilation, instantiation, and execution) several times in
-                // this process.
-                for i in 0..self.iterations_per_process {
-                    let wasm_hash = {
-                        use std::collections::hash_map::DefaultHasher;
-                        use std::hash::{Hash, Hasher};
-                        let mut hasher = DefaultHasher::new();
-                        wasm_file.hash(&mut hasher);
-                        hasher.finish()
-                    };
-                    let stdout = format!("stdout-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
-                    let stdout = Path::new(&stdout);
-                    let stderr = format!("stderr-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
-                    let stderr = Path::new(&stderr);
-                    let stdin = None;
+        // Run the benchmark (compilation, instantiation, and execution) several times in
+        // this process.
+        for i in 0..self.iterations_per_process {
+            let wasm_hash = {
+                use std::collections::hash_map::DefaultHasher;
+                use std::hash::{Hash, Hasher};
+                let mut hasher = DefaultHasher::new();
+                wasm_file.hash(&mut hasher);
+                hasher.finish()
+            };
+            let stdout = format!("stdout-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+            let stdout = Path::new(&stdout);
+            let stderr = format!("stderr-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
+            let stderr = Path::new(&stderr);
+            let stdin = None;
 
-                    benchmark(
-                        &mut bench_api,
-                        &working_dir,
-                        stdout,
-                        stderr,
-                        stdin,
-                        &bytes,
-                        self.stop_after_phase.clone(),
-                        &mut measure,
-                        &mut measurements,
-                    )?;
+            benchmark(
+                &mut bench_api,
+                &working_dir,
+                stdout,
+                stderr,
+                stdin,
+                &wasm_bytes,
+                self.stop_after_phase.clone(),
+                &mut measure,
+                &mut measurements,
+            )?;
 
-                    self.check_output(Path::new(wasm_file), stdout, stderr)?;
-                    measurements.next_iteration();
-                }
-
-                all_measurements.extend(measurements.finish());
-            }
+            self.check_output(Path::new(&wasm_file), stdout, stderr)?;
+            measurements.next_iteration();
         }
 
-        self.write_results(&all_measurements, &mut output_file)?;
+        let measurements = measurements.finish();
+        let stdout = io::stdout();
+        let stdout = stdout.lock();
+        self.output_format.write(&measurements, stdout)?;
         Ok(())
     }
 
@@ -267,9 +266,9 @@ impl BenchmarkCommand {
         Ok(())
     }
 
-    /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
-    /// run the `execute_in_current_process` function above.
-    fn execute_in_multiple_processes(&self) -> Result<()> {
+    /// Execute the benchmark(s) by spawning multiple processes. Each of the
+    /// spawned processes will run the `execute_child` function above.
+    fn execute_parent(&self) -> Result<()> {
         let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
             Box::new(BufWriter::new(fs::File::create(file)?))
         } else {
@@ -312,6 +311,7 @@ impl BenchmarkCommand {
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::inherit())
+                .env("__SIGHTGLASS_CHILD", "1")
                 .arg("benchmark")
                 .arg("--processes")
                 .arg("1")
