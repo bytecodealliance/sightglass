@@ -6,7 +6,7 @@ use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
     env, fs,
-    io::{self, BufWriter, Write},
+    io::{self, BufWriter, Read, Write},
     path::{Path, PathBuf},
     process::Command,
     process::Stdio,
@@ -174,6 +174,7 @@ impl BenchmarkCommand {
             let stderr = Path::new(&stderr);
             let stdin = None;
 
+            self.wait_for_parent()?;
             benchmark(
                 &mut bench_api,
                 &working_dir,
@@ -185,6 +186,7 @@ impl BenchmarkCommand {
                 &mut measure,
                 &mut measurements,
             )?;
+            self.notify_parent()?;
 
             self.check_output(Path::new(&wasm_file), stdout, stderr)?;
             measurements.next_iteration();
@@ -193,7 +195,32 @@ impl BenchmarkCommand {
         let measurements = measurements.finish();
         let stdout = io::stdout();
         let stdout = stdout.lock();
-        self.output_format.write(&measurements, stdout)?;
+        serde_json::to_writer(stdout, &measurements)?;
+        Ok(())
+    }
+
+    /// Wait for the parent process to write a byte to our (child process's)
+    /// stdin.
+    fn wait_for_parent(&self) -> Result<()> {
+        debug_assert!(env::var("__SIGHTGLASS_CHILD").is_ok());
+        let stdin = io::stdin();
+        let mut stdin = stdin.lock();
+        let mut buf = [0; 1];
+        stdin
+            .read_exact(&mut buf)
+            .context("failed to read a byte from stdin")?;
+        Ok(())
+    }
+
+    /// Notify the parent process that we (the child process) finished running
+    /// an iteration.
+    fn notify_parent(&self) -> Result<()> {
+        debug_assert!(env::var("__SIGHTGLASS_CHILD").is_ok());
+        let stdout = io::stdout();
+        let mut stdout = stdout.lock();
+        stdout
+            .write_all(&[b'\n'])
+            .context("failed to write a byte to stdout")?;
         Ok(())
     }
 
@@ -285,17 +312,19 @@ impl BenchmarkCommand {
 
         let mut rng = SmallRng::seed_from_u64(0x1337_4242);
 
-        // Worklist that we randomly sample from.
+        // Worklist of benchmarking child processes that we randomly sample
+        // from.
         let mut choices = vec![];
 
         for engine in &self.engines {
             // Ensure that each of our engines is built before we spawn any
-            // child processes (potentially in a different working directory,
-            // and therefore potentially invalidating relative paths used here).
+            // child processes.
             let engine = get_built_engine(engine)?;
 
             for wasm in &self.wasm_files {
-                choices.push((engine.clone(), wasm, self.processes));
+                for _ in 0..self.processes {
+                    choices.push(Child::new(self, &this_exe, &engine, wasm)?);
+                }
             }
         }
 
@@ -304,59 +333,40 @@ impl BenchmarkCommand {
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, wasm, procs_left) = &mut choices[index];
+            let child = &mut choices[index];
 
-            let mut command = Command::new(&this_exe);
-            command
-                .stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .env("__SIGHTGLASS_CHILD", "1")
-                .arg("benchmark")
-                .arg("--processes")
-                .arg("1")
-                .arg("--iterations-per-process")
-                .arg(self.iterations_per_process.to_string())
-                .arg("--engine")
-                .arg(&engine)
-                .arg("--measure")
-                .arg(self.measure.to_string())
-                .arg("--raw")
-                .arg("--output-format")
-                // Always use JSON when privately communicating with a
-                // subprocess.
-                .arg(Format::Json.to_string());
+            log::info!(
+                "Running benchmark iteration in child process {}",
+                child.process.id()
+            );
+            child.run_one_iteration()?;
 
-            if self.small_workloads {
-                command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
+            if child.iterations > 0 {
+                // This child process has more iterations to complete before the
+                // child prints its measurements to `stdout`.
+                continue;
             }
 
-            if let Some(phase) = self.stop_after_phase {
-                command.arg("--stop-after").arg(phase.to_string());
-            }
-
-            command.arg("--").arg(&wasm);
-
-            let output = command
-                .output()
-                .context("failed to run benchmark subprocess")?;
-
+            let status = child
+                .process
+                .wait()
+                .context("failed to `wait` on a benchmarking child process")?;
             anyhow::ensure!(
-                output.status.success(),
-                "benchmark subprocess did not exit successfully"
+                status.success(),
+                "benchmarking child process did not exit successfully"
             );
 
-            // Parse the subprocess's output and add its measurements to our
-            // accumulation.
+            // Parse the benchmarking child's stdout and add its measurements to
+            // our accumulation.
+            let child_stdout = child.process.stdout.as_mut().unwrap();
             measurements.extend(
-                serde_json::from_slice::<Vec<Measurement<'_>>>(&output.stdout)
+                serde_json::from_reader::<_, Vec<Measurement<'_>>>(child_stdout)
                     .context("failed to read benchmark subprocess's results")?,
             );
 
-            *procs_left -= 1;
-            if *procs_left == 0 {
-                choices.swap_remove(index);
-            }
+            // We are all done with this benchmarking child process! Remove it
+            // from our worklist.
+            choices.swap_remove(index);
         }
 
         self.write_results(&measurements, &mut output_file)?;
@@ -391,6 +401,84 @@ impl BenchmarkCommand {
             std::env::current_dir().context("failed to get the current working directory")?
         };
         Ok(working_dir)
+    }
+}
+
+/// A benchmarking child process.
+struct Child {
+    /// The child process itself.
+    process: std::process::Child,
+    /// How many iterations it still has left.
+    iterations: usize,
+}
+
+impl Child {
+    fn new(
+        benchmark: &BenchmarkCommand,
+        this_exe: &Path,
+        engine: &Path,
+        wasm: &Path,
+    ) -> Result<Self> {
+        let mut command = Command::new(&this_exe);
+        command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit())
+            .env("__SIGHTGLASS_CHILD", "1")
+            .arg("benchmark")
+            .arg("--processes")
+            .arg("1")
+            .arg("--iterations-per-process")
+            .arg(benchmark.iterations_per_process.to_string())
+            .arg("--engine")
+            .arg(engine)
+            .arg("--measure")
+            .arg(benchmark.measure.to_string())
+            .arg("--raw")
+            .arg("--output-format")
+            .arg(Format::Json.to_string());
+
+        if benchmark.small_workloads {
+            command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
+        }
+
+        if let Some(phase) = benchmark.stop_after_phase {
+            command.arg("--stop-after").arg(phase.to_string());
+        }
+
+        command.arg("--").arg(&wasm);
+
+        let process = command
+            .spawn()
+            .context("failed to spawn benchmarking child process")?;
+
+        Ok(Child {
+            process,
+            iterations: benchmark.iterations_per_process,
+        })
+    }
+
+    fn run_one_iteration(&mut self) -> Result<()> {
+        assert!(self.iterations > 0);
+
+        // The child process is blocked on reading a byte from its
+        // stdin. Write a byte to the child process's stdin, so that it
+        // unblocks and then executes one benchmark iteration.
+        let child_stdin = self.process.stdin.as_mut().unwrap();
+        child_stdin
+            .write_all(&[b'\n'])
+            .context("failed to write to benchmarking child process's stdin")?;
+
+        // Now wait for the child process to finish its iteration. It will write
+        // a byte to its `stdout` when the iteration is complete.
+        let child_stdout = self.process.stdout.as_mut().unwrap();
+        let mut buf = [0; 1];
+        child_stdout
+            .read_exact(&mut buf)
+            .context("failed to read a byte from a benchmarking child process's stdout")?;
+
+        self.iterations -= 1;
+        Ok(())
     }
 }
 
