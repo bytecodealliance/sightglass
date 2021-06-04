@@ -161,6 +161,14 @@ impl BenchmarkCommand {
         // Run the benchmark (compilation, instantiation, and execution) several times in
         // this process.
         for i in 0..self.iterations_per_process {
+            if i == 0 {
+                // To ensure that the first iteration doesn't coincide with
+                // other child processes' initializations, tell the parent we
+                // are initialized now, so that it can wait on all child
+                // processes' initialization before starting iterations.
+                self.notify_parent()?;
+            }
+
             let wasm_hash = {
                 use std::collections::hash_map::DefaultHasher;
                 use std::hash::{Hash, Hasher};
@@ -452,30 +460,42 @@ impl Child {
             .spawn()
             .context("failed to spawn benchmarking child process")?;
 
-        Ok(Child {
+        let mut child = Child {
             process,
             iterations: benchmark.iterations_per_process,
-        })
+        };
+
+        // Wait for the child process to report itself as ready and initialized.
+        child.wait_for_child()?;
+
+        Ok(child)
     }
 
-    fn run_one_iteration(&mut self) -> Result<()> {
-        assert!(self.iterations > 0);
-
-        // The child process is blocked on reading a byte from its
-        // stdin. Write a byte to the child process's stdin, so that it
-        // unblocks and then executes one benchmark iteration.
+    fn notify_child(&mut self) -> Result<()> {
         let child_stdin = self.process.stdin.as_mut().unwrap();
         child_stdin
             .write_all(&[b'\n'])
             .context("failed to write to benchmarking child process's stdin")?;
+        Ok(())
+    }
 
-        // Now wait for the child process to finish its iteration. It will write
-        // a byte to its `stdout` when the iteration is complete.
+    fn wait_for_child(&mut self) -> Result<()> {
         let child_stdout = self.process.stdout.as_mut().unwrap();
         let mut buf = [0; 1];
         child_stdout
             .read_exact(&mut buf)
             .context("failed to read a byte from a benchmarking child process's stdout")?;
+        Ok(())
+    }
+
+    fn run_one_iteration(&mut self) -> Result<()> {
+        assert!(self.iterations > 0);
+
+        // Notify the child to start running one iteration.
+        self.notify_child()?;
+
+        // Now wait for the child process to finish its iteration.
+        self.wait_for_child()?;
 
         self.iterations -= 1;
         Ok(())
