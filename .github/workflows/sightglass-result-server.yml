@@ -1,4 +1,4 @@
-name: sg-history
+name: sightglass-result-server
 
 on:
   push:
@@ -16,11 +16,9 @@ jobs:
     defaults:
       run:
         shell: bash
-        working-directory: webui/sg-history
+        working-directory: crates/result-server
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build -p sg-history --verbose
-    - name: Run tests
-      run: cargo test -p sg-history --verbose
+    - name: Build the Docker image
+      run: docker build -t sightglass-result-server:latest .
