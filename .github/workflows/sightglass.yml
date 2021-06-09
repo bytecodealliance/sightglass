@@ -73,8 +73,5 @@ jobs:
       if: runner.os == 'Windows'
       run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
 
-    - name: Build all
-      run: cargo +nightly build --verbose --all
-
     - name: Test all
       run: cargo +nightly test --verbose --all
