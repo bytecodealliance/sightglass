@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_LOG: info
+  RUST_LOG: debug
 
   # The Wasmtime commit that we build the bench API from for testing. Bumping
   # this will automatically cause us to update our CI cache on the next run.
