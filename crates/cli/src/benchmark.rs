@@ -166,6 +166,7 @@ impl BenchmarkCommand {
                 // other child processes' initializations, tell the parent we
                 // are initialized now, so that it can wait on all child
                 // processes' initialization before starting iterations.
+                log::debug!("Notifying parent we are initialized");
                 self.notify_parent()?;
             }
 
@@ -182,6 +183,7 @@ impl BenchmarkCommand {
             let stderr = Path::new(&stderr);
             let stdin = None;
 
+            log::debug!("Waiting for parent to tell us to run an iteration");
             self.wait_for_parent()?;
             benchmark(
                 &mut bench_api,
@@ -194,6 +196,7 @@ impl BenchmarkCommand {
                 &mut measure,
                 &mut measurements,
             )?;
+            log::debug!("Notifying parent we finished an iteration");
             self.notify_parent()?;
 
             self.check_output(Path::new(&wasm_file), stdout, stderr)?;
@@ -495,10 +498,10 @@ impl Child {
     fn run_one_iteration(&mut self) -> Result<()> {
         assert!(self.iterations > 0);
 
-        // Notify the child to start running one iteration.
+        log::debug!("Notifying child to run one iteration");
         self.notify_child()?;
 
-        // Now wait for the child process to finish its iteration.
+        log::debug!("Waiting for child to finish one iteration");
         self.wait_for_child()?;
 
         self.iterations -= 1;
