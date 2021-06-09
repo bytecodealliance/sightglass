@@ -74,4 +74,4 @@ jobs:
       run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
 
     - name: Test all
-      run: cargo +nightly test --verbose --all
+      run: cargo +nightly test --verbose --all -- --nocapture --test-threads 1
