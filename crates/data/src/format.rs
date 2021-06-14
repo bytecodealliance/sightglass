@@ -10,7 +10,7 @@ use std::{
 };
 
 /// Describes the input/output formats for the data structures in the `sightglass-data` crate.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Format {
     /// The JSON format.
     Json,
