@@ -359,6 +359,27 @@ impl BenchmarkCommand {
                 continue;
             }
 
+            // Close the child's `stdin`.
+            //
+            // This isn't strictly necessary, but should help catch bugs where
+            // the child is trying to wait on notification from the parent to
+            // run another iteration, but the parent thinks that the child
+            // should be done running iterations.
+            drop(child.process.stdin.take().unwrap());
+
+            // Read its results from `stdout`.
+            //
+            // Do this before waiting on the child to exit. This way we don't
+            // deadlock waiting on the child to exit while it is blocked trying
+            // to write to its `stdout` pipe whose buffer is full and we aren't
+            // emptying because we are waiting on the child to exit.
+            let mut child_stdout = child.process.stdout.take().unwrap();
+            let mut child_results = vec![];
+            child_stdout
+                .read_to_end(&mut child_results)
+                .context("failed to read benchmark subprocess's results on stdout")?;
+
+            // Finally, wait on the child to exit.
             let status = child
                 .process
                 .wait()
@@ -370,10 +391,9 @@ impl BenchmarkCommand {
 
             // Parse the benchmarking child's stdout and add its measurements to
             // our accumulation.
-            let child_stdout = child.process.stdout.as_mut().unwrap();
             measurements.extend(
-                serde_json::from_reader::<_, Vec<Measurement<'_>>>(child_stdout)
-                    .context("failed to read benchmark subprocess's results")?,
+                serde_json::from_slice::<Vec<Measurement<'_>>>(&child_results)
+                    .context("failed to parse benchmark subprocess's results")?,
             );
 
             // We are all done with this benchmarking child process! Remove it
