@@ -1,4 +1,4 @@
-FROM rust:1.45
+FROM rust:1.54
 
 RUN rustup target add wasm32-wasi
 WORKDIR /usr/src
