@@ -1,4 +1,4 @@
-FROM rust:1.51
+FROM rust:1.54
 ARG REPOSITORY=https://github.com/bytecodealliance/wasmtime/
 ARG REVISION=main
 
