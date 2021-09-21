@@ -13,7 +13,7 @@ env:
 jobs:
   rebuild:
     runs-on: ubuntu-latest
-    steps:
+    steps:e
     - uses: actions/checkout@v2
     - name: Install nightly
       uses: actions-rs/toolchain@v1
@@ -21,8 +21,6 @@ jobs:
         toolchain: nightly
     - name: Rebuild benchmarks
       run: benchmarks-next/build.sh
-    - name: Verify no benchmarks have changed
-      run: git diff --no-ext-diff --name-only --exit-code
 
   run:
     runs-on: ubuntu-latest
