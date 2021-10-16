@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_LOG: info
+  RUST_LOG: debug
 
   # The Wasmtime commit that we build the bench API from for testing. Bumping
   # this will automatically cause us to update our CI cache on the next run.
@@ -73,8 +73,5 @@ jobs:
       if: runner.os == 'Windows'
       run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
 
-    - name: Build all
-      run: cargo +nightly build --verbose --all
-
     - name: Test all
-      run: cargo +nightly test --verbose --all
+      run: cargo +nightly test --verbose --all -- --nocapture --test-threads 1

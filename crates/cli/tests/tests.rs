@@ -4,6 +4,31 @@ use sightglass_data::Measurement;
 use std::path::PathBuf;
 use std::process::Command;
 
+trait AssertExt {
+    fn log_output(self) -> Self;
+}
+
+impl AssertExt for assert_cmd::assert::Assert {
+    fn log_output(self) -> Self {
+        let output = self.get_output();
+        eprintln!(
+            "\
+            === stdout =====================================================================\n\
+            {}\n\
+            ================================================================================\n",
+            String::from_utf8_lossy(&output.stdout).trim_end()
+        );
+        eprintln!(
+            "\
+            === stderr =====================================================================\n\
+            {}\n\
+            ================================================================================\n",
+            String::from_utf8_lossy(&output.stderr).trim_end()
+        );
+        self
+    }
+}
+
 /// Get a `Command` for this crate's `sightglass-cli` executable.
 fn sightglass_cli() -> Command {
     drop(env_logger::try_init());
@@ -68,7 +93,7 @@ fn benchmark(benchmark_name: &str) -> String {
 
 #[test]
 fn help() {
-    sightglass_cli().arg("help").assert().success();
+    sightglass_cli().arg("help").assert().log_output().success();
 }
 
 #[test]
@@ -83,6 +108,7 @@ fn benchmark_stop_after_compilation() {
         .arg("compilation")
         .arg(benchmark("noop"))
         .assert()
+        .log_output()
         .success()
         .stdout(
             predicate::str::contains("Compilation")
@@ -103,6 +129,7 @@ fn benchmark_stop_after_instantiation() {
         .arg("instantiation")
         .arg(benchmark("noop"))
         .assert()
+        .log_output()
         .success()
         .stdout(
             predicate::str::contains("Compilation")
@@ -123,10 +150,10 @@ fn benchmark_json() {
         .arg("json")
         .arg("--")
         .arg(benchmark("noop"))
-        .assert();
+        .assert()
+        .log_output();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
     assert!(serde_json::from_str::<serde_json::Value>(stdout).is_ok());
 
     assert
@@ -151,10 +178,10 @@ fn benchmark_csv() {
         .arg("csv")
         .arg("--")
         .arg(benchmark("noop"))
-        .assert();
+        .assert()
+        .log_output();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
     let mut reader = csv::Reader::from_reader(stdout.as_bytes());
     for measurement in reader.deserialize::<Measurement<'_>>() {
         drop(measurement.unwrap());
@@ -181,6 +208,7 @@ fn benchmark_summary() {
         .arg("--")
         .arg(benchmark("noop"))
         .assert()
+        .log_output()
         .success()
         .stdout(
             predicate::str::contains("compilation")
@@ -215,6 +243,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg("3")
         .arg(benchmark("noop"))
         .assert()
+        .log_output()
         .success()
         .stdout(
             predicate::str::contains(&format!("compilation :: cycles :: {}", benchmark("noop")))
