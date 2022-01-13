@@ -661,26 +661,6 @@ checksum = "1482821306169ec4d07f6aca392a4681f66c75c9918aa49641a2595db64053cb"
 
 [[package]]
 name = "libloading"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c3ad660d7cb8c5822cd83d10897b0f1f1526792737a179e73896152f85b88c2"
-dependencies = [
- "cc",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "libloading"
-version = "0.6.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9367bdfa836b7e3cf895867f7a570283444da90562980ec2263d6e1569b16bc"
-dependencies = [
- "cfg-if 1.0.0",
- "winapi 0.3.9",
-]
-
-[[package]]
-name = "libloading"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afe203d669ec979b7128619bae5a63b7b42e9203c1b29146079ee05e2f604b52"
@@ -1501,7 +1481,7 @@ dependencies = [
  "goblin",
  "hwloc",
  "libc",
- "libloading 0.5.0",
+ "libloading",
  "precision",
  "printtable",
  "serde",
@@ -1549,7 +1529,7 @@ dependencies = [
  "assert_cmd",
  "csv",
  "env_logger 0.8.3",
- "libloading 0.6.6",
+ "libloading",
  "log 0.4.11",
  "predicates",
  "pretty_env_logger",
@@ -1581,7 +1561,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "lazy_static",
- "libloading 0.7.2",
+ "libloading",
  "log 0.4.11",
  "perf-event",
  "precision",
