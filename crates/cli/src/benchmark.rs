@@ -141,7 +141,7 @@ impl BenchmarkCommand {
         for engine in &self.engines {
             let engine_path = get_built_engine(engine)?;
             log::info!("Using benchmark engine: {}", engine_path.display());
-            let lib = libloading::Library::new(&engine_path)?;
+            let lib = unsafe { libloading::Library::new(&engine_path)? };
             let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
             for wasm_file in &wasm_files {

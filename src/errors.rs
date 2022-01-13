@@ -4,6 +4,8 @@ use std::io;
 pub enum BenchError {
     #[error("Internal error: {0}")]
     InternalError(&'static str),
+    #[error("Library loading error: {0}")]
+    LibraryLoadingErrror(#[from] libloading::Error),
     #[error("ABI error: {0}")]
     ABIError(&'static str),
     #[error("Parse error: {0}")]

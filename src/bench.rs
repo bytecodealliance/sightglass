@@ -318,7 +318,7 @@ fn load_library<P: AsRef<OsStr>>(
     } else {
         flags |= RTLD_LOCAL;
     }
-    let library = libloading::os::unix::Library::open(Some(library_path), flags)?.into();
+    let library = unsafe { libloading::os::unix::Library::open(Some(library_path), flags)?.into() };
     Ok(library)
 }
 
@@ -328,7 +328,7 @@ fn load_library<P: AsRef<OsStr>>(
     _rtld_lazy: bool,
     _rtld_global: bool,
 ) -> Result<Library, BenchError> {
-    Ok(Library::new(library_path)?)
+    Ok(unsafe { Library::new(library_path)? })
 }
 
 /// Bench all functions contained in a shared library
