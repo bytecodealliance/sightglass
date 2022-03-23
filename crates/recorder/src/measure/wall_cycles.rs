@@ -19,7 +19,7 @@ impl WallCycleMeasure {
 }
 
 impl Measure for WallCycleMeasure {
-    fn start(&mut self) {
+    fn start(&mut self, _phase: Phase) {
         let start = PRECISION.now();
         self.0 = Some(start);
     }

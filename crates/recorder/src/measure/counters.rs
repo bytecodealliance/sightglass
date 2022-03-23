@@ -63,7 +63,7 @@ impl CounterMeasure {
 }
 
 impl Measure for CounterMeasure {
-    fn start(&mut self) {
+    fn start(&mut self, _phase: Phase) {
         self.event_group.reset().unwrap();
         self.event_group.enable().unwrap()
     }
@@ -155,7 +155,7 @@ mod tests {
 
         let mut measurements = Measurements::new("arch".into(), "engine".into(), "wasm".into());
         let mut measure = CounterMeasure::new();
-        measure.start();
+        measure.start(Phase::Compilation);
         let mut a = 0;
         for i in 0..1_000_000 {
             a = i
