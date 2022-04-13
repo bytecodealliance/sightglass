@@ -105,13 +105,13 @@ where
             stdin_path_ptr: stdin_path.as_ref().map_or(ptr::null(), |p| p.as_ptr()),
             stdin_path_len: stdin_path.as_ref().map_or(0, |p| p.len()),
             compilation_timer: measurement_data as *mut u8,
-            compilation_start: Self::start,
+            compilation_start: Self::compilation_start,
             compilation_end: Self::compilation_end,
             instantiation_timer: measurement_data as *mut u8,
-            instantiation_start: Self::start,
+            instantiation_start: Self::instantiation_start,
             instantiation_end: Self::instantiation_end,
             execution_timer: measurement_data as *mut u8,
-            execution_start: Self::start,
+            execution_start: Self::execution_start,
             execution_end: Self::execution_end,
         };
 
@@ -136,13 +136,28 @@ where
         Module { engine: self }
     }
 
-    /// Shared bench API callback for the start of
-    /// compilation/instantiation/execution.
-    extern "C" fn start(data: *mut u8) {
-        log::info!("Starting new measurement");
+    /// Bench API callback for the start of compilation.
+    extern "C" fn compilation_start(data: *mut u8) {
+        log::info!("Starting compilation measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
-        measure.start();
+        measure.start(Phase::Compilation);
+    }
+
+    /// Bench API callback for the start of instantiation.
+    extern "C" fn instantiation_start(data: *mut u8) {
+        log::info!("Starting instantiation measurement");
+        let data = data as *mut (*mut M, *mut Measurements<'b>);
+        let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
+        measure.start(Phase::Instantiation);
+    }
+
+    /// Bench API callback for the start of execution.
+    extern "C" fn execution_start(data: *mut u8) {
+        log::info!("Starting execution measurement");
+        let data = data as *mut (*mut M, *mut Measurements<'b>);
+        let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
+        measure.start(Phase::Execution);
     }
 
     /// Bench API callback for the end of compilation.

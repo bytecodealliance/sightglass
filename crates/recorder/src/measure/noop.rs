@@ -12,6 +12,6 @@ impl NoopMeasure {
 }
 
 impl Measure for NoopMeasure {
-    fn start(&mut self) {}
+    fn start(&mut self, _phase: Phase) {}
     fn end(&mut self, _phase: Phase, _measurements: &mut Measurements) {}
 }
