@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 ARG REPOSITORY=https://github.com/WebAssembly/wasm-c-api
-ARG REVISION=branch-heads/7.6
+ARG REVISION=branch-heads/9.9
 
 # The V8 build process untar's an archive; this causes issues inside some container frameworks, like
 # `Cannot change ownership to uid 65002, gid 100005: Invalid argument` (see
