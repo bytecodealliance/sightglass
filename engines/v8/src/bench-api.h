@@ -33,14 +33,6 @@ typedef struct wasm_bench_config_t {
   wasm_bench_timer_t execution_timer;
   wasm_bench_callback_t execution_start;
   wasm_bench_callback_t execution_end;
-  // void (*compilation_start)(char*);
-  // void (*compilation_end)(char*);
-  // wasm_bench_timer_t instantiation_timer;
-  // void (*instantiation_start)(char*);
-  // void (*instantiation_end)(char*);
-  // wasm_bench_timer_t execution_timer;
-  // void (*execution_start)(char*);
-  // void (*execution_end)(char*);
 } wasm_bench_config_t;
 
 /// API functions (TODO cite).

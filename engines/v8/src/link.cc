@@ -35,9 +35,9 @@ auto bench_end(void* env, const wasm::Val args[], wasm::Val results[])
   return nullptr;
 }
 
-std::vector<const wasm::Extern*> link(wasm::Store* store,
-                                      const wasm::Module* module,
-                                      Timer* timer) {
+std::vector<wasm::own<wasm::Func>> link(wasm::Store* store,
+                                        const wasm::Module* module,
+                                        Timer* timer) {
   // Set up import types.
   auto fn_type_none_none = wasm::FuncType::make(
       wasm::ownvec<wasm::ValType>::make(), wasm::ownvec<wasm::ValType>::make());
@@ -56,21 +56,18 @@ std::vector<const wasm::Extern*> link(wasm::Store* store,
       wasm::Func::make(store, fn_type_none_none.get(), bench_start, timer));
   available_functions[ImportName("bench", "end")] = std::move(
       wasm::Func::make(store, fn_type_none_none.get(), bench_end, timer));
-  wasm::Func::callback fn = [](auto p, auto r) -> wasm::own<wasm::Trap> {
-    return nullptr;
-  };
   available_functions[ImportName("wasi_snapshot_preview1", "proc_exit")] =
-      std::move(wasm::Func::make(store, fn_type_i32_none.get(), fn));
+      std::move(wasm::Func::make(store, fn_type_i32_none.get(), proc_exit));
   available_functions[ImportName("wasi_snapshot_preview1", "fd_write")] =
-      std::move(wasm::Func::make(store, fn_type_4xi32_i32.get(), fn));
+      std::move(wasm::Func::make(store, fn_type_4xi32_i32.get(), fd_write));
 
   // Construct list of import functions.
   auto import_names = list_imports(module);
-  std::vector<const wasm::Extern*> imports = {};
+  std::vector<wasm::own<wasm::Func>> imports = {};
   for (ImportName i : import_names) {
     auto found = available_functions.find(i) != available_functions.end();
     if (found) {
-      imports.push_back(available_functions[i].get());
+      imports.push_back(std::move(available_functions[i]));
     } else {
       std::cerr << "Unable to find a function for import: " << i.first << " "
                 << i.second << std::endl;
@@ -79,4 +76,22 @@ std::vector<const wasm::Extern*> link(wasm::Store* store,
   }
 
   return imports;
+}
+
+wasm::own<wasm::Extern> find_start_fn(const wasm::Module* module,
+                                      const wasm::Instance* instance) {
+  std::string start_fn_name = "_start";
+  auto exports = instance->exports();
+  auto export_types = module->exports();
+  for (size_t i = 0; i < exports.size(); ++i) {
+    if (exports[i]->type()->kind() == wasm::EXTERN_FUNC) {
+      assert(exports[i]->type()->kind() == export_types[i]->type()->kind());
+      const wasm::Name& name = export_types[i]->name();
+      // std::cerr << "Found function: " << name.get() << std::endl;
+      if (start_fn_name == name.get()) {
+        return std::move(exports[i]);
+      }
+    }
+  }
+  return nullptr;
 }

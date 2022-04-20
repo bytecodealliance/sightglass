@@ -56,16 +56,22 @@ int wasm_bench_instantiate(void* state_) {
   assert(st->module != nullptr);
   assert(st->store != nullptr);
 
+  // Retrieve linked functions and extract their pointers here to avoid dropping
+  // them too early.
   auto imports = link(st->store.get(), st->module.get(), &st->config.execution);
-  auto instance =
-      wasm::Instance::make(st->store.get(), st->module.get(), &imports[0]);
-  if (!instance) {
+  const wasm::Extern* imports_as_extern[imports.size()];
+  for (size_t i = 0; i < imports.size(); ++i) {
+    imports_as_extern[i] = imports[i].get();
+  }
+
+  st->instance = wasm::Instance::make(st->store.get(), st->module.get(),
+                                      imports_as_extern);
+  if (!st->instance) {
     std::cerr << "> Error instantiating module!" << std::endl;
     return 1;
   } else {
     return 0;
   }
-  return 0;
 }
 
 int wasm_bench_execute(void* state_) {
@@ -73,41 +79,21 @@ int wasm_bench_execute(void* state_) {
   assert(st != nullptr);
   assert(st->module != nullptr);
   assert(st->instance != nullptr);
-  //   RETURN_ON_INVALID_POINTER(state, state);
-  //   RETURN_ON_INVALID_POINTER(state->module, module);
-  //   RETURN_ON_INVALID_POINTER(state->instance, instance);
 
-  //   const wasm_func_t* run_func = find_start_fn(state->module,
-  //   state->instance); RETURN_ON_INVALID_POINTER(run_func, run_func); if
-  //   (wasm_func_call(run_func, NULL, NULL)) {
-  //     printf("> Error calling function!\n");
-  //     return 1;
-  //   }
+  // Find the _start function.
+  auto start_fn = find_start_fn(st->module.get(), st->instance.get());
+  if (!start_fn) {
+    std::cerr << "> Unable to find the '_start' function!" << std::endl;
+    return 1;
+  }
+
+  // Run the start function.
+  if (!start_fn->func()->call()) {
+    std::cerr << "> Error calling start function!" << std::endl;
+    return 1;
+  }
 
   return 0;
 }
-
-// wasm_func_t* find_start_fn(const wasm_module_t* module,
-//                            const wasm_instance_t* instance) {
-//   wasm_exporttype_vec_t export_types;
-//   wasm_extern_vec_t exports;
-//   wasm_module_exports(module, &export_types);
-//   wasm_instance_exports(instance, &exports);
-//   assert(exports.size == export_types.size);
-
-//   for (size_t i = 0; i < exports.size; ++i) {
-//     if (wasm_extern_kind(exports.data[i]) == WASM_EXTERN_FUNC) {
-//       assert(wasm_extern_kind(exports.data[i]) ==
-//              wasm_externtype_kind(wasm_exporttype_type(export_types.data[i])));
-//       const wasm_name_t* fn_name =
-//       wasm_exporttype_name(export_types.data[i]); int len = (fn_name->size >
-//       6) ? fn_name->size : 6; if (strncmp("_start", fn_name->data, len) == 0)
-//       {
-//         return wasm_extern_as_func(exports.data[i]);
-//       }
-//     }
-//   }
-//   return NULL;
-// }
 
 }  // extern "C"

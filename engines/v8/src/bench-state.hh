@@ -67,9 +67,6 @@ class BenchState {
   std::unique_ptr<wasm::Store> store;
   std::unique_ptr<wasm::Module> module;
   std::unique_ptr<wasm::Instance> instance;
-  // std::optional<wasm::Store> store;
-  // std::optional<wasm::Module> wasm_module;
-  // std::optional<wasm::Instance> instance;
 };
 
 #endif  // #ifdef __BENCH_STATE_HH

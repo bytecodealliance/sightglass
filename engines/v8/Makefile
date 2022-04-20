@@ -9,6 +9,7 @@ all: v8-checkout test
 # - `make wee8` will build the `libwee8.a` library inside the v8 tree (see See
 #   https://docs.google.com/document/d/1oFPHyNb_eXg6NzrE6xJDNPdJrHMZvx0LqsD6wpbd9vY/edit#)
 
+# TODO rename `v8` directory to `upstream`; potentially move this section to a separate Makefile there.
 V8_VERSION = branch-heads/9.9
 V8_ARCH = x64
 V8_MODE = release
@@ -38,7 +39,7 @@ ${V8_V8}:
 
 .PHONY: wee8
 wee8: ${V8_LIBWEE8}
-${V8_LIBWEE8}:
+${V8_LIBWEE8}: args.gn
 	mkdir -p ${V8_V8}/out/wee8
 	cp args.gn ${V8_V8}/out/wee8/
 	(cd ${V8_V8}; PATH=${V8_PATH} gn gen out/wee8)
@@ -65,6 +66,8 @@ BUILD_DIR=build
 SRCS=src/bench-api.cc src/bench-state.cc src/link.cc src/wasi.cc
 OBJS=$(patsubst $(SRC_DIR)/%.cc,$(BUILD_DIR)/%.o,$(SRCS))
 LDLIBS=$(V8_LIBWEE8) -ldl -pthread
+# See https://stackoverflow.com/questions/36692315.
+LDFLAGS=-rdynamic
 
 # Create the build directory, if necessary.
 $(BUILD_DIR):
@@ -88,7 +91,7 @@ $(BUILD_DIR)/main.o: $(TEST_DIR)/main.c $(SRC_DIR)/bench-api.h
 test: $(BUILD_DIR)/test
 	$< ../../benchmarks-next/noop/benchmark.wasm
 $(BUILD_DIR)/test: $(BUILD_DIR) $(OBJS) $(BUILD_DIR)/main.o
-	$(CXX) -g $(LDFLAGS) -o $@ $(OBJS) $(BUILD_DIR)/main.o $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(BUILD_DIR)/main.o $(LDLIBS)
 
 .PHONY: test
 clean:

@@ -6,6 +6,8 @@
 
 using ImportName = std::pair<std::string, std::string>;
 std::vector<ImportName> list_imports(const wasm::Module* module);
-std::vector<const wasm::Extern*> link(wasm::Store* store,
-                                      const wasm::Module* module,
-                                      Timer* timer);
+std::vector<wasm::own<wasm::Func>> link(wasm::Store* store,
+                                        const wasm::Module* module,
+                                        Timer* timer);
+wasm::own<wasm::Extern> find_start_fn(const wasm::Module* module,
+                                      const wasm::Instance* instance);
