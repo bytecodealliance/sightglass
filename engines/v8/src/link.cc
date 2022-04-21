@@ -44,6 +44,18 @@ std::vector<wasm::own<wasm::Func>> link(wasm::Store* store,
   auto fn_type_i32_none = wasm::FuncType::make(
       wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32)),
       wasm::ownvec<wasm::ValType>::make());
+  auto fn_type_i32_i32 = wasm::FuncType::make(
+      wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32)),
+      wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32)));
+  auto fn_type_2xi32_i32 = wasm::FuncType::make(
+      wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32),
+                                        wasm::ValType::make(wasm::I32)),
+      wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32)));
+  auto fn_type_seek_i32 = wasm::FuncType::make(
+      wasm::ownvec<wasm::ValType>::make(
+          wasm::ValType::make(wasm::I32), wasm::ValType::make(wasm::I64),
+          wasm::ValType::make(wasm::I32), wasm::ValType::make(wasm::I32)),
+      wasm::ownvec<wasm::ValType>::make(wasm::ValType::make(wasm::I32)));
   auto fn_type_4xi32_i32 = wasm::FuncType::make(
       wasm::ownvec<wasm::ValType>::make(
           wasm::ValType::make(wasm::I32), wasm::ValType::make(wasm::I32),
@@ -60,6 +72,13 @@ std::vector<wasm::own<wasm::Func>> link(wasm::Store* store,
       std::move(wasm::Func::make(store, fn_type_i32_none.get(), proc_exit));
   available_functions[ImportName("wasi_snapshot_preview1", "fd_write")] =
       std::move(wasm::Func::make(store, fn_type_4xi32_i32.get(), fd_write));
+  available_functions[ImportName("wasi_snapshot_preview1", "fd_seek")] =
+      std::move(wasm::Func::make(store, fn_type_seek_i32.get(), fd_seek));
+  available_functions[ImportName("wasi_snapshot_preview1", "fd_close")] =
+      std::move(wasm::Func::make(store, fn_type_i32_i32.get(), fd_close));
+  available_functions[ImportName("wasi_snapshot_preview1", "fd_fdstat_get")] =
+      std::move(
+          wasm::Func::make(store, fn_type_2xi32_i32.get(), fd_fdstat_get));
 
   // Construct list of import functions.
   auto import_names = list_imports(module);

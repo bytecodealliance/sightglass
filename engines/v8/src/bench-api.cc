@@ -64,8 +64,11 @@ int wasm_bench_instantiate(void* state_) {
     imports_as_extern[i] = imports[i].get();
   }
 
+  st->config.instantiation.start();
   st->instance = wasm::Instance::make(st->store.get(), st->module.get(),
                                       imports_as_extern);
+  st->config.instantiation.end();
+
   if (!st->instance) {
     std::cerr << "> Error instantiating module!" << std::endl;
     return 1;
