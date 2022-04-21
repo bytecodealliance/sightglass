@@ -65,6 +65,24 @@ impl Format {
             }
         })
     }
+
+    /// Write a list of `T` using the selected format.
+    pub fn write_one<T, W>(&self, object: T, writer: W) -> Result<()>
+    where
+        T: Serialize,
+        W: Write + Sized,
+    {
+        Ok(match self {
+            Format::Json => serde_json::to_writer(writer, &object)?,
+            Format::Csv { headers } => {
+                let mut csv = csv::WriterBuilder::new()
+                    .has_headers(headers.take())
+                    .from_writer(writer);
+                csv.serialize(&object)?;
+                csv.flush()?;
+            }
+        })
+    }
 }
 
 impl fmt::Display for Format {

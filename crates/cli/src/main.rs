@@ -1,6 +1,7 @@
 mod benchmark;
 mod build_benchmark;
 mod effect_size;
+mod fingerprint;
 mod summarize;
 mod validate;
 
@@ -8,6 +9,7 @@ use anyhow::Result;
 use benchmark::BenchmarkCommand;
 use build_benchmark::BuildBenchmarkCommand;
 use effect_size::EffectSizeCommand;
+use fingerprint::FingerprintCommand;
 use log::trace;
 use structopt::{clap::AppSettings, StructOpt};
 use summarize::SummarizeCommand;
@@ -36,6 +38,7 @@ enum SightglassCommand {
     Validate(ValidateCommand),
     Summarize(SummarizeCommand),
     EffectSize(EffectSizeCommand),
+    Fingerprint(FingerprintCommand),
 }
 
 impl SightglassCommand {
@@ -47,6 +50,7 @@ impl SightglassCommand {
             SightglassCommand::Validate(validate) => validate.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),
             SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
+            SightglassCommand::Fingerprint(fingerprint) => fingerprint.execute(),
         }
     }
 }

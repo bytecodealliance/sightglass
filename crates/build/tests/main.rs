@@ -1,5 +1,4 @@
 use anyhow::Result;
-use log::info;
 use pretty_env_logger;
 use sightglass_build::{Dockerfile, WasmBenchmark};
 use std::env;
