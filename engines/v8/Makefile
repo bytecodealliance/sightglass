@@ -1,15 +1,17 @@
-# This Makefile builds both the V8 components and the bench API wrapper for Sightglass.
+# This Makefile builds both the V8 components and the bench API wrapper for
+# Sightglass.
 all: v8-checkout test
 
 ######### V8 ##########
 
 # In order to build the `libwee8` library, we must perform the following steps:
-# - `make v8-checkout` will retrieve the V8 repository (borrowing much the same logic as
-#   https://github.com/WebAssembly/wasm-c-api)
+# - `make v8-checkout` will retrieve the V8 repository (borrowing much the same
+#   logic as https://github.com/WebAssembly/wasm-c-api)
 # - `make wee8` will build the `libwee8.a` library inside the v8 tree (see See
 #   https://docs.google.com/document/d/1oFPHyNb_eXg6NzrE6xJDNPdJrHMZvx0LqsD6wpbd9vY/edit#)
 
-# TODO rename `v8` directory to `upstream`; potentially move this section to a separate Makefile there.
+# TODO rename `v8` directory to `upstream`; potentially move this section to a
+# separate Makefile there.
 V8_VERSION = branch-heads/9.9
 V8_ARCH = x64
 V8_MODE = release
@@ -53,9 +55,9 @@ v8-clean:
 
 ######### BENCH-API ##########
 
-# The shared library that Sightglass expects must conform to a specific interface (see
-# `src/bench-api.h`). We interact with `libwee8.a` in `src/bench-state.cc`. To build and test this
-# functionality, use `make test`.
+# The shared library that Sightglass expects must conform to a specific
+# interface (see `src/bench-api.h`). We interact with `libwee8.a` in
+# `src/bench-state.cc`. To build and test this functionality, use `make test`.
 
 # This Makefile setup roughly follows https://stackoverflow.com/a/2481326.
 CXXFLAGS=-g -O0 -fPIC -I ${V8_V8}/third_party/wasm-api
@@ -92,6 +94,15 @@ test: $(BUILD_DIR)/test
 	$< ../../benchmarks-next/noop/benchmark.wasm
 $(BUILD_DIR)/test: $(BUILD_DIR) $(OBJS) $(BUILD_DIR)/main.o
 	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(BUILD_DIR)/main.o $(LDLIBS)
+
+# Create the shared library target; this is what can be used by sightglass to
+# measure benchmarks.
+$(BUILD_DIR)/libengine.so: $(BUILD_DIR) $(OBJS)
+	$(CXX) -shared $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
+test-lib: $(BUILD_DIR)/libengine.so
+	RUST_LOG=trace cargo run -- benchmark ../../benchmarks-next/noop/benchmark.wasm \
+		--engine $(BUILD_DIR)/libengine.so --processes 1 --iterations-per-process 1 \
+		--skip-output-check
 
 .PHONY: test
 clean:

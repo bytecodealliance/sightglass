@@ -15,7 +15,8 @@ extern "C" {
 
 int wasm_bench_create(wasm_bench_config_t config, void** out_ptr) {
   BenchState* st = new BenchState(Config::make(config));
-  st->engine = wasm::Engine::make();
+  st->engine = wasm::Engine::make();  // TODO cannot instantiate an EngineImpl
+                                      // multiple times.
   assert(st->engine != nullptr);
   st->store = wasm::Store::make(st->engine.get());
   assert(st->store != nullptr);

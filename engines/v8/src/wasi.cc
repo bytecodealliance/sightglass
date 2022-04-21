@@ -6,7 +6,7 @@
 auto proc_exit(const wasm::Val args[], wasm::Val results[])
     -> wasm::own<wasm::Trap> {
   std::cerr << "proc_exit" << std::endl;
-  exit(args[0].i32());
+  // exit(args[0].i32()); // TODO this cannot actually exit here; should trap?
   return nullptr;
 }
 

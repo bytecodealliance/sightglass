@@ -11,10 +11,11 @@ Config Config::make(wasm_bench_config_t config) {
   auto stdin_path = std::string(config.stdin_path_ptr, config.stdin_path_len);
   auto compilation = Timer(config.compilation_timer, config.compilation_start,
                            config.compilation_end);
-  auto instantiation = Timer(config.compilation_timer, config.compilation_start,
-                             config.compilation_end);
-  auto execution = Timer(config.compilation_timer, config.compilation_start,
-                         config.compilation_end);
+  auto instantiation =
+      Timer(config.instantiation_timer, config.instantiation_start,
+            config.instantiation_end);
+  auto execution = Timer(config.execution_timer, config.execution_start,
+                         config.execution_end);
   return Config(working_dir, stdout_path, stderr_path, stdin_path, compilation,
                 instantiation, execution);
 }

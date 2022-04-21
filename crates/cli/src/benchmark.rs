@@ -106,6 +106,12 @@ pub struct BenchmarkCommand {
     /// supplied.
     #[structopt(short, long, default_value = "0.01")]
     significance_level: f64,
+
+    /// Sightglass checks that the benchmark has emitted log files for `stdout`
+    /// and `stderr` and will attempt to check these against `stdout.expected`
+    /// and `stderr.expected` files; enabling this flag skips these checks.
+    #[structopt(long)]
+    skip_output_check: bool,
 }
 
 impl BenchmarkCommand {
@@ -186,7 +192,9 @@ impl BenchmarkCommand {
                         &mut measurements,
                     )?;
 
-                    self.check_output(Path::new(wasm_file), stdout, stderr)?;
+                    if !self.skip_output_check {
+                        self.check_output(Path::new(wasm_file), stdout, stderr)?;
+                    }
                     measurements.next_iteration();
                 }
 
