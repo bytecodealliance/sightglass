@@ -38,6 +38,7 @@ members = [
     "crates/data",
     "crates/fingerprint",
     "crates/recorder",
+    "crates/upload",
     "webui/sg-history"
 ]
 default-members = [
