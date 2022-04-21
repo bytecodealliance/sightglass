@@ -1,19 +1,34 @@
-use serde::{Deserialize, Serialize};
-/// Describe a specific Git commit in a repository; this is important for replicating the creation
-/// of artifacts. The fields are optional (for now), since in certain cases they can be assumed:
-/// the repository of some engines is well-known (e.g. Wasmtime) and the default branch can be used
-/// for the revision.
+use anyhow::{bail, Result};
+
+/// Use the `git2` crate to resolve a revision in a repository into a commit SHA.
 ///
-/// TODO eventually this and GitSource should merge together.
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-pub struct GitLocation {
-    /// The URL of the Git repository.
-    pub repository: Option<String>,
-    /// A revision in the repository. According to [the Git
-    /// documentation](https://mirrors.edge.kernel.org/pub/software/scm/git/docs/gitrevisions.html#_specifying_revisions)
-    /// this could be, e.g.:
-    /// - a branch name
-    /// - a commit hash
-    /// - a tag
-    pub revision: Option<String>,
+/// See [this example] for a more comprehensive version of this function.
+///
+/// [this example]: https://github.com/rust-lang/git2-rs/blob/master/examples/ls-remote.rs
+pub fn resolve_to_commit(repository: &str, revision: &str) -> Result<String> {
+    let mut remote = git2::Remote::create_detached(repository)?;
+    let connection = remote.connect_auth(git2::Direction::Fetch, None, None)?;
+    for head in connection.list()?.iter() {
+        if head.name().ends_with(revision) {
+            return Ok(head.oid().to_string());
+        }
+    }
+    bail!(
+        "in repository {}, unable to find commit for revision: {}",
+        repository,
+        revision
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolve() {
+        let repo = "https://github.com/bytecodealliance/wasmtime";
+        let revision = "v0.33.1"; // A tag (but a branch or commit would work as well).
+        let commit = resolve_to_commit(repo, revision).unwrap();
+        assert_eq!(&commit[0..7], "5215c78");
+    }
 }

@@ -35,7 +35,7 @@ impl BuildBenchmarkCommand {
             Some(p) => p,
         };
 
-        dockerfile.extract(WasmBenchmark::source(), &destination, None)?;
+        dockerfile.extract(&[(WasmBenchmark::source(), &destination)], None)?;
         let wasmfile = WasmBenchmark::from(destination);
         if self.emit_wat {
             wasmfile.emit_wat()?;

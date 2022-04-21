@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_build::get_built_engine;
+use sightglass_build::engine::get_built_engine;
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
@@ -21,15 +21,18 @@ use structopt::StructOpt;
 pub struct BenchmarkCommand {
     /// The benchmark engine(s) with which to run the benchmark.
     ///
-    /// This can be either the path to a shared library implementing the
-    /// benchmarking engine specification or an engine reference: `[engine
-    /// name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
+    /// This can be either:
+    ///  1. the path to a shared library implementing the benchmarking engine specification,
+    ///  2. a build-info string (see `build-engine`): `[engine name]?[variable]=[value]+...`, e.g.
+    ///     `wasmtime?REVISION=v0.33.1`.
+    ///  3. an engine alias (see the output of `list-engines`)
     #[structopt(
         long("engine"),
         short("e"),
-        value_name = "ENGINE-REF OR PATH",
+        value_name = "PATH or BUILD-INFO or ENGINE-ALIAS",
         empty_values = false,
-        default_value = "wasmtime"
+        default_value = "wasmtime",
+        verbatim_doc_comment
     )]
     engines: Vec<String>,
 

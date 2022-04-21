@@ -10,9 +10,9 @@ pub struct CleanCommand {}
 impl CleanCommand {
     pub fn execute(&self) -> Result<()> {
         // Remove cached data, e.g. engines.
-        sightglass_build::clean()?;
+        sightglass_build::cache::clean()?;
 
-        // Remove log files.
+        // Remove log files; TODO remove test-generated log files in `crates/cli` as well.
         let log_file_regex = Regex::new(r"^(stdout|stderr)\-\w+\-\d+-\d+.log$").unwrap();
         for entry in std::env::current_dir()?.read_dir()? {
             let entry = entry?;

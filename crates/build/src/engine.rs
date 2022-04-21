@@ -1,60 +1,65 @@
-use crate::{DockerBuildArgs, Dockerfile, GitLocation};
-use anyhow::{anyhow, Result};
+//! Provide functions for building and listing engines.
+use crate::{
+    buildinfo, git,
+    path::{
+        get_buildinfo_path_from_engine_path, get_cache_dir, get_engine_filename,
+        get_engine_path_from_buildinfo, get_engine_path_from_engine_name,
+    },
+    BuildInfo, Dockerfile, EngineName,
+};
+use anyhow::Result;
 use log;
-use std::{env, fmt, fs, path::Path, path::PathBuf, str::FromStr};
+use std::{fs, path::Path, path::PathBuf, str};
 
-// Retrieve a built engine library for running benchmarks; the returned value is a path to the built
-// engine's dylib. This function will attempt to build the library if it does not yet exist.
+/// Retrieve a built engine library for running benchmarks.
+///
+/// The returned value is a path to the built engine's dylib. This function will attempt to build
+/// the library if it does not yet exist. `engine` can be either:
+///
+///  1. a path to an already-built engine library
+///  2. an engine alias (see [`EngineName`])
+///  3. a BUILD-INFO URI-like string (see [`BuildInfo`])
 pub fn get_built_engine(engine: &str) -> Result<PathBuf> {
+    // 1. a path to an already-built engine library
     if Path::new(engine).exists() {
         log::debug!("Using already-built engine path: {}", engine);
         return Ok(PathBuf::from(engine));
     }
 
-    // Get the path to where the known engine dylib would be if it is built, or else propagate an
-    // unknown engine error.
-    let engine_path = get_known_engine_path(engine)?;
+    // 2. an engine alias
+    let engine_name: Result<EngineName, _> = engine.parse();
+    if let Ok(engine_name) = engine_name {
+        let path = get_engine_path_from_engine_name(&engine_name)?;
+        log::debug!(
+            "Using already-built engine path from alias {}: {}",
+            engine_name,
+            path.display()
+        );
+        return Ok(path);
+    }
+
+    // 3. a BUILD-INFO URI-like string. Get the path to where the known engine dylib would be if it
+    // is built, or else propagate an unknown engine error.
+    let buildinfo = BuildInfo::parse_uri(engine)?;
+    let engine_path = get_engine_path_from_buildinfo(&buildinfo)?;
 
     // If no file exists at the engine path, then we have to build it.
     if !engine_path.exists() {
-        build_engine(engine, &engine_path)?;
+        build_engine(&buildinfo, &engine_path)?;
         assert!(engine_path.exists());
+    } else if is_build_stale(&engine_path)? {
+        log::warn!(
+            "The library built with this BUILD-INFO ({}) is stale",
+            buildinfo
+        );
     }
 
     log::debug!("Using known engine at path: {}", engine_path.display());
     Ok(engine_path)
 }
 
-/// Calculate the path to an engine library: e.g. `<user's app data
-/// dir>/sightglass/wasmtime@ab1234ef/libengine.so`.
-pub fn get_known_engine_path(slug: &str) -> Result<PathBuf> {
-    let mut p = super::sightglass_data_dir()?;
-    p.push(slug);
-    p.push(get_engine_filename());
-    Ok(p)
-}
-
-/// Calculate the library name for a sightglass library on the target operating system: e.g.
-/// `engine.dll`, `libengine.so`.
-pub fn get_engine_filename() -> String {
-    format!(
-        "{}engine{}",
-        env::consts::DLL_PREFIX,
-        env::consts::DLL_SUFFIX
-    )
-}
-
-/// Calculate the path to the Dockerfile for building a known engine.
-pub fn get_known_dockerfile_path(slug: &str) -> Result<PathBuf> {
-    let mut path = PathBuf::from("."); // TODO calculate the project directory
-    path.push("engines");
-    path.push(slug);
-    path.push("Dockerfile");
-    Ok(path)
-}
-
 /// Build an engine from either a Dockerfile or a known engine.
-pub fn build_engine(engine: &str, engine_path: &Path) -> Result<()> {
+pub fn build_engine(cli_buildinfo: &BuildInfo, engine_path: &Path) -> Result<()> {
     // If the known engine's directory is not yet created, create it.
     let engine_dir = engine_path.parent().unwrap();
     if !engine_dir.is_dir() {
@@ -62,132 +67,59 @@ pub fn build_engine(engine: &str, engine_path: &Path) -> Result<()> {
         log::debug!("Created sightglass directory: {}", engine_dir.display());
     }
 
-    let (dockerfile, args) = if Path::new(engine).exists() {
-        (Dockerfile::from(PathBuf::from(engine)), None)
-    } else {
-        let engine_ref = EngineRef::from_str(engine)?;
-        let dockerfile =
-            Dockerfile::from(get_known_dockerfile_path(&engine_ref.engine.to_string())?);
+    // Find the Dockerfile to build with.
+    let engine_name = cli_buildinfo
+        .get("NAME")
+        .expect("BUILDINFO must have a name");
+    let dockerfile = Dockerfile::from_known_engine(engine_name)?;
 
-        // Set up any additional arguments for building the library.
-        let mut args = DockerBuildArgs::new();
-        if let Some(revision) = &engine_ref.git.revision {
-            args.set("REVISION".to_string(), revision.clone())
-        }
-        if let Some(repository) = &engine_ref.git.repository {
-            args.set("REPOSITORY".to_string(), repository.clone())
-        }
-
-        (dockerfile, Some(args))
-    };
-
+    // Build the image and extract both the library and the .build-info file.
     log::debug!("Using Dockerfile at path: {}", dockerfile);
-    dockerfile.extract(format!("/{}", get_engine_filename()), engine_path, args)?;
+    let container_engine_path = format!("/{}", get_engine_filename());
+    let container_buildinfo_path = format!("/{}", buildinfo::DEFAULT_FILE_NAME);
+    let buildinfo_path = &Path::join(&engine_dir, buildinfo::DEFAULT_FILE_NAME);
+    let files = [
+        (container_engine_path, engine_path),
+        (container_buildinfo_path, buildinfo_path),
+    ];
+    dockerfile.extract(&files, Some(cli_buildinfo))?;
     Ok(())
 }
 
-/// An engine-ref is a parseable description of a benchmarking engine. This crate understands how to
-/// build certain well-known engines.
-#[derive(Clone, Debug)]
-pub struct EngineRef {
-    engine: WellKnownEngine,
-    git: GitLocation,
-}
-impl fmt::Display for EngineRef {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.engine)?;
-        if let Some(rev) = &self.git.revision {
-            write!(f, "@{}", rev)?;
-        }
-        if let Some(repo) = &self.git.repository {
-            write!(f, "@{}", repo)?;
-        }
-        Ok(())
-    }
-}
-impl FromStr for EngineRef {
-    type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<_> = s.split('@').collect();
-        let engine = if let Some(name) = parts.get(0) {
-            name.parse()?
-        } else {
-            return Err(anyhow!(
-                "failed to parse engine-ref; the engine-ref must not be empty"
-            ));
-        };
-        let revision = parts.get(1).map(|s| s.to_string());
-        let repository = parts.get(2).map(|s| s.to_string());
-        if parts.len() > 3 {
-            return Err(anyhow!("an engine-ref must not have more than 3 parts: [engine name]@[revision]@[repository]"));
-        }
-        Ok(Self {
-            engine,
-            git: GitLocation {
-                repository,
-                revision,
-            },
-        })
-    }
-}
-
-/// Enumerates the engines known to sightglass.
-#[derive(Clone, Debug)]
-pub enum WellKnownEngine {
-    Wasmtime,
-}
-impl fmt::Display for WellKnownEngine {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let s = match self {
-            Self::Wasmtime => "wasmtime",
-        };
-        write!(f, "{}", s)
-    }
-}
-impl FromStr for WellKnownEngine {
-    type Err = anyhow::Error;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "wasmtime" => Ok(Self::Wasmtime),
-            _ => Err(anyhow!("unable to parse an unknown engine: {}", s)),
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[cfg(target_os = "linux")]
-    #[test]
-    fn engine_filename() {
-        assert_eq!("libengine.so", get_engine_filename());
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn engine_filename() {
-        assert_eq!("engine.dll", get_engine_filename());
-    }
-
-    #[test]
-    fn engine_ref() {
-        fn roundtrip(engine_ref: &str) -> Result<()> {
-            let er = EngineRef::from_str(engine_ref)?;
-            if engine_ref != er.to_string() {
-                Err(anyhow!("{} != {}", engine_ref, er.to_string()))
-            } else {
-                Ok(())
+/// List all known engines in the cache folder.
+pub fn list_engines<'a>() -> Result<Vec<(EngineName<'a>, PathBuf)>> {
+    let sightglass_data_dir = get_cache_dir()?;
+    let mut engines = vec![];
+    for entry in fs::read_dir(sightglass_data_dir)? {
+        let entry = entry?;
+        if entry.file_type()?.is_dir() {
+            let engine_dir = entry.path();
+            match EngineName::from_cache_directory(engine_dir.as_path()) {
+                Ok(name) => {
+                    let engine_path = Path::join(&engine_dir, get_engine_filename());
+                    engines.push((name, engine_path));
+                }
+                Err(err) => log::warn!("Invalid engine found at {}: {}", engine_dir.display(), err),
             }
         }
+    }
+    Ok(engines)
+}
 
-        // Check valid engine-refs.
-        assert!(roundtrip("wasmtime").is_ok());
-        assert!(roundtrip("wasmtime@1234567").is_ok());
-        assert!(roundtrip("wasmtime@1234567@https://github.com/user/wasmtime").is_ok());
-
-        // Check invalid engine-refs.
-        assert!(roundtrip("other_engine").is_err());
-        assert!(roundtrip("wasmtime@1234567@https://github.com/user/wasmtime@...").is_err());
+/// Check if the built engine is on a revision that may have been updated since the engine was
+/// built. E.g., if `REVISION` is set to a branch, the branch may have received new commits.
+fn is_build_stale(engine_path: &Path) -> Result<bool> {
+    let buildinfo = BuildInfo::parse_file(&get_buildinfo_path_from_engine_path(engine_path)?)?;
+    let repository = buildinfo
+        .get("REPOSITORY")
+        .expect("BUILDINFO must have a REPOSITORY value");
+    let revision = buildinfo
+        .get("REVISION")
+        .expect("BUILDINFO must have a REVISION value");
+    let commit = git::resolve_to_commit(repository, revision)?;
+    if let Some(built_commit) = buildinfo.get("COMMIT") {
+        Ok(commit == built_commit)
+    } else {
+        Ok(false)
     }
 }

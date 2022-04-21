@@ -1,19 +1,13 @@
-//! An abstraction for Wasm benchmarks; this can verify whether the benchmark can be executed within the sightglass
-//! benchmarking infrastructure.
+//! An abstraction for Wasm benchmarks; this can verify whether the benchmark can be executed within
+//! the sightglass benchmarking infrastructure.
 use anyhow::Result;
-use std::{fmt, fs};
-use std::{
-    fmt::{Display, Formatter},
-    fs::File,
-};
-use std::{
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
+use std::{fmt, fs, io};
 use thiserror::Error;
 use wasmparser::{Import, ImportSectionEntryType, Payload};
 use wasmprinter;
 
+/// The location of a WebAssembly benchmark.
 pub struct WasmBenchmark(PathBuf);
 
 impl WasmBenchmark {
@@ -22,6 +16,7 @@ impl WasmBenchmark {
         PathBuf::from("/benchmark.wasm")
     }
 
+    /// Create a [WasmBenchmark] from a path.
     pub fn from<P: AsRef<Path>>(path: P) -> Self {
         Self(path.as_ref().canonicalize().expect("a valid path"))
     }
@@ -65,6 +60,8 @@ impl WasmBenchmark {
     /// write to by replacing the benchmark's `.wasm` extension with `.wat`. On success, this will
     /// return the path to the written WAT.
     pub fn emit_wat(&self) -> Result<PathBuf> {
+        use io::Write;
+
         let stem = self
             .0
             .file_stem()
@@ -79,7 +76,7 @@ impl WasmBenchmark {
             stem.to_str()
                 .expect("a valid Unicode file name for the Wasm benchmark")
         ));
-        let mut file = File::create(&wat)?;
+        let mut file = fs::File::create(&wat)?;
         file.write_all(wasmprinter::print_file(&self.0)?.as_bytes())?;
         file.write(&['\n' as u8])?; // Append a newline on the end.
         Ok(wat)
@@ -95,6 +92,12 @@ impl AsRef<Path> for WasmBenchmark {
 impl Into<PathBuf> for WasmBenchmark {
     fn into(self) -> PathBuf {
         self.0
+    }
+}
+
+impl fmt::Display for WasmBenchmark {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0.display())
     }
 }
 
@@ -124,12 +127,6 @@ impl ValidationErrorKind {
             path: wasmfile.to_string(),
             source: self,
         })
-    }
-}
-
-impl Display for WasmBenchmark {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0.display())
     }
 }
 
