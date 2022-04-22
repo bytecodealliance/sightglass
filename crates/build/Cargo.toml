@@ -1,5 +1,5 @@
 [package]
-name = "sightglass-artifact"
+name = "sightglass-build"
 version = "0.1.0"
 description = "Tools for building and describing Wasm benchmark artifacts"
 authors = ["Andrew Brown <andrew.brown@intel.com>"]

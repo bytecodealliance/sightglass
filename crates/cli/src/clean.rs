@@ -10,7 +10,7 @@ pub struct CleanCommand {}
 impl CleanCommand {
     pub fn execute(&self) -> Result<()> {
         // Remove cached data, e.g. engines.
-        sightglass_artifact::clean()?;
+        sightglass_build::clean()?;
 
         // Remove log files.
         let log_file_regex = Regex::new(r"^(stdout|stderr)\-\w+\-\d+-\d+.log$").unwrap();

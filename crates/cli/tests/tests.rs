@@ -22,7 +22,7 @@ fn test_engine() -> PathBuf {
         // system.
         static BUILD_WASMTIME: std::sync::Once = std::sync::Once::new();
         BUILD_WASMTIME.call_once(|| {
-            if sightglass_artifact::get_known_engine_path("wasmtime")
+            if sightglass_build::get_known_engine_path("wasmtime")
                 .unwrap()
                 .is_file()
             {
@@ -49,7 +49,7 @@ fn test_engine() -> PathBuf {
                 .expect("failed to run `sightglass-cli build-engine`");
             assert!(status.success());
         });
-        sightglass_artifact::get_known_engine_path("wasmtime").unwrap()
+        sightglass_build::get_known_engine_path("wasmtime").unwrap()
     }
 }
 

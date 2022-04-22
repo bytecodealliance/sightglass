@@ -11,7 +11,7 @@ libloading = "0.7"
 log = "0.4"
 precision = "0.1"
 serde = { version = "1.0.118", features = ["derive"] }
-sightglass-artifact = { path = "../artifact" }
+sightglass-build = { path = "../build" }
 sightglass-data = { path = "../data" }
 thiserror = "1.0"
 lazy_static = "1.4"
