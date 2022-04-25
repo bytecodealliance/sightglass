@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sightglass_artifact::WasmBenchmark;
+use sightglass_build::WasmBenchmark;
 use std::path::PathBuf;
 use structopt::StructOpt;
 

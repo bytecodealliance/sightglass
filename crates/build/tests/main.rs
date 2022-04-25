@@ -1,7 +1,7 @@
 use anyhow::Result;
 use log::info;
 use pretty_env_logger;
-use sightglass_artifact::{Artifact, Dockerfile, WasmBenchmark};
+use sightglass_build::{Artifact, Dockerfile, WasmBenchmark};
 use std::env;
 use std::path::PathBuf;
 

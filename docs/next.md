@@ -5,12 +5,12 @@ The `sightglass` next test runner measures benchmarks that are compiled into Was
 use of a separate shared library to control the Wasm engine. This project, an iteration in the
 spirit of the original sightglass, contains separate crates for running Wasm benchmarks:
  - [`sightglass-cli`](crates/cli) contains the CLI for creating and running benchmarks
- - [`sightglass-artifact`](crates/artifact) provides tools for building the Wasm benchmark artifacts, e.g.,
-   from a Dockerfile
+ - [`sightglass-build`](crates/build) provides tools for building the Wasm benchmark artifacts,
+   e.g., from a `Dockerfile`
  - [`sightglass-recorder`](crates/recorder) is a measurement tool for running a Wasm benchmark, see
    _Conventions_ below
  - TODO Eventually, other crates may be included: `sightglass-analysis`,
-   `sightglass-artifact-server`, `sightglass-result-server`
+   `sightglass-build-server`, `sightglass-result-server`
 
 ### Conventions
 

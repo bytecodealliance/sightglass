@@ -1,5 +1,5 @@
 use anyhow::Result;
-use sightglass_artifact::{Dockerfile, WasmBenchmark};
+use sightglass_build::{Dockerfile, WasmBenchmark};
 use std::path::PathBuf;
 use structopt::StructOpt;
 

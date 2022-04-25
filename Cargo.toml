@@ -33,7 +33,7 @@ hwloc = "0.5"
 members = [
     "crates/analysis",
     "crates/api",
-    "crates/artifact",
+    "crates/build",
     "crates/cli",
     "crates/data",
     "crates/recorder",
