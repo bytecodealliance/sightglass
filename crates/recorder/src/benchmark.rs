@@ -31,6 +31,7 @@ pub fn benchmark<'a, 'b, 'c>(
         stdin_path,
         measurements,
         measure,
+        None,
     );
 
     // Measure the module compilation.
