@@ -32,6 +32,9 @@ struct WasmBenchConfig {
     execution_timer: *mut u8,
     execution_start: extern "C" fn(*mut u8),
     execution_end: extern "C" fn(*mut u8),
+
+    execution_flags_ptr: *const u8,
+    execution_flags_len: usize,
 }
 
 /// An shared library that implements our in-process benchmarking API.
@@ -86,6 +89,7 @@ where
         stdin_path: Option<&Path>,
         measurements: &'a mut Measurements<'c>,
         measure: &'a mut M,
+        execution_flags: Option<&'a str>,
     ) -> Self {
         let working_dir = working_dir.display().to_string();
         let stdout_path = stdout_path.display().to_string();
@@ -113,6 +117,8 @@ where
             execution_timer: measurement_data as *mut u8,
             execution_start: Self::execution_start,
             execution_end: Self::execution_end,
+            execution_flags_ptr: execution_flags.as_ref().map_or(ptr::null(), |p| p.as_ptr()),
+            execution_flags_len: execution_flags.as_ref().map_or(0, |p| p.len()),
         };
 
         let mut engine = ptr::null_mut();
