@@ -133,15 +133,17 @@ pub fn build_image<P: AsRef<Path>>(dockerfile: P, args: Option<&BuildInfo>) -> R
     let tar_context_dir = tar_dir(context_dir)?;
 
     let mut command = Command::new(docker_binary());
-    // Read the context from a tar directory,
-    // https://docs.docker.com/engine/reference/commandline/build/#tarball-contexts
-    command.arg("build").arg("-");
+    command.arg("build");
 
     if let Some(args) = args {
         for (k, v) in args.iter() {
             command.arg("--build-arg").arg(format!("{}={}", k, v));
         }
     }
+
+    // Read the context from a tar directory,
+    // https://docs.docker.com/engine/reference/commandline/build/#tarball-contexts
+    command.arg("-");
 
     execute_and_capture_last_line(command, Some(tar_context_dir))
 }

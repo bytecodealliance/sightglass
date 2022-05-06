@@ -1,6 +1,6 @@
 //! Provide functions for constructing and converting paths to various build artifacts.
 use crate::{buildinfo, BuildInfo, EngineName};
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use std::{
     env,
     path::{Path, PathBuf},
@@ -13,6 +13,12 @@ pub const SIGHTGLASS_PROJECT_DIRECTORY: &'static str = env!("SIGHTGLASS_PROJECT_
 
 /// Get the local directory where sightglass stores cached data.
 pub fn get_cache_dir() -> Result<PathBuf> {
+    if let Ok(path) = env::var("SIGHTGLASS_CACHE_DIR") {
+        return Ok(PathBuf::from(path)
+            .canonicalize()
+            .context("invalid SIGHTGLASS_CACHE_DIR")?);
+    }
+
     let mut p = dirs::data_local_dir().ok_or_else(|| {
         anyhow::anyhow!(
             "missing an application data folder for storing sightglass engines; e.g. \

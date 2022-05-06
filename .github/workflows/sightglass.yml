@@ -41,40 +41,40 @@ jobs:
       with:
         toolchain: nightly
 
-    - name: Download Cached Wasmtime Bench API
-      uses: actions/cache@v2
-      id: wasmtime-cache
-      with:
-        path: wasmtime/target/release/*wasmtime_bench_api.*
-        key: wasmtime-${{ runner.os }}-${{ env.WASMTIME_COMMIT }}
-
-    - name: Clone Wasmtime
-      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
-      uses: actions/checkout@v2
-      with:
-        repository: "bytecodealliance/wasmtime"
-        ref: ${{ env.WASMTIME_COMMIT }}
-        submodules: recursive
-        path: wasmtime
-
-    - name: Build Wasmtime Bench API
-      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
-      run: cargo build --manifest-path wasmtime/crates/bench-api/Cargo.toml --release
-
-    - name: Configure Wasmtime Bench API (linux)
-      if: runner.os == 'Linux'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.so" >> $GITHUB_ENV
-
-    - name: Configure Wasmtime Bench API (macos)
-      if: runner.os == 'macOS'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.dylib" >> $GITHUB_ENV
-
-    - name: Configure Wasmtime Bench API (windows)
-      if: runner.os == 'Windows'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
-
     - name: Build all
       run: cargo +nightly build --verbose --all
 
+    # In order to cache the built Wasmtime engine, we specify a known directory path to put it in:
+    # `<repo>/target/engines`. We avoid using the system cache directory since this can have OS
+    # differences (e.g., `/home/.../.local/share`).
+    - name: Setup SIGHTGLASS_CACHE_DIR (non-Windows)
+      if: runner.os != 'Windows'
+      run: echo "SIGHTGLASS_CACHE_DIR=$(pwd)/target/engines" >> $GITHUB_ENV
+    - name: Setup SIGHTGLASS_CACHE_DIR  (Windows)
+      if: runner.os == 'Windows'
+      run: echo "SIGHTGLASS_CACHE_DIR=$(pwd)\\target\\engines" >> $env:GITHUB_ENV
+
+    # If the Wasmtime engine has been previously built, we can save time by loading a cached copy
+    # of it to the `SIGHTGLASS_CACHE_DIR`.
+    - name: Download cached Wasmtime engine
+      uses: actions/cache@v2
+      id: wasmtime-engine-cache
+      with:
+        path: ${{env.SIGHTGLASS_CACHE_DIR}}
+        key: wasmtime-${{ runner.os }}-${{ env.WASMTIME_COMMIT }}
+
+    # If the cache is invalidated, we build the engine into the `SIGHTGLASS_CACHE_DIR`.
+    - name: Build Wasmtime engine
+      if: steps.wasmtime-engine-cache.outputs.cache-hit != 'true'
+      env:
+        RUST_LOG: trace
+        RUST_BACKTRACE: 1
+      run: |
+           mkdir -p ${{env.SIGHTGLASS_CACHE_DIR}}
+           cargo +nightly run -- build-engine wasmtime?REVISION=${{env.WASMTIME_COMMIT}}
+           cargo +nightly run -- list-engines
+
     - name: Test all
+      env:
+        SIGHTGLASS_CACHE_DIR: ${{env.GITHUB_WORKSPACE}}/target/engines
       run: cargo +nightly test --verbose --all
