@@ -20,36 +20,44 @@ fn test_engine() -> PathBuf {
         // Make sure we only ever build Wasmtime once, and don't have N threads
         // build it in parallel and race to be the one to save it onto the file
         // system.
+        let project_dir = PathBuf::from("../..").canonicalize().unwrap();
+        let engine_dir = project_dir.join("engines/wasmtime");
+        let engine_path = engine_dir.join(sightglass_build::get_engine_filename());
         static BUILD_WASMTIME: std::sync::Once = std::sync::Once::new();
         BUILD_WASMTIME.call_once(|| {
-            if sightglass_build::get_known_engine_path("wasmtime")
-                .unwrap()
-                .is_file()
-            {
-                // A wasmtime engine is already built!
+            if engine_path.is_file() {
+                // Use the already built engine library.
                 return;
-            }
-
-            // Use this instead of `eprintln!` to avoid `cargo test`'s stdio
-            // capturing.
-            use std::io::Write;
-            drop(writeln!(
-                std::io::stderr(),
-                "**************************************************************\n\
+            } else {
+                // Use this instead of `eprintln!` to avoid `cargo test`'s stdio
+                // capturing.
+                use std::io::Write;
+                drop(writeln!(
+                    std::io::stderr(),
+                    "**************************************************************\n\
                  *** Building Wasmtime engine; this may take a few minutes. ***\n\
                  **************************************************************"
-            ));
+                ));
 
-            let status = Command::cargo_bin("sightglass-cli")
-                .unwrap()
-                .current_dir("../..") // Run in the root of the repo.
-                .arg("build-engine")
-                .arg("wasmtime")
-                .status()
-                .expect("failed to run `sightglass-cli build-engine`");
-            assert!(status.success());
+                // Build the `build.rs` script.
+                let status = Command::new("rustc")
+                    .current_dir(&engine_dir)
+                    .arg("build.rs")
+                    .status()
+                    .expect("failed to run `rustc build.rs`");
+                assert!(status.success());
+
+                // Build the Wasmtime engine library in to the `engines/wasmtime` directory.
+                let build_script_path =
+                    engine_dir.join(format!("build{}", std::env::consts::EXE_SUFFIX));
+                let status = Command::new(build_script_path)
+                    .current_dir(&engine_dir)
+                    .status()
+                    .expect("failed to run `./build`");
+                assert!(status.success());
+            }
         });
-        sightglass_build::get_known_engine_path("wasmtime").unwrap()
+        engine_path
     }
 }
 
