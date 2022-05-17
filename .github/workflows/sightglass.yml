@@ -41,37 +41,19 @@ jobs:
       with:
         toolchain: nightly
 
-    - name: Download Cached Wasmtime Bench API
+    - name: Download Cached Wasmtime engine
       uses: actions/cache@v2
       id: wasmtime-cache
       with:
-        path: wasmtime/target/release/*wasmtime_bench_api.*
+        path: engines/wasmtime/*
         key: wasmtime-${{ runner.os }}-${{ env.WASMTIME_COMMIT }}
 
-    - name: Clone Wasmtime
+    - name: Build Wasmtime engine
       if: steps.wasmtime-cache.outputs.cache-hit != 'true'
-      uses: actions/checkout@v2
-      with:
-        repository: "bytecodealliance/wasmtime"
-        ref: ${{ env.WASMTIME_COMMIT }}
-        submodules: recursive
-        path: wasmtime
-
-    - name: Build Wasmtime Bench API
-      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
-      run: cargo build --manifest-path wasmtime/crates/bench-api/Cargo.toml --release
-
-    - name: Configure Wasmtime Bench API (linux)
-      if: runner.os == 'Linux'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.so" >> $GITHUB_ENV
-
-    - name: Configure Wasmtime Bench API (macos)
-      if: runner.os == 'macOS'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)/wasmtime/target/release/libwasmtime_bench_api.dylib" >> $GITHUB_ENV
-
-    - name: Configure Wasmtime Bench API (windows)
-      if: runner.os == 'Windows'
-      run: echo "SIGHTGLASS_TEST_ENGINE=$(pwd)\\wasmtime\\target\\release\\wasmtime_bench_api.dll" >> $env:GITHUB_ENV
+      working-directory: ./engines/wasmtime
+      run: |
+           rustc build.rs
+           ./build
 
     - name: Build all
       run: cargo +nightly build --verbose --all
