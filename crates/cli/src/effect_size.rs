@@ -1,9 +1,9 @@
 use anyhow::Result;
-use sightglass_analysis::effect_size;
-use sightglass_data::{Format, Measurement};
+use sightglass_analysis::{effect_size, summarize};
+use sightglass_data::Format;
 use std::{
     fs::File,
-    io::{self, BufReader, Read},
+    io::{self, BufReader},
 };
 use structopt::StructOpt;
 
@@ -12,17 +12,18 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "effect-size")]
 pub struct EffectSizeCommand {
+    /// Path to the file(s) that will be read from, or none to indicate stdin (default).
+    #[structopt(short = "f")]
+    input_file: Option<Vec<String>>,
+
     /// The format of the input data. Either 'json' or 'csv'.
     #[structopt(short = "i", long = "input-format", default_value = "json")]
     input_format: Format,
 
-    /// Path to the file that will be read from, or none to indicate stdin (default).
-    #[structopt(short = "f")]
-    input_file: Option<String>,
-
-    /// The format of the output data. Either 'json' or 'csv'.
-    #[structopt(short = "o", long = "output-format", default_value = "json")]
-    output_format: Format,
+    /// The format of the output data. Either 'json' or 'csv'; if unspecified, print the output in
+    /// human-readable form.
+    #[structopt(short = "o", long = "output-format")]
+    output_format: Option<Format>,
 
     /// The significance level for the confidence interval. Typical values are
     /// 0.01 and 0.05, which correspond to 99% and 95% confidence respectively.
@@ -32,13 +33,28 @@ pub struct EffectSizeCommand {
 
 impl EffectSizeCommand {
     pub fn execute(&self) -> Result<()> {
-        let file: Box<dyn Read> = if let Some(file) = self.input_file.as_ref() {
-            Box::new(BufReader::new(File::open(file)?))
+        let measurements = if let Some(files) = self.input_file.as_ref() {
+            let mut ms = Vec::new();
+            for file in files {
+                let reader = BufReader::new(File::open(file)?);
+                ms.append(&mut self.input_format.read(reader)?);
+            }
+            ms
         } else {
-            Box::new(io::stdin())
+            self.input_format.read(io::stdin())?
         };
-        let measurements: Vec<Measurement> = self.input_format.read(file)?;
-        let effects = effect_size(self.significance_level, &measurements)?;
-        self.output_format.write(&effects, io::stdout())
+
+        let effects = effect_size::calculate(self.significance_level, &measurements)?;
+        if let Some(output_format) = &self.output_format {
+            output_format.write(&effects, io::stdout())
+        } else {
+            let summaries = summarize::calculate(&measurements);
+            effect_size::write(
+                effects,
+                &summaries,
+                self.significance_level,
+                &mut io::stdout(),
+            )
+        }
     }
 }
