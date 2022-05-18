@@ -23,7 +23,7 @@ pub fn benchmark<'a, 'b, 'c>(
     measure: &'a mut impl Measure,
     measurements: &'a mut Measurements<'c>,
 ) -> Result<()> {
-    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    #[cfg(target_os = "linux")]
     info!("Benchmark scheduled on CPU: {}", unsafe {
         libc::sched_getcpu()
     });
