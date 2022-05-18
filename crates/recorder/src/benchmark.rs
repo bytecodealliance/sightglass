@@ -1,7 +1,6 @@
 use crate::bench_api::{BenchApi, Engine};
 use crate::measure::{Measure, Measurements};
 use anyhow::Result;
-use libc::sched_getcpu;
 use log::info;
 use sightglass_data::Phase;
 use std::path::Path;
@@ -24,7 +23,10 @@ pub fn benchmark<'a, 'b, 'c>(
     measure: &'a mut impl Measure,
     measurements: &'a mut Measurements<'c>,
 ) -> Result<()> {
-    info!("Benchmark scheduled on CPU: {}", unsafe { sched_getcpu() });
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    info!("Benchmark scheduled on CPU: {}", unsafe {
+        libc::sched_getcpu()
+    });
 
     let engine = Engine::new(
         bench_api,
