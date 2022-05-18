@@ -1,8 +1,10 @@
 use crate::keys::KeyBuilder;
+use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
+use std::io::Write;
 
 /// Summarize measurements grouped by: architecture, engine, benchmark file, phase and event.
-pub fn summarize<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
+pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
     for k in KeyBuilder::all().keys(&measurements) {
         let mut grouped_counts: Vec<_> = measurements
@@ -57,6 +59,50 @@ fn median(numbers: &mut [u64]) -> u64 {
     numbers[numbers.len() / 2]
 }
 
+/// Write a vector of [Summary] structures to the passed `output_file` in human-readable form.
+pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Result<()> {
+    // TODO this sorting is not using `arch` which is not guaranteed to be the same in result sets;
+    // potentially this could re-use `Key` functionality.
+    summaries.sort_by(|x, y| {
+        x.phase
+            .cmp(&y.phase)
+            .then_with(|| x.wasm.cmp(&y.wasm))
+            .then_with(|| x.event.cmp(&y.event))
+            .then_with(|| x.engine.cmp(&y.engine))
+    });
+
+    let mut last_phase = None;
+    let mut last_wasm = None;
+    let mut last_event = None;
+    for summary in summaries {
+        if last_phase != Some(summary.phase) {
+            last_phase = Some(summary.phase);
+            last_wasm = None;
+            last_event = None;
+            writeln!(output_file, "{}", summary.phase)?;
+        }
+
+        if last_wasm.as_ref() != Some(&summary.wasm) {
+            last_wasm = Some(summary.wasm.clone());
+            last_event = None;
+            writeln!(output_file, "  {}", summary.wasm)?;
+        }
+
+        if last_event.as_ref() != Some(&summary.event) {
+            last_event = Some(summary.event.clone());
+            writeln!(output_file, "    {}", summary.event)?;
+        }
+
+        writeln!(
+            output_file,
+            "      [{} {:.2} {}] {}",
+            summary.min, summary.mean, summary.max, summary.engine,
+        )?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,7 +126,7 @@ mod tests {
         let measurements = vec![measurement(1), measurement(0), measurement(2)];
 
         assert_eq!(
-            summarize(&measurements),
+            calculate(&measurements),
             vec![Summary {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
@@ -116,6 +162,6 @@ mod tests {
             measurement(Phase::Compilation, 2),
         ];
 
-        assert_eq!(summarize(&measurements).len(), 2);
+        assert_eq!(calculate(&measurements).len(), 2);
     }
 }

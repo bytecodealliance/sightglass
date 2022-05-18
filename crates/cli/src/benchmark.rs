@@ -409,160 +409,20 @@ fn display_effect_size(
     significance_level: f64,
     output_file: &mut dyn Write,
 ) -> Result<()> {
-    let mut effect_sizes = sightglass_analysis::effect_size(significance_level, measurements)?;
-    let summary = sightglass_analysis::summarize(measurements);
-
-    // Sort the effect sizes so that we focus on statistically
-    // significant results before insignificant results and larger
-    // relative effect sizes before smaller relative effect sizes.
-    effect_sizes.sort_by(|x, y| {
-        y.is_significant().cmp(&x.is_significant()).then_with(|| {
-            let x_speedup = x.a_speed_up_over_b().0.max(x.b_speed_up_over_a().0);
-            let y_speedup = y.a_speed_up_over_b().0.max(y.b_speed_up_over_a().0);
-            y_speedup.partial_cmp(&x_speedup).unwrap()
-        })
-    });
-
-    for effect_size in effect_sizes {
-        writeln!(output_file)?;
-        writeln!(
-            output_file,
-            "{} :: {} :: {}",
-            effect_size.phase, effect_size.event, effect_size.wasm
-        )?;
-        writeln!(output_file)?;
-
-        // For readability, trim the shared prefix from our two engine names.
-        let end_of_shared_prefix = effect_size
-            .a_engine
-            .char_indices()
-            .zip(effect_size.b_engine.char_indices())
-            .find_map(|((i, a), (j, b))| {
-                if a == b {
-                    None
-                } else {
-                    debug_assert_eq!(i, j);
-                    Some(i)
-                }
-            })
-            .unwrap_or(0);
-        let a_engine = &effect_size.a_engine[end_of_shared_prefix..];
-        let b_engine = &effect_size.b_engine[end_of_shared_prefix..];
-
-        if effect_size.is_significant() {
-            writeln!(
-                output_file,
-                "  Δ = {:.2} ± {:.2} (confidence = {}%)",
-                (effect_size.b_mean - effect_size.a_mean).abs(),
-                effect_size.half_width_confidence_interval.abs(),
-                (1.0 - significance_level) * 100.0,
-            )?;
-            writeln!(output_file)?;
-
-            let ratio = effect_size.b_mean / effect_size.a_mean;
-            let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
-            writeln!(
-                output_file,
-                "  {a_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_engine}!",
-                a_engine = a_engine,
-                b_engine = b_engine,
-                ratio_min = ratio - ratio_ci,
-                ratio_max = ratio + ratio_ci,
-            )?;
-            let ratio = effect_size.a_mean / effect_size.b_mean;
-            let ratio_ci = effect_size.half_width_confidence_interval / effect_size.b_mean;
-
-            writeln!(
-                output_file,
-                "  {b_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_engine}!",
-                a_engine = a_engine,
-                b_engine = b_engine,
-                ratio_min = ratio - ratio_ci,
-                ratio_max = ratio + ratio_ci,
-            )?;
-        } else {
-            writeln!(output_file, "  No difference in performance.")?;
-        }
-        writeln!(output_file)?;
-
-        let get_summary = |engine: &str, wasm: &str, phase: Phase, event: &str| {
-            summary
-                .iter()
-                .find(|s| {
-                    s.engine == engine && s.wasm == wasm && s.phase == phase && s.event == event
-                })
-                .unwrap()
-        };
-
-        let a_summary = get_summary(
-            &effect_size.a_engine,
-            &effect_size.wasm,
-            effect_size.phase,
-            &effect_size.event,
-        );
-        writeln!(
-            output_file,
-            "  [{} {:.2} {}] {}",
-            a_summary.min, a_summary.mean, a_summary.max, a_engine,
-        )?;
-
-        let b_summary = get_summary(
-            &effect_size.b_engine,
-            &effect_size.wasm,
-            effect_size.phase,
-            &effect_size.event,
-        );
-        writeln!(
-            output_file,
-            "  [{} {:.2} {}] {}",
-            b_summary.min, b_summary.mean, b_summary.max, b_engine,
-        )?;
-    }
-
-    Ok(())
+    let effect_sizes =
+        sightglass_analysis::effect_size::calculate(significance_level, measurements)?;
+    let summaries = sightglass_analysis::summarize::calculate(measurements);
+    sightglass_analysis::effect_size::write(
+        effect_sizes,
+        &summaries,
+        significance_level,
+        output_file,
+    )
 }
 
 fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Write) -> Result<()> {
-    let mut summaries = sightglass_analysis::summarize(measurements);
-
-    summaries.sort_by(|x, y| {
-        x.phase
-            .cmp(&y.phase)
-            .then_with(|| x.wasm.cmp(&y.wasm))
-            .then_with(|| x.event.cmp(&y.event))
-            .then_with(|| x.engine.cmp(&y.engine))
-    });
-
-    let mut last_phase = None;
-    let mut last_wasm = None;
-    let mut last_event = None;
-    for summary in summaries {
-        if last_phase != Some(summary.phase) {
-            last_phase = Some(summary.phase);
-            last_wasm = None;
-            last_event = None;
-            writeln!(output_file, "{}", summary.phase)?;
-        }
-
-        if last_wasm.as_ref() != Some(&summary.wasm) {
-            last_wasm = Some(summary.wasm.clone());
-            last_event = None;
-            writeln!(output_file, "  {}", summary.wasm)?;
-        }
-
-        if last_event.as_ref() != Some(&summary.event) {
-            last_event = Some(summary.event.clone());
-            writeln!(output_file, "    {}", summary.event)?;
-        }
-
-        writeln!(
-            output_file,
-            "      [{} {:.2} {}] {}",
-            summary.min, summary.mean, summary.max, summary.engine,
-        )?;
-    }
-
-    Ok(())
+    let summaries = sightglass_analysis::summarize::calculate(measurements);
+    sightglass_analysis::summarize::write(summaries, output_file)
 }
 
 #[cfg(test)]
