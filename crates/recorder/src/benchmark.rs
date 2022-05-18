@@ -23,6 +23,11 @@ pub fn benchmark<'a, 'b, 'c>(
     measure: &'a mut impl Measure,
     measurements: &'a mut Measurements<'c>,
 ) -> Result<()> {
+    #[cfg(target_os = "linux")]
+    info!("Benchmark scheduled on CPU: {}", unsafe {
+        libc::sched_getcpu()
+    });
+
     let engine = Engine::new(
         bench_api,
         working_dir,

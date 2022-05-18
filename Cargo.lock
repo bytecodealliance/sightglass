@@ -1432,6 +1432,7 @@ dependencies = [
  "anyhow",
  "ittapi",
  "lazy_static",
+ "libc",
  "libloading",
  "log",
  "perf-event",
