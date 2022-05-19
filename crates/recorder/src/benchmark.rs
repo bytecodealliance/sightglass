@@ -20,6 +20,7 @@ pub fn benchmark<'a, 'b, 'c>(
     stdin_path: Option<&Path>,
     wasm_bytes: &[u8],
     stop_after_phase: Option<Phase>,
+    execution_flags: Option<&str>,
     measure: &'a mut impl Measure,
     measurements: &'a mut Measurements<'c>,
 ) -> Result<()> {
@@ -36,7 +37,7 @@ pub fn benchmark<'a, 'b, 'c>(
         stdin_path,
         measurements,
         measure,
-        None,
+        execution_flags,
     );
 
     // Measure the module compilation.

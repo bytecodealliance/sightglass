@@ -19,6 +19,15 @@ use structopt::StructOpt;
 /// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(StructOpt, Debug)]
 pub struct BenchmarkCommand {
+    /// The path to the Wasm file(s) to benchmark.
+    #[structopt(
+        index = 1,
+        required = true,
+        value_name = "WASMFILE",
+        parse(from_os_str)
+    )]
+    wasm_files: Vec<PathBuf>,
+
     /// The benchmark engine(s) with which to run the benchmark.
     ///
     /// This can be either the path to a shared library implementing the
@@ -32,6 +41,11 @@ pub struct BenchmarkCommand {
         default_value = "wasmtime"
     )]
     engines: Vec<String>,
+
+    /// Configure an engine using engine-specific flags. (For the Wasmtime engine, these can be a
+    /// subset of flags from `wasmtime run --help`).
+    #[structopt(long("engine-flags"), value_name = "ENGINE_FLAGS")]
+    engine_flags: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
     #[structopt(long = "processes", default_value = "10", value_name = "PROCESSES")]
@@ -86,15 +100,6 @@ pub struct BenchmarkCommand {
     /// specified, the Wasm file's parent directory is used instead.
     #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
     working_dir: Option<PathBuf>,
-
-    /// The path to the Wasm file to compile.
-    #[structopt(
-        index = 1,
-        required = true,
-        value_name = "WASMFILE",
-        parse(from_os_str)
-    )]
-    wasm_files: Vec<PathBuf>,
 
     /// Stop measuring after the given phase (compilation/instantiation/execution).
     #[structopt(long("stop-after"))]
@@ -182,6 +187,7 @@ impl BenchmarkCommand {
                         stdin,
                         &bytes,
                         self.stop_after_phase.clone(),
+                        self.engine_flags.as_deref(),
                         &mut measure,
                         &mut measurements,
                     )?;
