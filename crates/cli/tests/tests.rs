@@ -210,6 +210,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
     let alt_engine_path: PathBuf = alt_engine.path().into();
     alt_engine.close()?;
     std::fs::copy(&test_engine, &alt_engine_path)?;
+    assert!(alt_engine_path.exists());
 
     sightglass_cli()
         .arg("benchmark")
