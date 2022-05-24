@@ -1,6 +1,5 @@
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_build::get_built_engine;
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
@@ -30,16 +29,9 @@ pub struct BenchmarkCommand {
 
     /// The benchmark engine(s) with which to run the benchmark.
     ///
-    /// This can be either the path to a shared library implementing the
-    /// benchmarking engine specification or an engine reference: `[engine
-    /// name]@[Git revision]?@[Git repository]?`, e.g. `wasmtime@main`.
-    #[structopt(
-        long("engine"),
-        short("e"),
-        value_name = "ENGINE-REF OR PATH",
-        empty_values = false,
-        default_value = "wasmtime"
-    )]
+    /// This is one or more paths to a shared library implementing the benchmarking engine
+    /// specification. See `engines/wasmtime` for an example script to build an engine.
+    #[structopt(long("engine"), short("e"), value_name = "PATH", empty_values = false)]
     engines: Vec<String>,
 
     /// Configure an engine using engine-specific flags. (For the Wasmtime engine, these can be a
@@ -144,7 +136,7 @@ impl BenchmarkCommand {
         let mut all_measurements = vec![];
 
         for engine in &self.engines {
-            let engine_path = get_built_engine(engine)?;
+            let engine_path = check_engine_path(engine)?;
             log::info!("Using benchmark engine: {}", engine_path.display());
             let lib = unsafe { libloading::Library::new(&engine_path)? };
             let mut bench_api = unsafe { BenchApi::new(&lib)? };
@@ -299,7 +291,7 @@ impl BenchmarkCommand {
             // Ensure that each of our engines is built before we spawn any
             // child processes (potentially in a different working directory,
             // and therefore potentially invalidating relative paths used here).
-            let engine = get_built_engine(engine)?;
+            let engine = check_engine_path(engine)?;
 
             for wasm in &self.wasm_files {
                 choices.push((engine.clone(), wasm, self.processes));
@@ -429,6 +421,17 @@ fn display_effect_size(
 fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Write) -> Result<()> {
     let summaries = sightglass_analysis::summarize::calculate(measurements);
     sightglass_analysis::summarize::write(summaries, output_file)
+}
+
+// Check that a passed engine path is indeed a valid path; the returned value is a path to the built
+// engine's dylib.
+pub fn check_engine_path(engine: &str) -> Result<PathBuf> {
+    if Path::new(engine).exists() {
+        log::debug!("Using engine path: {}", engine);
+        Ok(PathBuf::from(engine))
+    } else {
+        Err(anyhow!("invalid path to engine: {}", engine))
+    }
 }
 
 #[cfg(test)]
