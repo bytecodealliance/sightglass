@@ -1,5 +1,5 @@
 use crate::hash;
-use crate::util::stringify;
+use crate::util::to_string_lossy;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -65,7 +65,7 @@ fn simplify_benchmark_name<P: AsRef<Path>>(path: P) -> Result<String> {
     } else {
         stem
     };
-    Ok(stringify(name))
+    Ok(to_string_lossy(name))
 }
 
 /// Simplify the benchmark path if possible; e.g.:
@@ -79,9 +79,9 @@ fn simplify_benchmark_path<P: AsRef<Path>>(path: P) -> String {
         .position(|c| c == "benchmarks" || c == "benchmarks-next")
     {
         let shortened_path: PathBuf = path.iter().skip(i).collect();
-        stringify(shortened_path.as_os_str())
+        to_string_lossy(shortened_path.as_os_str())
     } else {
-        stringify(path.as_os_str())
+        to_string_lossy(path.as_os_str())
     }
 }
 

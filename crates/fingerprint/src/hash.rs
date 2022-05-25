@@ -29,7 +29,7 @@ pub(crate) fn hexify(bytes: &[u8]) -> String {
     s
 }
 
-/// Create a hexadecimal string from a sequence of bytes.
+/// Use the first 8 characters of a string as its slug; e.g., for hashes.
 pub fn slug(s: &str) -> &str {
     &s[0..8]
 }

@@ -1,5 +1,5 @@
 use crate::hash;
-use crate::util::stringify;
+use crate::util::to_string_lossy;
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ impl Engine {
     pub fn fingerprint<P: AsRef<Path>>(library_path: P) -> Result<Self> {
         let library_path = library_path.as_ref().canonicalize()?;
         let buildinfo_path = get_buildinfo_path_from_engine_path(&library_path)?;
-        let path = stringify(&library_path);
+        let path = to_string_lossy(&library_path);
 
         if let Ok(buildinfo_contents) = fs::read_to_string(buildinfo_path) {
             let buildinfo_name = extract_value_from_buildinfo(&buildinfo_contents, "NAME")
