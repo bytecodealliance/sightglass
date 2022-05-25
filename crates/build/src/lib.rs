@@ -1,7 +1,5 @@
-mod docker;
 mod wasm;
 
-pub use docker::{DockerBuildArgs, Dockerfile};
 pub use wasm::WasmBenchmark;
 
 /// Calculate the library name for a sightglass library on the target operating system: e.g.

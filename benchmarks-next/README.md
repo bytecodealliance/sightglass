@@ -13,14 +13,13 @@ effectively duplicate workloads.
 Build an individual benchmark program via:
 
 ```
-$ cargo run -p sightglass-cli -- build-benchmark path/to/benchmark/Dockerfile
+$ ./build.sh path/to/benchmark/dir/
 ```
 
-Build all benchmark programs by entering this directory
-(`sightglass/benchmarks-next`) and running:
+Build all benchmark programs by running:
 
 ```
-$ ./build.sh
+$ ./build-all.sh
 ```
 
 ## Minimal Technical Requirements
@@ -44,9 +43,9 @@ record its execution, it must:
 
 * Be located at `sightglass/benchmarks-next/$BENCHMARK_NAME/benchmark.wasm`
 
-* Input workloads must be files that lives in the same directory as the `.wasm`
+* Input workloads must be files that live in the same directory as the `.wasm`
   benchmark program. The benchmark program is run within the directory where it
-  lives on the filesystem, with that directory propened in WASI. The workload
+  lives on the filesystem, with that directory pre-opened in WASI. The workload
   must be read via a relative file path.
 
   If, for example, the benchmark processes JSON input, then its input workload
@@ -60,6 +59,13 @@ record its execution, it must:
 * Define the expected `stderr` output in a `./stderr.expected` sibling file
   located next to the `benchmark.wasm` file. The runner will assert that the
   actual execution's output matches the expectation.
+
+Many of the above requirements can be checked by running the `.wasm` file through
+the `validate` command:
+
+```
+$ cargo run -p sightglass-cli -- validate path/to/benchmark.wasm
+```
 
 ## Additional Requirements
 
