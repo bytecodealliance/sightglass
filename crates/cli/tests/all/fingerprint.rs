@@ -70,7 +70,7 @@ fn fingerprint_engine() {
             starts_with("{")
                 .and(contains(r#""name":"wasmtime-"#))
                 .and(contains(format!(r#""path":"{}""#, engine_path.display())))
-                .and(contains(r#""buildinfo":"NAME=wasmtime\n"#))
+                .and(contains(r#""buildinfo":"NAME=wasmtime"#))
                 .and(ends_with("}")),
         )
         .success();
