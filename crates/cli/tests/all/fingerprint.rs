@@ -36,10 +36,11 @@ fn fingerprint_benchmark() {
         drop(measurement.unwrap());
     }
 
+    let benchmark_subpath = format!("noop{}benchmark.wasm", std::path::MAIN_SEPARATOR);
     assert
         .stdout(
             predicate::str::starts_with("name,path,hash,size\n")
-                .and(predicate::str::contains("noop/benchmark.wasm")),
+                .and(predicate::str::contains(benchmark_subpath)),
         )
         .success();
 }
