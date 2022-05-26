@@ -108,13 +108,10 @@ mod tests {
             simplify_benchmark_path("code/benchmarks-next/noop.wasm"),
             format!("benchmarks-next{}noop.wasm", std::path::MAIN_SEPARATOR)
         );
+        // Note here how `simplify_benchmark_path` does not modify the path separator.
         assert_eq!(
             simplify_benchmark_path("some/other/path.wasm"),
-            format!(
-                "some{}other{}path.wasm",
-                std::path::MAIN_SEPARATOR,
-                std::path::MAIN_SEPARATOR
-            )
+            "some/other/path.wasm"
         );
     }
 }
