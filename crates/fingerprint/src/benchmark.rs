@@ -15,7 +15,7 @@ use std::{fs::File, path::Path};
 /// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Benchmark {
-    /// The benchmark name; this is calculated from either the benchark name (if it does not start
+    /// The benchmark name; this is calculated from either the benchmark name (if it does not start
     /// with "benchmark") or from the parent directory. This accommodates both the current benchmark
     /// structure where each directory contains a "benchmark.wasm" file as well as non-Sightglass
     /// benchmarks, e.g., "spidermonkey.wasm".
@@ -70,8 +70,10 @@ fn simplify_benchmark_name<P: AsRef<Path>>(path: P) -> Result<String> {
 
 /// Simplify the benchmark path if possible; e.g.:
 /// `/home/user/code/sightglass/benchmarks-next/<name>/benchmark.wasm` ->
-/// `benchmarks-next/<name>/benchmark.wasm`. This function finds a path component natching
-/// `benchmarks/` or `benchmarks-next/` and cuts the path there.
+/// `benchmarks-next/<name>/benchmark.wasm`. This function finds a path component matching
+/// `benchmarks/` or `benchmarks-next/` and cuts the path there. To avoid OS path differences, the
+/// simplified name will have its back slashes replaced with forward slashes; not-simplified paths
+/// remain the same.
 fn simplify_benchmark_path<P: AsRef<Path>>(path: P) -> String {
     let path = path.as_ref();
     if let Some(i) = path
@@ -79,7 +81,7 @@ fn simplify_benchmark_path<P: AsRef<Path>>(path: P) -> String {
         .position(|c| c == "benchmarks" || c == "benchmarks-next")
     {
         let shortened_path: PathBuf = path.iter().skip(i).collect();
-        to_string_lossy(shortened_path.as_os_str())
+        to_string_lossy(shortened_path.as_os_str()).replace("\\", "/")
     } else {
         to_string_lossy(path.as_os_str())
     }
