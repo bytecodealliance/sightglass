@@ -11,7 +11,7 @@ use std::{fs::File, path::Path};
 /// # use sightglass_fingerprint::Benchmark;
 /// let benchmark = Benchmark::fingerprint("../../benchmarks-next/noop/benchmark.wasm").unwrap();
 /// assert_eq!(benchmark.name, "noop");
-/// assert_eq!(benchmark.path, "benchmarks-next/noop/benchmark.wasm");
+/// assert_eq!(benchmark.path, format!("benchmarks-next{}noop{}benchmark.wasm", std::path::MAIN_SEPARATOR, std::path::MAIN_SEPARATOR));
 /// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Benchmark {
@@ -71,9 +71,7 @@ fn simplify_benchmark_name<P: AsRef<Path>>(path: P) -> Result<String> {
 /// Simplify the benchmark path if possible; e.g.:
 /// `/home/user/code/sightglass/benchmarks-next/<name>/benchmark.wasm` ->
 /// `benchmarks-next/<name>/benchmark.wasm`. This function finds a path component matching
-/// `benchmarks/` or `benchmarks-next/` and cuts the path there. To avoid OS path differences, the
-/// simplified name will have its back slashes replaced with forward slashes; not-simplified paths
-/// remain the same.
+/// `benchmarks/` or `benchmarks-next/` and cuts the path there.
 fn simplify_benchmark_path<P: AsRef<Path>>(path: P) -> String {
     let path = path.as_ref();
     if let Some(i) = path
@@ -81,7 +79,7 @@ fn simplify_benchmark_path<P: AsRef<Path>>(path: P) -> String {
         .position(|c| c == "benchmarks" || c == "benchmarks-next")
     {
         let shortened_path: PathBuf = path.iter().skip(i).collect();
-        to_string_lossy(shortened_path.as_os_str()).replace("\\", "/")
+        to_string_lossy(shortened_path.as_os_str())
     } else {
         to_string_lossy(path.as_os_str())
     }
@@ -104,15 +102,19 @@ mod tests {
     fn shortened_benchmark_paths() {
         assert_eq!(
             simplify_benchmark_path("/home/user/sightglass/benchmarks/benchmark.wasm"),
-            "benchmarks/benchmark.wasm"
+            format!("benchmark{}benchmark.wasm", std::path::MAIN_SEPARATOR)
         );
         assert_eq!(
             simplify_benchmark_path("code/benchmarks-next/noop.wasm"),
-            "benchmarks-next/noop.wasm"
+            format!("benchmarks-next{}noop.wasm", std::path::MAIN_SEPARATOR)
         );
         assert_eq!(
             simplify_benchmark_path("some/other/path.wasm"),
-            "some/other/path.wasm"
+            format!(
+                "some{}other{}path.wasm",
+                std::path::MAIN_SEPARATOR,
+                std::path::MAIN_SEPARATOR
+            )
         );
     }
 }
