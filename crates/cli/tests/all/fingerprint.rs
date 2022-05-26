@@ -64,12 +64,14 @@ fn fingerprint_engine() {
         drop(measurement.unwrap());
     }
 
+    // On Windows, the paths will have extra escaping when printed to output.
+    let escaped_engine_path = engine_path.to_string_lossy().replace("\\", "\\\\");
     use predicate::str::*;
     assert
         .stdout(
             starts_with("{")
                 .and(contains(r#""name":"wasmtime-"#))
-                .and(contains(format!("\"path\":\"{}\"", engine_path.display())))
+                .and(contains(format!(r#""path":"{}""#, escaped_engine_path)))
                 .and(contains(r#""buildinfo":"NAME=wasmtime"#))
                 .and(ends_with("}")),
         )
