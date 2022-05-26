@@ -102,7 +102,7 @@ mod tests {
     fn shortened_benchmark_paths() {
         assert_eq!(
             simplify_benchmark_path("/home/user/sightglass/benchmarks/benchmark.wasm"),
-            format!("benchmark{}benchmark.wasm", std::path::MAIN_SEPARATOR)
+            format!("benchmarks{}benchmark.wasm", std::path::MAIN_SEPARATOR)
         );
         assert_eq!(
             simplify_benchmark_path("code/benchmarks-next/noop.wasm"),
