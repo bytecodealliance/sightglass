@@ -88,10 +88,15 @@ measurements from, how many iterations we perform for each process, etc...
 
 That said, here are a couple typical usage scenarios.
 
+### Building the Runtime Engine for Wasmtime
+```
+$ cd engines/wasmtime && rustc build.rs && ./build && cd ../../
+```
+
 ### Running the Full Benchmark Suite
 
 ```
-$ cargo run -- benchmark -- benchmarks-next/*/benchmark.wasm
+$ cargo run -- benchmark -- benchmarks-next/*/benchmark.wasm --engine engines/wasmtime/libengine.so
 ```
 
 The output will be a summary of each benchmark program's compilation,
@@ -100,7 +105,7 @@ instantiation, and execution times.
 ### Running a Single Wasm Benchmark
 
 ```
-$ cargo run -- benchmark -- path/to/benchmark.wasm
+$ cargo run -- benchmark -- path/to/benchmark.wasm --engine engines/wasmtime/libengine.so
 ```
 
 ### Comparing a Feature Branch to Main
