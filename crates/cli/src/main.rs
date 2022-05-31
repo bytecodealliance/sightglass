@@ -1,5 +1,4 @@
 mod benchmark;
-mod build_benchmark;
 mod effect_size;
 mod fingerprint;
 mod summarize;
@@ -7,7 +6,6 @@ mod validate;
 
 use anyhow::Result;
 use benchmark::BenchmarkCommand;
-use build_benchmark::BuildBenchmarkCommand;
 use effect_size::EffectSizeCommand;
 use fingerprint::FingerprintCommand;
 use log::trace;
@@ -33,7 +31,6 @@ fn main() -> Result<()> {
     ],
 )]
 enum SightglassCommand {
-    BuildBenchmark(BuildBenchmarkCommand),
     Benchmark(BenchmarkCommand),
     Validate(ValidateCommand),
     Summarize(SummarizeCommand),
@@ -45,7 +42,6 @@ impl SightglassCommand {
     fn execute(&self) -> Result<()> {
         trace!("Executing command: {:?}", &self);
         match self {
-            SightglassCommand::BuildBenchmark(build) => build.execute(),
             SightglassCommand::Benchmark(benchmark) => benchmark.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),

@@ -1,4 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+# Run all of the benchmarks found in the `benchmarks-next` directory.
+#
+# Usage: ./run-all.sh
 
 set -e
 PROJECT_DIR=$(dirname "$0" | xargs dirname)
