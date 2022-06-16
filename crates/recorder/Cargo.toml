@@ -22,6 +22,12 @@ perf-event = "0.4"
 # On supported platforms, we use libc's `sched_getcpu` to log the processor ID.
 libc = "0.2"
 
+# There are multiple implementations for pinning the benchmark to a single core.
+[target.'cfg(any(target_os="windows",target_os="macos",target_os="linux"))'.dependencies]
+core_affinity="0.5.9"
+[target.'cfg(not(any(target_os="windows",target_os="macos",target_os="linux")))'.dependencies]
+hwloc = "0.5"
+
 [dev-dependencies]
 pretty_env_logger = "0.4"
 wat = "1.0"
