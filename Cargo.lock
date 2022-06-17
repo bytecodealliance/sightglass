@@ -1635,6 +1635,8 @@ name = "sightglass-recorder"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "core_affinity",
+ "hwloc",
  "ittapi",
  "lazy_static",
  "libc",

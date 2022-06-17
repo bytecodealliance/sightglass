@@ -1,6 +1,7 @@
 use anyhow::{anyhow, Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
+use sightglass_recorder::cpu_affinity::bind_to_single_core;
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
 use std::{
@@ -103,6 +104,11 @@ pub struct BenchmarkCommand {
     /// supplied.
     #[structopt(short, long, default_value = "0.01")]
     significance_level: f64,
+
+    /// Pin all benchmark iterations in a process to a single core. See `cpu_affinity` in the
+    /// `sightglass-recorder` crate for more information.
+    #[structopt(long)]
+    pin: bool,
 }
 
 impl BenchmarkCommand {
@@ -127,6 +133,10 @@ impl BenchmarkCommand {
         } else {
             Box::new(io::stdout())
         };
+
+        if self.pin {
+            bind_to_single_core().context("attempting to pin execution to a single core")?;
+        }
 
         let wasm_files: Vec<_> = self
             .wasm_files
@@ -324,6 +334,10 @@ impl BenchmarkCommand {
                 // Always use JSON when privately communicating with a
                 // subprocess.
                 .arg(Format::Json.to_string());
+
+            if self.pin {
+                command.arg("--pin");
+            }
 
             if self.small_workloads {
                 command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
