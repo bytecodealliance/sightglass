@@ -41,7 +41,7 @@ record its execution, it must:
 
 * Provide reproducible builds via Docker.
 
-* Be located at `sightglass/benchmarks-next/$BENCHMARK_NAME/benchmark.wasm`
+* Be located at `sightglass/benchmarks/$BENCHMARK_NAME/benchmark.wasm`
 
 * Input workloads must be files that live in the same directory as the `.wasm`
   benchmark program. The benchmark program is run within the directory where it
@@ -49,7 +49,7 @@ record its execution, it must:
   must be read via a relative file path.
 
   If, for example, the benchmark processes JSON input, then its input workload
-  should live at `sightglass/benchmarks-next/$BENCHMARK_NAME/input.json`, and it
+  should live at `sightglass/benchmarks/$BENCHMARK_NAME/input.json`, and it
   should open that file as `"./input.json"`.
 
 * Define the expected `stdout` output in a `./stdout.expected` sibling file

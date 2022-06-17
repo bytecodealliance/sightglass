@@ -49,11 +49,11 @@ above with `DOCKER=path/to/alternate/binary`.
 Build a Dockerfile into a Wasm benchmark:
 
 ```
-benchmarks-next/build.sh path/to/benchmark/directory/
+benchmarks/build.sh path/to/benchmark/directory/
 ```
 
-The [benchmarks-next/build-all.sh](../benchmarks-next/build-all.sh) script iterates over the
-Dockerfiles in `benchmarks-next` to build all of the included benchmarks.
+The [benchmarks/build-all.sh](../benchmarks/build-all.sh) script iterates over the
+Dockerfiles in `benchmarks` to build all of the included benchmarks.
 
 Then, measure how long an engine takes to compile, instantiate, and execute a Wasm benchmark:
 
@@ -61,5 +61,5 @@ Then, measure how long an engine takes to compile, instantiate, and execute a Wa
 cargo run -- benchmark path/to/generated/benchmark.wasm --engine path/to/engine.so
 ```
 
-The [benchmarks-next/run-all.sh](../benchmarks-next/run-all.sh) script runs all of the benchmarks in
-the `benchmarks-next` directory.
+The [benchmarks/run-all.sh](../benchmarks/run-all.sh) script runs all of the benchmarks in
+the `benchmarks` directory.

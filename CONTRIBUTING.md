@@ -55,5 +55,5 @@ to
 add](https://github.com/bytecodealliance/rfcs/blob/main/accepted/benchmark-suite.md#initial-list-of-potential-candidates),
 and we still haven't added most of them!
 
-[See `benchmarks-next/README.md` for technical details on adding new benchmark
-programs.](https://github.com/bytecodealliance/sightglass/blob/main/benchmarks-next/README.md)
+[See `benchmarks/README.md` for technical details on adding new benchmark
+programs.](https://github.com/bytecodealliance/sightglass/blob/main/benchmarks/README.md)

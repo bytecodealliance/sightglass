@@ -27,7 +27,7 @@ as described in [this
 RFC](https://github.com/bytecodealliance/rfcs/blob/main/accepted/benchmark-suite.md).
 In particular, it has
 
-* a benchmark suite of Wasm applications in `benchmarks-next/*`, and
+* a benchmark suite of Wasm applications in `benchmarks/*`, and
 
 * a benchmark runner CLI tool to record, analyze, and display benchmark results
   in `crates/cli/*`.
@@ -96,7 +96,7 @@ $ cd engines/wasmtime && rustc build.rs && ./build && cd ../../
 ### Running the Full Benchmark Suite
 
 ```
-$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks-next/*/benchmark.wasm
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks/*/benchmark.wasm
 ```
 
 The output will be a summary of each benchmark program's compilation,
@@ -137,7 +137,7 @@ $ cargo run -- \
     --engine /tmp/wasmtime_main.so \
     --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
     -- \
-    benchmarks-next/*/benchmark.wasm
+    benchmarks/*/benchmark.wasm
 ```
 
 The output will show a comparison between the `main` branch's results and your
@@ -156,7 +156,7 @@ $ cargo build --manifest-path ~/wasmtime/Cargo.toml --release -p wasmtime-bench-
       --engine /tmp/wasmtime_main.so \
       --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
       -- \
-      benchmarks-next/*/benchmark.wasm
+      benchmarks/*/benchmark.wasm
 ```
 
 ### Getting Raw JSON or CSV Results
@@ -165,7 +165,7 @@ If you don't want the results to be summarized and displayed in a human-readable
 format, you can get raw JSON or CSV via the `--raw` flag:
 
 ```
-$ cargo run -- benchmark --raw --output-format csv -- benchmarks-next/*/benchmark.wasm
+$ cargo run -- benchmark --raw --output-format csv -- benchmarks/*/benchmark.wasm
 ```
 
 Then you can use your own R/python/spreadsheets/etc to analyze and visualize the

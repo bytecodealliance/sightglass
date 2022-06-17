@@ -67,5 +67,5 @@ pub fn sightglass_cli_benchmark() -> Command {
 
 /// Get the benchmark path for the benchmark with the given name.
 pub fn benchmark(benchmark_name: &str) -> String {
-    format!("../../benchmarks-next/{}/benchmark.wasm", benchmark_name).into()
+    format!("../../benchmarks/{}/benchmark.wasm", benchmark_name).into()
 }
