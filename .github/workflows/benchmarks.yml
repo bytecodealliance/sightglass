@@ -20,7 +20,7 @@ jobs:
       with:
         toolchain: nightly
     - name: Rebuild benchmarks
-      run: benchmarks-next/build-all.sh 5
+      run: benchmarks/build-all.sh 5
 
   run:
     runs-on: ubuntu-latest
@@ -31,4 +31,4 @@ jobs:
       with:
         toolchain: nightly
     - name: Run benchmarks
-      run: benchmarks-next/run-all.sh
+      run: benchmarks/run-all.sh
