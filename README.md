@@ -39,9 +39,21 @@ work is not completed yet. See [issue
 93](https://github.com/bytecodealliance/sightglass/issues/93) for details.
 
 Results are always broken down by *phase* &mdash; compilation vs. instantiation
-vs.  execution &mdash; for each program in the suite. This allows us to reason
+vs. execution &mdash; for each program in the suite. This allows us to reason
 about, for example, compiler performance separately from its generated code
-quality.
+quality. How all this works together:
+
+- each __benchmark__ is compiled to a `benchmark.wasm` module that calls two host functions,
+  `bench.start` and `bench.end`, to notify Sightglass of the portion of the execution to measure
+  (see the [benchmarks README])
+- we build an __engine__ (e.g., Wasmtime) as a shared library that implements the [bench API]; the
+  Sightglass infrastructure uses this to measure each phase (see an [engine README])
+- the __`sightglass-cli`__ tool runs __benchmarks__ using the __engines__ and emits __measurements__
+  for each phase; this is configurable, e.g., by various measurement mechanisms, various output
+  formats, different aggregations, etc.
+
+[benchmarks README]: benchmarks/README.md
+[engine README]: engines/wasmtime/README.md
 
 ## This is *NOT* a General-Purpose WebAssembly Benchmark Suite
 
@@ -86,7 +98,7 @@ cargo run -- help
 There are flags to control how many different processes we spawn and take
 measurements from, how many iterations we perform for each process, etc...
 
-That said, here are a couple typical usage scenarios.
+That said, here are a couple of typical usage scenarios.
 
 ### Building the Runtime Engine for Wasmtime
 ```
@@ -168,5 +180,13 @@ format, you can get raw JSON or CSV via the `--raw` flag:
 $ cargo run -- benchmark --raw --output-format csv -- benchmarks/*/benchmark.wasm
 ```
 
-Then you can use your own R/python/spreadsheets/etc to analyze and visualize the
+Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize the
 benchmark results.
+
+### Adding a New Benchmark
+
+Add a Dockerfile under `benchmarks/<your benchmark>` building a Wasm file that brackets the work to
+measure with the `bench.start` and `bench.end` host calls. See the [benchmarks README] for a fuller
+set of requirements and the [`build.sh`] script for building this file.
+
+[`build.sh`]: benchmarks/build.sh
