@@ -96,7 +96,7 @@ $ cd engines/wasmtime && rustc build.rs && ./build && cd ../../
 ### Running the Full Benchmark Suite
 
 ```
-$ cargo run -- benchmark -- benchmarks-next/*/benchmark.wasm --engine engines/wasmtime/libengine.so
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks-next/*/benchmark.wasm
 ```
 
 The output will be a summary of each benchmark program's compilation,
@@ -105,7 +105,7 @@ instantiation, and execution times.
 ### Running a Single Wasm Benchmark
 
 ```
-$ cargo run -- benchmark -- path/to/benchmark.wasm --engine engines/wasmtime/libengine.so
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/benchmark.wasm
 ```
 
 ### Comparing a Feature Branch to Main
