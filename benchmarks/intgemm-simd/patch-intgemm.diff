@@ -1,0 +1,34 @@
+diff --git a/intgemm/intgemm.cc b/intgemm/intgemm.cc
+index 58e4bc5..70679ee 100644
+--- a/intgemm/intgemm.cc
++++ b/intgemm/intgemm.cc
+@@ -120,7 +120,11 @@ CPUType GetCPUID() {
+   return kLocalCPU;
+ }
+ 
++#ifdef WASM
++const CPUType kCPU = CPUType::SSSE3;
++#else
+ const CPUType kCPU = GetCPUID();
++#endif
+ 
+ void UnsupportedCPUError() {
+ #if (defined(_MSC_VER) && !defined(__clang__)) ? (_HAS_EXCEPTIONS) : (__EXCEPTIONS)
+diff --git a/intgemm/intgemm.h b/intgemm/intgemm.h
+index 26febb5..616fe0a 100644
+--- a/intgemm/intgemm.h
++++ b/intgemm/intgemm.h
+@@ -150,8 +150,13 @@ CPUType GetCPUID();
+  * unsupported otherwise
+  */
+ template <class T> T ChooseCPU(T avx512vnni, T avx512bw, T avx2, T ssse3, T sse2, T unsupported) {
++#ifdef WASM
++  (void)(avx512vnni), (void)(avx512bw), (void)(avx2), (void)(sse2), (void)(unsupported);
++  return ssse3;
++#else
+   const T ret[] = {unsupported, sse2, ssse3, avx2, avx512bw, avx512vnni};
+   return ret[(int)GetCPUID()];
++#endif
+ }
+ 
+ struct TileInfo {
