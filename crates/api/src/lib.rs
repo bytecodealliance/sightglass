@@ -9,7 +9,7 @@
 //! bench::end();
 //! ```
 //!
-//! See [benchmarks-next/README.md] for more details.
+//! See [benchmarks/README.md] for more details.
 
 mod ffi {
     #[link(wasm_import_module = "bench")]

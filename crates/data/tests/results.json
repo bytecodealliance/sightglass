@@ -2,7 +2,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 0,
         "phase": "Compilation",
@@ -12,7 +12,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 0,
         "phase": "Instantiation",
@@ -22,7 +22,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 0,
         "phase": "Execution",
@@ -32,7 +32,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 1,
         "phase": "Compilation",
@@ -42,7 +42,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 1,
         "phase": "Instantiation",
@@ -52,7 +52,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 1,
         "phase": "Execution",
@@ -62,7 +62,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 2,
         "phase": "Compilation",
@@ -72,7 +72,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 2,
         "phase": "Instantiation",
@@ -82,7 +82,7 @@
     {
         "arch": "x86_64",
         "engine": "wasmtime",
-        "wasm": "benchmarks-next/noop/benchmark.wasm",
+        "wasm": "benchmarks/noop/benchmark.wasm",
         "process": 1701529,
         "iteration": 2,
         "phase": "Execution",
