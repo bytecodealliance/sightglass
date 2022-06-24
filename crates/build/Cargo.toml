@@ -13,8 +13,8 @@ log = "0.4"
 serde = { version = "1.0.118", features = ["derive"] }
 tar = "0.4"
 thiserror = "1.0"
-wasmparser = "0.67"
-wasmprinter = "0.2.29"
+wasmparser = "0.86"
+wasmprinter = "0.2.36"
 
 [dev-dependencies]
 pretty_env_logger = "0.4"

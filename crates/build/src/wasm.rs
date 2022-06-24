@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
-use wasmparser::{Import, ImportSectionEntryType, Payload};
+use wasmparser::{Import, Payload, TypeRef};
 use wasmprinter;
 
 pub struct WasmBenchmark(PathBuf);
@@ -42,10 +42,9 @@ impl WasmBenchmark {
         };
 
         // Check that it contains valid Wasm.
-        let mut validator = wasmparser::Validator::new();
         let mut features = wasmparser::WasmFeatures::default();
         features.simd = true;
-        validator.wasm_features(features);
+        let mut validator = wasmparser::Validator::new_with_features(features);
         if let Err(_) = validator.validate_all(&bytes) {
             return ValidationErrorKind::InvalidWasm.with(&self);
         }
@@ -142,8 +141,8 @@ fn has_import_function(bytes: &[u8], expected_module: &str, expected_field: &str
                     match import? {
                         Import {
                             module,
-                            field: Some(field),
-                            ty: ImportSectionEntryType::Function(_),
+                            name: field,
+                            ty: TypeRef::Func(_),
                         } => {
                             if module == expected_module && field == expected_field {
                                 return Ok(true);

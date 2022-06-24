@@ -1103,7 +1103,7 @@ dependencies = [
  "serde_json",
  "tar",
  "thiserror",
- "wasmparser 0.67.0",
+ "wasmparser",
  "wasmprinter",
 ]
 
@@ -1439,27 +1439,21 @@ checksum = "d554b7f530dee5964d9a9468d95c1f8b8acae4f282807e7d27d4b03099a46744"
 
 [[package]]
 name = "wasmparser"
-version = "0.67.0"
+version = "0.86.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f091cf3849e5fe76a60255bff169277459f2201435bc583b6656880553f0ad0"
-
-[[package]]
-name = "wasmparser"
-version = "0.84.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77dc97c22bb5ce49a47b745bed8812d30206eff5ef3af31424f2c1820c0974b2"
+checksum = "4bcbfe95447da2aa7ff171857fc8427513eb57c75a729bb190e974dc695e8f5c"
 dependencies = [
  "indexmap",
 ]
 
 [[package]]
 name = "wasmprinter"
-version = "0.2.34"
+version = "0.2.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9b72b3c96567183a4eca151040b5f61735b2d53e7cadd4242dbb61cd9011d865"
+checksum = "aa4cca415278da771add7c9ab7f3391f04b8d98719d2cf28a185d38d5206697e"
 dependencies = [
  "anyhow",
- "wasmparser 0.84.0",
+ "wasmparser",
 ]
 
 [[package]]
