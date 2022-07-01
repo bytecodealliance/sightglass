@@ -30,13 +30,14 @@ pub struct BenchmarkCommand {
 
     /// The benchmark engine(s) with which to run the benchmark.
     ///
-    /// This is one or more paths to a shared library implementing the benchmarking engine
-    /// specification. See `engines/wasmtime` for an example script to build an engine.
+    /// This is one or more paths to a shared library implementing the
+    /// benchmarking engine specification. See `engines/wasmtime` for an example
+    /// script to build an engine.
     #[structopt(long("engine"), short("e"), value_name = "PATH", empty_values = false)]
     engines: Vec<String>,
 
-    /// Configure an engine using engine-specific flags. (For the Wasmtime engine, these can be a
-    /// subset of flags from `wasmtime run --help`).
+    /// Configure an engine using engine-specific flags. (For the Wasmtime
+    /// engine, these can be a subset of flags from `wasmtime run --help`).
     #[structopt(long("engine-flags"), value_name = "ENGINE_FLAGS")]
     engine_flags: Option<String>,
 
@@ -67,8 +68,8 @@ pub struct BenchmarkCommand {
     #[structopt(short = "o", long = "output-file")]
     output_file: Option<String>,
 
-    /// The type of measurement to use (wall-cycles, perf-counters, noop) when
-    /// recording the benchmark performance.
+    /// The type of measurement to use (wall-cycles, perf-counters, noop, vtune)
+    /// when recording the benchmark performance.
     #[structopt(long, short, default_value = "wall-cycles")]
     measure: MeasureType,
 
@@ -105,8 +106,8 @@ pub struct BenchmarkCommand {
     #[structopt(short, long, default_value = "0.01")]
     significance_level: f64,
 
-    /// Pin all benchmark iterations in a process to a single core. See `cpu_affinity` in the
-    /// `sightglass-recorder` crate for more information.
+    /// Pin all benchmark iterations in a process to a single core. See
+    /// `cpu_affinity` in the `sightglass-recorder` crate for more information.
     #[structopt(long)]
     pin: bool,
 }
