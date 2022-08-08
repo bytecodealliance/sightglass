@@ -146,7 +146,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg("--processes")
         .arg("1")
         .arg("--iterations-per-process")
-        .arg("3")
+        .arg("200")
         .arg(benchmark("noop"))
         .assert()
         .success()
