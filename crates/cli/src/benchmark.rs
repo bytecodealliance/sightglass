@@ -119,6 +119,10 @@ impl BenchmarkCommand {
             self.iterations_per_process > 0,
             "iterations-per-process must be greater than zero"
         );
+        anyhow::ensure!(
+            !self.engines.is_empty(),
+            "must pass one or more engines to benchmark with -e/--engine"
+        );
 
         if self.processes == 1 {
             self.execute_in_current_process()
