@@ -127,27 +127,29 @@ pub fn write(
             )?;
             writeln!(output_file)?;
 
-            let ratio = effect_size.b_mean / effect_size.a_mean;
-            let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
-            writeln!(
-                output_file,
-                "  {a_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_engine}!",
-                a_engine = a_engine,
-                b_engine = b_engine,
-                ratio_min = ratio - ratio_ci,
-                ratio_max = ratio + ratio_ci,
-            )?;
-            let ratio = effect_size.a_mean / effect_size.b_mean;
-            let ratio_ci = effect_size.half_width_confidence_interval / effect_size.b_mean;
-
-            writeln!(
-                output_file,
-                "  {b_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_engine}!",
-                a_engine = a_engine,
-                b_engine = b_engine,
-                ratio_min = ratio - ratio_ci,
-                ratio_max = ratio + ratio_ci,
-            )?;
+            if effect_size.a_mean < effect_size.b_mean {
+                let ratio = effect_size.b_mean / effect_size.a_mean;
+                let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
+                writeln!(
+                    output_file,
+                    "  {a_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_engine}!",
+                    a_engine = a_engine,
+                    b_engine = b_engine,
+                    ratio_min = ratio - ratio_ci,
+                    ratio_max = ratio + ratio_ci,
+                )?;
+            } else {
+                let ratio = effect_size.a_mean / effect_size.b_mean;
+                let ratio_ci = effect_size.half_width_confidence_interval / effect_size.b_mean;
+                writeln!(
+                    output_file,
+                    "  {b_engine} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_engine}!",
+                    a_engine = a_engine,
+                    b_engine = b_engine,
+                    ratio_min = ratio - ratio_ci,
+                    ratio_max = ratio + ratio_ci,
+                )?;
+            }
         } else {
             writeln!(output_file, "  No difference in performance.")?;
         }
