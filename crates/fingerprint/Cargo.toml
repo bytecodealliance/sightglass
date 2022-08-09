@@ -3,7 +3,7 @@ name = "sightglass-fingerprint"
 version = "0.1.0"
 description = "Collect metadata for various parts of Sightglass"
 authors = ["Sightglass Project Developers"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 anyhow = "1.0"

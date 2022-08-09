@@ -522,7 +522,6 @@ compilation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
 
   Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
 
-  new_backend.so is 0.75x to 0.76x faster than old_backend.so!
   old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
   [889384088 935555419.78 1045075629] new_backend.so
@@ -532,7 +531,6 @@ compilation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
 
   Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
 
-  new_backend.so is 0.75x to 0.76x faster than old_backend.so!
   old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
   [306252409 322151144.14 359863566] new_backend.so
@@ -543,7 +541,6 @@ execution :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
   Δ = 467229.61 ± 57708.35 (confidence = 95%)
 
   new_backend.so is 1.13x to 1.16x faster than old_backend.so!
-  old_backend.so is 0.86x to 0.89x faster than new_backend.so!
 
   [3061587 3240065.98 4419514] new_backend.so
   [3510983 3707295.59 5811112] old_backend.so
@@ -553,7 +550,6 @@ execution :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
   Δ = 1356859.60 ± 167590.00 (confidence = 95%)
 
   new_backend.so is 1.13x to 1.16x faster than old_backend.so!
-  old_backend.so is 0.86x to 0.89x faster than new_backend.so!
 
   [8891120 9409439.69 12834660] new_backend.so
   [10196192 10766299.29 16875960] old_backend.so
