@@ -7,7 +7,7 @@ use precision::{Config, Precision, Timestamp};
 use sightglass_data::Phase;
 
 lazy_static! {
-    static ref PRECISION: Precision = Precision::new(Config::default()).unwrap();
+    static ref PRECISION: Precision = Precision::new(Config::default().wall_time(false)).unwrap();
 }
 
 pub struct WallCycleMeasure(Option<Timestamp>);
@@ -25,10 +25,12 @@ impl Measure for WallCycleMeasure {
     }
 
     fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
-        let precision = &*PRECISION; // deref the lazy-static just once.
+        // Deref the lazy-static just once.
+        let precision = &*PRECISION;
+
         let end = precision.now();
-        let elapsed = end - self.0.take().expect("an existing timestamp");
+        let elapsed = end - self.0.take().expect("must call start before end");
+
         measurements.add(phase, "cycles".into(), elapsed.ticks());
-        measurements.add(phase, "nanoseconds".into(), elapsed.as_ns(precision));
     }
 }
