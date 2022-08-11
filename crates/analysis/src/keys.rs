@@ -114,7 +114,7 @@ mod tests {
             engine: Some("wasmtime".into()),
             wasm: Some("bench.wasm".into()),
             phase: Some(Phase::Compilation),
-            event: Some("wall-cycles".into()),
+            event: Some("cycles".into()),
         };
 
         // More test cases are needed, but this provides a sanity check for the matched key and
@@ -126,7 +126,7 @@ mod tests {
             process: 42,
             iteration: 0,
             phase: Phase::Compilation,
-            event: "wall-cycles".into(),
+            event: "cycles".into(),
             count: 42,
         }));
     }

@@ -79,9 +79,9 @@ pub trait Measure: 'static {
 
 #[cfg(target_os = "linux")]
 pub mod counters;
+pub mod cycles;
 pub mod noop;
 pub mod vtune;
-pub mod wall_cycles;
 
 /// [MeasureType] enumerates the implementations of [Measure] and allows us to `build` an instance
 /// from its name:
@@ -94,8 +94,8 @@ pub mod wall_cycles;
 pub enum MeasureType {
     /// No measurement.
     Noop,
-    /// Measure wall-clock time using, e.g., `RDTSC`.
-    WallCycles,
+    /// Measure cycles using, e.g., `RDTSC`.
+    Cycles,
     /// Measure using VTune; this will return `0` values.
     VTune,
     /// Measure a combination of HW counters using `perf_event_open`.
@@ -107,7 +107,7 @@ impl fmt::Display for MeasureType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             MeasureType::Noop => write!(f, "noop"),
-            MeasureType::WallCycles => write!(f, "wall-cycles"),
+            MeasureType::Cycles => write!(f, "cycles"),
             MeasureType::VTune => write!(f, "vtune"),
             #[cfg(target_os = "linux")]
             MeasureType::PerfCounters => write!(f, "perf-counters"),
@@ -120,7 +120,7 @@ impl FromStr for MeasureType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "noop" => Ok(Self::Noop),
-            "wall-cycles" => Ok(Self::WallCycles),
+            "cycles" => Ok(Self::Cycles),
             "vtune" => Ok(Self::VTune),
             #[cfg(target_os = "linux")]
             "perf-counters" => Ok(Self::PerfCounters),
@@ -136,7 +136,7 @@ impl MeasureType {
     pub fn build(&self) -> Box<dyn Measure> {
         match self {
             Self::Noop => Box::new(noop::NoopMeasure::new()),
-            Self::WallCycles => Box::new(wall_cycles::WallCycleMeasure::new()),
+            Self::Cycles => Box::new(cycles::CycleMeasure::new()),
             Self::VTune => Box::new(vtune::VTuneMeasure::new()),
             #[cfg(target_os = "linux")]
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),

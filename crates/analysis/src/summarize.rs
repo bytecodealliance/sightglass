@@ -118,7 +118,7 @@ mod tests {
                 process: 42,
                 iteration: 0,
                 phase: Phase::Compilation,
-                event: "wall-cycles".into(),
+                event: "cycles".into(),
                 count,
             }
         }
@@ -132,7 +132,7 @@ mod tests {
                 engine: "wasmtime".into(),
                 wasm: "bench.wasm".into(),
                 phase: Phase::Compilation,
-                event: "wall-cycles".into(),
+                event: "cycles".into(),
                 mean: 1.0,
                 min: 0,
                 median: 1,
@@ -152,7 +152,7 @@ mod tests {
                 process: 42,
                 iteration: 0,
                 phase,
-                event: "wall-cycles".into(),
+                event: "cycles".into(),
                 count,
             }
         }

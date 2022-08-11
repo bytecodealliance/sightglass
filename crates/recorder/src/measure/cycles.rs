@@ -1,5 +1,5 @@
-//! Measure the wall-clock number of ticks/cycles elapsed (e.g. using RDTSC). This is a small
-//! wrapper around the `precision` crate to adapt it to the [Measure] API.
+//! Measure the number of ticks/cycles elapsed (e.g. using RDTSC). This is a
+//! small wrapper around the `precision` crate to adapt it to the [Measure] API.
 
 use super::{Measure, Measurements};
 use lazy_static::lazy_static;
@@ -7,18 +7,25 @@ use precision::{Config, Precision, Timestamp};
 use sightglass_data::Phase;
 
 lazy_static! {
-    static ref PRECISION: Precision = Precision::new(Config::default().wall_time(false)).unwrap();
+    static ref PRECISION: Precision = {
+        // NB: Disable wall-time measurement, as that requires calibrating the
+        // CPU frequency, which adds ~5 seconds on start up time per
+        // benchmarking process, and we only care about cycles anyways (less
+        // affected by CPU frequency monitors).
+        let config = Config::default().wall_time(false);
+        Precision::new(config).unwrap()
+    };
 }
 
-pub struct WallCycleMeasure(Option<Timestamp>);
+pub struct CycleMeasure(Option<Timestamp>);
 
-impl WallCycleMeasure {
+impl CycleMeasure {
     pub fn new() -> Self {
         Self(None)
     }
 }
 
-impl Measure for WallCycleMeasure {
+impl Measure for CycleMeasure {
     fn start(&mut self, _phase: Phase) {
         let start = PRECISION.now();
         self.0 = Some(start);
