@@ -173,14 +173,15 @@ $ cargo build --manifest-path ~/wasmtime/Cargo.toml --release -p wasmtime-bench-
 
 ### Collecting Different Kinds of Results
 
-Sightglass comes enabled with several different kinds of measurement mechanisms &mdash; a _measure_.
-The default _measure_ is `wall-cycles`, which simply measures the elapsed duration of CPU cycles for
-each phase (e.g., using `RDTSC`). The accuracy of this _measure_ is documented
-[here](crates/recorder/README.md) but note that measuring using CPU cycles alone can be problematic
-(e.g., CPU frequency changes, context switches, etc.).
+Sightglass comes enabled with several different kinds of measurement mechanisms
+&mdash; a _measure_.  The default _measure_ is `cycles`, which simply measures
+the elapsed duration of CPU cycles for each phase (e.g., using `RDTSC`). The
+accuracy of this _measure_ is documented [here](crates/recorder/README.md) but
+note that measuring using CPU cycles alone can be problematic (e.g., CPU
+frequency changes, context switches, etc.).
 
 Several _measures_ can be configured using the `--measure` option:
-- `wall-cycles`: the number of CPU cycles elapsed
+- `cycles`: the number of CPU cycles elapsed
 - `perf-counters`: a selection of common `perf` counters (CPU cycles, instructions retired, cache
 accesses, cache misses); only available on Linux
 - `vtune`: record each phase as a VTune task for analysis; see [this help

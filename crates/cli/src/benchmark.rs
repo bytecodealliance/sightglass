@@ -68,9 +68,9 @@ pub struct BenchmarkCommand {
     #[structopt(short = "o", long = "output-file")]
     output_file: Option<String>,
 
-    /// The type of measurement to use (wall-cycles, perf-counters, noop, vtune)
+    /// The type of measurement to use (cycles, perf-counters, noop, vtune)
     /// when recording the benchmark performance.
-    #[structopt(long, short, default_value = "wall-cycles")]
+    #[structopt(long, short, default_value = "cycles")]
     measure: MeasureType,
 
     /// Pass this flag to only run benchmarks over "small" workloads (rather

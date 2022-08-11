@@ -6,7 +6,7 @@
         "process": 1701529,
         "iteration": 0,
         "phase": "Compilation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 37063003
     },
     {
@@ -16,7 +16,7 @@
         "process": 1701529,
         "iteration": 0,
         "phase": "Instantiation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 3386636
     },
     {
@@ -26,7 +26,7 @@
         "process": 1701529,
         "iteration": 0,
         "phase": "Execution",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 4725
     },
     {
@@ -36,7 +36,7 @@
         "process": 1701529,
         "iteration": 1,
         "phase": "Compilation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 34267724
     },
     {
@@ -46,7 +46,7 @@
         "process": 1701529,
         "iteration": 1,
         "phase": "Instantiation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 2541521
     },
     {
@@ -56,7 +56,7 @@
         "process": 1701529,
         "iteration": 1,
         "phase": "Execution",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 4661
     },
     {
@@ -66,7 +66,7 @@
         "process": 1701529,
         "iteration": 2,
         "phase": "Compilation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 36150712
     },
     {
@@ -76,7 +76,7 @@
         "process": 1701529,
         "iteration": 2,
         "phase": "Instantiation",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 2552025
     },
     {
@@ -86,7 +86,7 @@
         "process": 1701529,
         "iteration": 2,
         "phase": "Execution",
-        "event": "wall-cycles",
+        "event": "cycles",
         "count": 4983
     }
 ]
