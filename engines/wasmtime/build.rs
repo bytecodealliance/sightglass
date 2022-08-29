@@ -4,6 +4,8 @@
 //! rustc build.rs
 //! [REPOSITORY=<repo url>] [REVISION=<hash|branch|tag>] ./build [<destination dir>]
 //! ```
+//!
+//! Note that a `hash` must be the full commit hash.
 
 #![deny(missing_docs)]
 #![deny(clippy::all)]
@@ -156,6 +158,10 @@ where
 {
     let build_dir = build_dir.as_ref();
     let commit = exec_with_stdout(&["git", "rev-parse", "HEAD"], &build_dir);
+    let datetime = exec_with_stdout(
+        &["git", "show", "--no-patch", "--no-notes", "--pretty=%cI"],
+        &build_dir,
+    );
     let cargo = exec_with_stdout(&["cargo", "--version"], &build_dir);
     let rustc = exec_with_stdout(&["rustc", "--version"], &build_dir);
     let build_info = build_dir.join(".build-info");
@@ -166,6 +172,7 @@ where
         writeln!(file, "REPOSITORY={}", repository).unwrap();
         writeln!(file, "REVISION={}", revision).unwrap();
         writeln!(file, "_COMMIT={}", commit).unwrap();
+        writeln!(file, "_COMMIT_DATETIME={}", datetime).unwrap();
         writeln!(file, "_CARGO={}", cargo).unwrap();
         writeln!(file, "_RUSTC={}", rustc).unwrap();
     }

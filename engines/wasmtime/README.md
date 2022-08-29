@@ -27,8 +27,8 @@ The script can be configured in several ways:
 
 All configuration is optional. The script responds to environment variables that change the Wasmtime
 source code used; by default, the script will download the tip-of-`main` Wasmtime from the official
-repository. If provided, the first CLI argument can override the destination directory at which to
-place the built files.
+repository. Note that a `hash`, if provided, must be the full commit hash. If provided, the first
+CLI argument can override the destination directory at which to place the built files.
 
 ### Contributing
 

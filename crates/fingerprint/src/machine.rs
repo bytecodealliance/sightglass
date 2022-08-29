@@ -1,5 +1,7 @@
+use crate::hash;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
+use std::env;
 use sysinfo::{ProcessorExt, System, SystemExt};
 
 /// Describes a fingerprinted system.
@@ -10,6 +12,8 @@ use sysinfo::{ProcessorExt, System, SystemExt};
 /// ```
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Machine {
+    /// A unique identifier hashed from all other properties.
+    pub id: String,
     /// The host name of the machine.
     pub name: String,
     /// The long version of the system OS; e.g., Linux 35 Fedora Linux.
@@ -54,7 +58,20 @@ impl Machine {
         let memory_total_kb = sys.total_memory();
         let memory = bytesize::to_string(bytesize::ByteSize::kib(memory_total_kb).0, true);
 
+        // Hash all properties into a unique identifier.
+        let hash = hash::string(&format!(
+            "{}\n{}\n{}\n{}\n{}\n{}",
+            name, arch, os, kernel, cpu, memory
+        ));
+        let id = format!(
+            "{}-{}-{}",
+            env::consts::ARCH,
+            env::consts::OS,
+            hash::slug(&hash)
+        );
+
         Ok(Self {
+            id,
             name,
             arch,
             os,
