@@ -144,7 +144,7 @@ where
 
     /// Bench API callback for the start of compilation.
     extern "C" fn compilation_start(data: *mut u8) {
-        log::info!("Starting compilation measurement");
+        log::debug!("Starting compilation measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
         measure.start(Phase::Compilation);
@@ -152,7 +152,7 @@ where
 
     /// Bench API callback for the start of instantiation.
     extern "C" fn instantiation_start(data: *mut u8) {
-        log::info!("Starting instantiation measurement");
+        log::debug!("Starting instantiation measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
         measure.start(Phase::Instantiation);
@@ -160,7 +160,7 @@ where
 
     /// Bench API callback for the start of execution.
     extern "C" fn execution_start(data: *mut u8) {
-        log::info!("Starting execution measurement");
+        log::debug!("Starting execution measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
         measure.start(Phase::Execution);
@@ -174,7 +174,7 @@ where
             (data.0.as_mut().unwrap(), data.1.as_mut().unwrap())
         };
         measure.end(Phase::Compilation, measurements);
-        log::info!("Finished measuring compilation");
+        log::debug!("Finished measuring compilation");
     }
 
     /// Bench API callback for the end of instantiation.
@@ -185,7 +185,7 @@ where
             (data.0.as_mut().unwrap(), data.1.as_mut().unwrap())
         };
         measure.end(Phase::Instantiation, measurements);
-        log::info!("Finished measuring instantiation");
+        log::debug!("Finished measuring instantiation");
     }
 
     /// Bench API callback for the end of execution.
@@ -196,7 +196,7 @@ where
             (data.0.as_mut().unwrap(), data.1.as_mut().unwrap())
         };
         measure.end(Phase::Execution, measurements);
-        log::info!("Finished measuring execution");
+        log::debug!("Finished measuring execution");
     }
 }
 
