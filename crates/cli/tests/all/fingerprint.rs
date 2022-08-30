@@ -39,7 +39,7 @@ fn fingerprint_benchmark() {
     let benchmark_subpath = format!("noop{}benchmark.wasm", std::path::MAIN_SEPARATOR);
     assert
         .stdout(
-            predicate::str::starts_with("name,path,hash,size\n")
+            predicate::str::starts_with("id,name,path,hash,size\n")
                 .and(predicate::str::contains(benchmark_subpath)),
         )
         .success();
@@ -70,7 +70,9 @@ fn fingerprint_engine() {
     assert
         .stdout(
             starts_with("{")
-                .and(contains(r#""name":"wasmtime-"#))
+                .and(contains(r#""id":"wasmtime-"#))
+                .and(contains(r#""name":"wasmtime""#))
+                .and(contains(r#""datetime":"20"#))
                 .and(contains(format!(r#""path":"{}""#, escaped_engine_path)))
                 .and(contains(r#""buildinfo":"NAME=wasmtime"#))
                 .and(ends_with("}")),
