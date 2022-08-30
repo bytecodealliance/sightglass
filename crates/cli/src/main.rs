@@ -2,6 +2,7 @@ mod benchmark;
 mod effect_size;
 mod fingerprint;
 mod summarize;
+mod upload;
 mod validate;
 
 use anyhow::Result;
@@ -11,6 +12,7 @@ use fingerprint::FingerprintCommand;
 use log::trace;
 use structopt::{clap::AppSettings, StructOpt};
 use summarize::SummarizeCommand;
+use upload::UploadCommand;
 use validate::ValidateCommand;
 
 /// Main entry point for CLI.
@@ -32,10 +34,11 @@ fn main() -> Result<()> {
 )]
 enum SightglassCommand {
     Benchmark(BenchmarkCommand),
-    Validate(ValidateCommand),
-    Summarize(SummarizeCommand),
     EffectSize(EffectSizeCommand),
     Fingerprint(FingerprintCommand),
+    Summarize(SummarizeCommand),
+    Upload(UploadCommand),
+    Validate(ValidateCommand),
 }
 
 impl SightglassCommand {
@@ -43,10 +46,11 @@ impl SightglassCommand {
         trace!("Executing command: {:?}", &self);
         match self {
             SightglassCommand::Benchmark(benchmark) => benchmark.execute(),
-            SightglassCommand::Validate(validate) => validate.execute(),
-            SightglassCommand::Summarize(summarize) => summarize.execute(),
             SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
             SightglassCommand::Fingerprint(fingerprint) => fingerprint.execute(),
+            SightglassCommand::Summarize(summarize) => summarize.execute(),
+            SightglassCommand::Upload(upload) => upload.execute(),
+            SightglassCommand::Validate(validate) => validate.execute(),
         }
     }
 }
