@@ -4,6 +4,10 @@ use super::util::{benchmark, sightglass_cli, test_engine};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 
+// Because the `results.json` contains `*.so` suffixes for the engine, this test
+// can only run where the fingerprinted engine will have a matching suffix,
+// i.e., Linux.
+#[cfg(target_os = "linux")]
 #[test]
 fn upload_dryrun() {
     let assert = sightglass_cli()
