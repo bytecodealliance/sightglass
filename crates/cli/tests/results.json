@@ -1,0 +1,6002 @@
+[
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 289553592
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 90846073
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 281951
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 88460
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1529
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 479
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 60544846
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18995659
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 159403
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 50011
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1569
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 492
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 61026648
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19146822
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 130059
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 40805
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 757
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 237
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 57999989
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18197223
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 113872
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 35726
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 726
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 227
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 58387422
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18318778
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 192849
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 60505
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1537
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 482
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 53730141
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 16857578
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 96885
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 30397
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 567
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 177
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 41635593
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 13062970
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 69070
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21670
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 459
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 144
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 32966762
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10343166
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 64797
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20329
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 478
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 149
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 34254592
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10747216
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59478
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18660
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 421
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 132
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 33378232
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10472262
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 125945
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 39514
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 996
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 654988,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 312
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 302671029
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 94962142
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 304930
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 95670
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1443
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 452
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 61562013
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19314900
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 163312
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 51238
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1041
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 326
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 57697845
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18102528
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 119287
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 37425
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 751
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 235
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 57662154
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18091330
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 94458
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 29635
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 643
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 201
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 46847712
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 14698331
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 80401
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 25225
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 670
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 210
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 44099560
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 13836106
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62974
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19757
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 476
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 149
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 36929004
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11586366
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 64094
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20109
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 476
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 149
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 35126264
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11020761
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 67305
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21116
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 460
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 144
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 34698239
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10886470
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62677
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19664
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 387
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 121
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 30675777
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9624434
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 63801
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20017
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 405
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655073,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 127
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 324276230
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 101740224
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 312187
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 97947
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1779
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 558
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 62665010
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19660868
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 268019
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 84089
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2747
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 861
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 60576052
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19005466
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 150119
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 47099
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 923
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 289
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 57124017
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 17922406
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 95185
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 29863
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 634
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 198
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 53465329
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 16774509
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 86792
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 27230
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 538
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 168
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 46494167
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 14587338
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 77624
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 24354
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 561
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 176
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 39440792
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12374373
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 63928
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20057
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 419
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 131
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 35489557
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11134690
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 139942
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 43906
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 447
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 140
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 26960279
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 8458667
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 63454
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19908
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 390
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 122
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 25686567
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 8059046
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62523
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19616
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 433
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655110,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 135
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 265213417
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 83209278
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 308704
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 96854
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2660
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 834
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 65399105
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 20518616
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 233341
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 73209
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1245
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 390
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 62995020
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19764347
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 149632
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 46946
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1022
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 320
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 60119455
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18862154
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 99987
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 31370
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 753
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 236
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 59217825
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18579273
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 101809
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 31942
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 627
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 196
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 49947975
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 15670907
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 69612
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21840
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 413
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 129
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 43859599
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 13760712
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 68515
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21496
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 610
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 191
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31793950
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9975180
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 64418
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20210
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 415
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 130
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 37214633
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11675890
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 63941
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20061
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 386
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 121
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 35565756
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11158564
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 139471
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 43758
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 358
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655141,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 112
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 262185111
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 82259284
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 310724
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 97488
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1553
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 487
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 65051260
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 20409511
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 201169
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 63115
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1143
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 358
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 61336253
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19243946
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 98054
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 30763
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 773
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 242
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 48481755
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 15210911
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59622
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18706
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 382
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 119
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31733293
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9956164
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 64183
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20137
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 385
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 120
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31917851
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10014068
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59920
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18799
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 364
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 114
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 27813652
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 8726396
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 141391
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 44360
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 413
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 129
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 28863128
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9055663
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 66625
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20903
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 409
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 128
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 29099705
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9129888
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 75263
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 23613
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 432
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 135
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 27745664
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 8705065
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 64028
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 20088
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 326
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655177,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 102
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 286073413
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 89754065
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 312290
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 97979
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1915
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 600
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 61466464
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19284787
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 150823
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 47319
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1243
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 389
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 62689408
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19668480
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 103841
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 32579
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 950
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 298
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 47535883
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 14914139
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 61837
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19401
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 417
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 130
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 29720051
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9324513
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 61451
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19279
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 413
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 129
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31902476
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10009238
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 155240
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 48705
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1460
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 458
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 38397676
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12047073
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 165931
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 52059
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1635
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 512
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 53779620
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 16873079
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 74783
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 23462
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 547
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 171
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 43858847
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 13760488
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 74220
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 23286
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 560
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 175
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 39186515
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12294567
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62566
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19629
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 390
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655215,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 122
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 289420510
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 90804385
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 359647
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 112837
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2253
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 706
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 59503356
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18668910
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 143072
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 44888
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 921
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 288
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 58006862
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18199392
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 139366
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 43725
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 899
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 282
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 58727776
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 18425576
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 88387
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 27731
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 573
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 179
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 44825990
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 14063953
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 71336
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 22381
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 596
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 186
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 34595018
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10854031
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 58685
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18412
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 459
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 144
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 32919588
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10328372
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59274
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18596
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 502
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 157
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 32148853
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10086558
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 60732
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19054
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 427
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 133
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 30696509
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9630891
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 111906
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 35110
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 868
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 272
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 33244128
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10430195
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62639
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19652
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 413
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655246,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 129
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 314472858
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 98664344
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 284874
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 89377
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1644
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 515
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 61963990
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19440903
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 178873
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 56120
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1075
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 337
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 60965960
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19127776
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 125079
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 39242
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 905
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 283
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 55091849
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 17284802
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 86914
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 27268
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 566
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 177
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 51850762
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 16267926
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 85202
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 26731
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 342
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 107
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 32560549
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10215715
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 68823
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21592
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 440
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 138
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 34810636
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10921669
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 177193
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 55593
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1142
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 358
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 37612748
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11800818
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 69036
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21659
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 381
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 119
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 32033107
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10050233
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 62785
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19698
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 599
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 187
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 29085350
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9125388
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 139059
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 43629
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 394
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655277,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 123
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 85911558
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 26954941
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 339519
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 106524
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2468
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 774
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 33412492
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10483243
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 307922
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 96611
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2370
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 743
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 35047922
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 10996362
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 196746
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 61729
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1774
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 556
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 28359328
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 8897801
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 74386
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 23338
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1019
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 319
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31432933
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9862152
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 155856
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 48900
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1524
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 478
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31276604
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9813103
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 61246
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19216
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 504
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 158
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 38579616
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12104439
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 123518
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 38754
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 978
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 306
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 29106160
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9132121
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59912
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18797
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 457
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 143
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 23613218
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 7408699
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 93262
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 29261
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 735
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 230
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 21348802
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 6698233
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 97978
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 30740
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 715
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655308,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 224
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 290898141
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 91267438
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 399775
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 125426
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 2665
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 0,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 836
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 63007476
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 19768194
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 168809
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 52962
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 1201
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 1,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 376
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 56022364
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 17576659
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 71983
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 22584
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 453
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 2,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 142
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 38022776
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11929403
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 58720
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18423
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 393
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 3,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 123
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 41351793
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12973861
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 60817
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 19080
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 436
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 4,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 136
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 39588733
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12420712
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 69139
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 21691
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 551
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 5,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 172
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 39432539
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12371707
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59102
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18542
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 476
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 6,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 149
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 37277300
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 11695515
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59446
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18650
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 522
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 7,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 163
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 38383391
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 12042544
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 59167
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18563
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 437
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 8,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 137
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "cycles",
+        "count": 31762826
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Compilation",
+        "event": "nanoseconds",
+        "count": 9965384
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "cycles",
+        "count": 58772
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Instantiation",
+        "event": "nanoseconds",
+        "count": 18439
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "cycles",
+        "count": 410
+    },
+    {
+        "arch": "x86_64",
+        "engine": "../../engines/wasmtime/libengine.so",
+        "wasm": "../../benchmarks/noop/benchmark.wasm",
+        "process": 655341,
+        "iteration": 9,
+        "phase": "Execution",
+        "event": "nanoseconds",
+        "count": 128
+    }
+]

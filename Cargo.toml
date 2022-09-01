@@ -6,7 +6,8 @@ members = [
     "crates/cli",
     "crates/data",
     "crates/fingerprint",
-    "crates/recorder"
+    "crates/recorder",
+    "crates/upload",
 ]
 default-members = [
     "crates/cli"
