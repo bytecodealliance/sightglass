@@ -11,7 +11,7 @@ use predicates::prelude::*;
 #[test]
 fn upload_dryrun() {
     let assert = sightglass_cli()
-        .arg("upload")
+        .arg("upload-elastic")
         .arg("--dry-run")
         .arg("--input-file")
         .arg("tests/results.json")

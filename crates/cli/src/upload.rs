@@ -7,10 +7,10 @@ use std::{
 };
 use structopt::StructOpt;
 
-/// Upload benchmark output to server; accepts raw benchmark results in `stdin` (i.e., from
-/// `sightglass-cli benchmark ...`).
+/// Upload benchmark output to an ElasticSearch server; accepts raw benchmark
+/// results in `stdin` (i.e., from `sightglass-cli benchmark ...`).
 #[derive(Debug, StructOpt)]
-#[structopt(name = "upload")]
+#[structopt(name = "upload-elastic")]
 pub struct UploadCommand {
     /// The format of the input data. Either 'json' or 'csv'.
     #[structopt(short = "i", long = "input-format", default_value = "json")]

@@ -37,7 +37,7 @@ enum SightglassCommand {
     EffectSize(EffectSizeCommand),
     Fingerprint(FingerprintCommand),
     Summarize(SummarizeCommand),
-    Upload(UploadCommand),
+    UploadElastic(UploadCommand),
     Validate(ValidateCommand),
 }
 
@@ -49,7 +49,7 @@ impl SightglassCommand {
             SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
             SightglassCommand::Fingerprint(fingerprint) => fingerprint.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),
-            SightglassCommand::Upload(upload) => upload.execute(),
+            SightglassCommand::UploadElastic(upload) => upload.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),
         }
     }
