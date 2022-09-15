@@ -1,0 +1,14 @@
+[package]
+name = "wasi-nn-benchmark"
+version = "0.1.0"
+authors = ["The Bytecode Alliance Developers"]
+readme = "README.md"
+edition = "2018"
+publish = false
+
+[dependencies]
+image = { version = "0.23.14", default-features = false, features = ["gif", "jpeg", "ico", "png", "pnm", "tga", "tiff", "webp", "bmp", "hdr", "dxt", "dds", "farbfeld"]  }
+wasi-nn = "0.1.0"
+sightglass-api = "0.1"
+
+[workspace]

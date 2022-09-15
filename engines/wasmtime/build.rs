@@ -66,7 +66,7 @@ fn main() {
     // Build the engine library.
     section("Building the engine");
     exec(
-        &["cargo", "build", "--release", "-p", "wasmtime-bench-api"],
+        &["cargo", "build", "--release", "-p", "wasmtime-bench-api", "--features", "wasi-nn"],
         &build_dir,
     );
 
