@@ -1,6 +1,7 @@
 mod benchmark;
 mod effect_size;
 mod fingerprint;
+mod suite;
 mod summarize;
 mod upload;
 mod validate;
