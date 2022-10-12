@@ -1,0 +1,25 @@
+# These benchmarks are adapted from the "The Computer Language Benchmarks Game"
+# for use within Sightglass. Sightglass only includes a subset of those
+# benchmarks which are typically smaller kernels (in some cases, true
+# micro-benchmarks) extracted from larger programs. More information is
+# available at https://benchmarksgame-team.pages.debian.net/benchmarksgame.
+
+shootout-ackermann/benchmark.wasm
+shootout-base64/benchmark.wasm
+shootout-ctype/benchmark.wasm
+shootout-ed25519/benchmark.wasm
+shootout-fib2/benchmark.wasm
+shootout-gimli/benchmark.wasm
+shootout-heapsort/benchmark.wasm
+shootout-keccak/benchmark.wasm
+shootout-matrix/benchmark.wasm
+shootout-memmove/benchmark.wasm
+shootout-minicsv/benchmark.wasm
+shootout-nestedloop/benchmark.wasm
+shootout-random/benchmark.wasm
+shootout-ratelimit/benchmark.wasm
+shootout-seqhash/benchmark.wasm
+shootout-sieve/benchmark.wasm
+shootout-switch/benchmark.wasm
+shootout-xblabla20/benchmark.wasm
+shootout-xchacha20/benchmark.wasm

@@ -1,3 +1,4 @@
+use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
@@ -19,14 +20,23 @@ use structopt::StructOpt;
 /// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(StructOpt, Debug)]
 pub struct BenchmarkCommand {
-    /// The path to the Wasm file(s) to benchmark.
+    /// The path to the file(s) to benchmark. This accepts one or more:
+    ///
+    /// - `*.wasm` files: individual benchmarks that meet the requirements
+    /// outlined in `benchmarks/README.md`
+    ///
+    /// - `*.suite` files: a file containing a newline-delimited list of
+    ///   benchmarks to execute. A `*.suite` file may contain `#`-prefixed line
+    ///   comments. Relative paths are resolved against the parent directory of
+    ///   the `*.suite` file.
+    ///
+    /// By default, this will use `benchmarks/default.suite`.
     #[structopt(
         index = 1,
-        required = true,
-        value_name = "WASMFILE",
-        parse(from_os_str)
+        default_value = "benchmarks/default.suite",
+        value_name = "FILE"
     )]
-    wasm_files: Vec<PathBuf>,
+    benchmarks: Vec<BenchmarkOrSuite>,
 
     /// The benchmark engine(s) with which to run the benchmark.
     ///
@@ -144,9 +154,10 @@ impl BenchmarkCommand {
         }
 
         let wasm_files: Vec<_> = self
-            .wasm_files
+            .benchmarks
             .iter()
-            .map(|f| f.display().to_string())
+            .flat_map(|f| f.paths())
+            .map(|p| p.display().to_string())
             .collect();
         let mut all_measurements = vec![];
 
@@ -308,7 +319,7 @@ impl BenchmarkCommand {
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
-            for wasm in &self.wasm_files {
+            for wasm in self.benchmarks.iter().flat_map(|s| s.paths()) {
                 choices.push((engine.clone(), wasm, self.processes));
             }
         }
