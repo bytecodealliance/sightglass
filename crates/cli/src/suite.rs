@@ -81,10 +81,8 @@ impl Suite {
             .parent()
             .expect("the suite path must have a parent directory");
         let mut benchmarks = vec![];
-        for line in io::BufReader::new(file_contents)
-            .lines()
-            .filter_map(Result::ok)
-        {
+        for line in io::BufReader::new(file_contents).lines() {
+            let line = line?;
             let line = line.trim();
             if !line.starts_with("#") && !line.is_empty() {
                 benchmarks.push(parent_dir.join(line))
