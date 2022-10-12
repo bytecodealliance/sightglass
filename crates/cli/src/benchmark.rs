@@ -319,7 +319,7 @@ impl BenchmarkCommand {
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
-            for wasm in &self.benchmarks {
+            for wasm in self.benchmarks.iter().flat_map(|s| s.paths()) {
                 choices.push((engine.clone(), wasm, self.processes));
             }
         }
