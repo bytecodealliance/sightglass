@@ -65,6 +65,10 @@ impl Suite {
     /// - `#`-prefixed lines are ignored
     /// - relative paths are resolved using the parent directory of the
     ///   `suite_path`.
+    ///
+    /// Note that paths are not canonicalized due to some [concerns on
+    /// Windows](https://github.com/bytecodealliance/sightglass/pull/204#discussion_r993434406).
+    /// This choice here should not affect how suites are used by sightglass.
     pub fn parse<P: AsRef<Path>>(suite_path: P) -> Result<Self> {
         Self::parse_contents(suite_path.as_ref(), &fs::read(suite_path.as_ref())?)
     }
