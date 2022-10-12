@@ -70,6 +70,7 @@ impl Suite {
     /// Windows](https://github.com/bytecodealliance/sightglass/pull/204#discussion_r993434406).
     /// This choice here should not affect how suites are used by sightglass.
     pub fn parse<P: AsRef<Path>>(suite_path: P) -> Result<Self> {
+        debug_assert!(suite_path.as_ref().is_file());
         Self::parse_contents(suite_path.as_ref(), &fs::read(suite_path.as_ref())?)
     }
 
@@ -79,7 +80,7 @@ impl Suite {
         let suite_path = suite_path.as_ref().to_path_buf();
         let parent_dir = suite_path
             .parent()
-            .expect("the suite path must have a parent directory");
+            .expect("the suite path must be a file and files must have a parent directory");
         let mut benchmarks = vec![];
         for line in io::BufReader::new(file_contents).lines() {
             let line = line?;
