@@ -22,14 +22,10 @@ pub enum BenchmarkOrSuite {
 
 impl BenchmarkOrSuite {
     /// List all of paths to the benchmarks to run.
-    pub fn paths(&self) -> Vec<String> {
+    pub fn paths(&self) -> Vec<PathBuf> {
         match self {
-            BenchmarkOrSuite::Suite(suite) => suite
-                .benchmarks
-                .iter()
-                .map(|p| p.display().to_string())
-                .collect(),
-            BenchmarkOrSuite::Benchmark(path) => vec![path.display().to_string()],
+            BenchmarkOrSuite::Suite(suite) => suite.benchmarks.clone(),
+            BenchmarkOrSuite::Benchmark(path) => vec![path.clone()],
         }
     }
 }

@@ -153,7 +153,12 @@ impl BenchmarkCommand {
             bind_to_single_core().context("attempting to pin execution to a single core")?;
         }
 
-        let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|f| f.paths()).collect();
+        let wasm_files: Vec<_> = self
+            .benchmarks
+            .iter()
+            .flat_map(|f| f.paths())
+            .map(|p| p.display().to_string())
+            .collect();
         let mut all_measurements = vec![];
 
         for engine in &self.engines {
