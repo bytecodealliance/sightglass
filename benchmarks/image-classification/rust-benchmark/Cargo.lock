@@ -99,6 +99,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "image-classification-benchmark"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "sightglass-api",
+ "wasi-nn",
+]
+
+[[package]]
 name = "jpeg-decoder"
 version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -201,18 +210,9 @@ dependencies = [
 
 [[package]]
 name = "wasi-nn"
-version = "0.1.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c909acded993dc129e02f64a7646eb7b53079f522a814024a88772f41558996"
-
-[[package]]
-name = "wasi-nn-benchmark"
-version = "0.1.0"
-dependencies = [
- "image",
- "sightglass-api",
- "wasi-nn",
-]
+checksum = "80715609d32850b55b000f7061a0b796d374bd37aa261db94eae0a6c2b35ccf8"
 
 [[package]]
 name = "weezl"
