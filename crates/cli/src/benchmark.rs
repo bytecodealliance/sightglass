@@ -363,6 +363,10 @@ impl BenchmarkCommand {
                 command.arg("--stop-after").arg(phase.to_string());
             }
 
+            if let Some(flags) = &self.engine_flags {
+                command.arg(format!("--engine-flags={}", flags));
+            }
+
             command.arg("--").arg(&wasm);
 
             let output = command
