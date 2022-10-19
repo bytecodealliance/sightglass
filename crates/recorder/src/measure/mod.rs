@@ -79,6 +79,9 @@ pub trait Measure: 'static {
 
 #[cfg(target_os = "linux")]
 pub mod counters;
+#[cfg(target_os = "linux")]
+pub mod insts;
+
 pub mod cycles;
 pub mod noop;
 pub mod vtune;
@@ -94,13 +97,20 @@ pub mod vtune;
 pub enum MeasureType {
     /// No measurement.
     Noop,
+
     /// Measure cycles using, e.g., `RDTSC`.
     Cycles,
+
     /// Measure using VTune; this will return `0` values.
     VTune,
+
     /// Measure a combination of HW counters using `perf_event_open`.
     #[cfg(target_os = "linux")]
     PerfCounters,
+
+    /// Measure instructions retired.
+    #[cfg(target_os = "linux")]
+    InstsRetired,
 }
 
 impl fmt::Display for MeasureType {
@@ -111,6 +121,8 @@ impl fmt::Display for MeasureType {
             MeasureType::VTune => write!(f, "vtune"),
             #[cfg(target_os = "linux")]
             MeasureType::PerfCounters => write!(f, "perf-counters"),
+            #[cfg(target_os = "linux")]
+            MeasureType::InstsRetired => write!(f, "insts-retired"),
         }
     }
 }
@@ -124,6 +136,8 @@ impl FromStr for MeasureType {
             "vtune" => Ok(Self::VTune),
             #[cfg(target_os = "linux")]
             "perf-counters" => Ok(Self::PerfCounters),
+            #[cfg(target_os = "linux")]
+            "insts-retired" => Ok(Self::InstsRetired),
             _ => Err("unknown measure type"),
         }
     }
@@ -140,6 +154,8 @@ impl MeasureType {
             Self::VTune => Box::new(vtune::VTuneMeasure::new()),
             #[cfg(target_os = "linux")]
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),
+            #[cfg(target_os = "linux")]
+            Self::InstsRetired => Box::new(insts::InstsRetiredMeasure::new()),
         }
     }
 }
