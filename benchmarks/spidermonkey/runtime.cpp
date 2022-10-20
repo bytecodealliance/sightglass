@@ -22,6 +22,9 @@
 #include "js/Object.h"
 #include "js/SourceText.h"
 
+#include "marked_js.h"
+#include "main_js.h"
+
 #pragma clang diagnostic pop
 
 using JS::Value;
@@ -91,54 +94,119 @@ bool init_js() {
   return true;
 }
 
-static const char* BENCH =
-  "function fib(n) {\n"
-  "  if (n < 2) {\n"
-  "    return 1;\n"
-  "  } else {\n"
-  "    return fib(n-1) + fib(n-2);\n"
-  "  }\n"
-  "}\n"
-  "\n"
-  "fib(33);\n";
-
-bool eval_bench(JSContext* cx, MutableHandleValue result) {
-  JS::CompileOptions opts(cx);
-  opts.setForceFullParse();
-  opts.setFileAndLine("<stdin>", 1);
-
-  JS::SourceText<mozilla::Utf8Unit> srcBuf;
-  if (!srcBuf.init(cx, BENCH, strlen(BENCH), JS::SourceOwnership::TakeOwnership)) {
-      return false;
+bool eval_bench(JSContext* cx,
+                JS::HandleObject global,
+                const char* markedSrc,
+                size_t markedSrcLen,
+                const char* mainSrc,
+                size_t mainSrcLen,
+                const char* markdownInput) {
+  JS::SourceText<mozilla::Utf8Unit> markedSrcBuf;
+  if (!markedSrcBuf.init(cx, markedSrc, markedSrcLen, JS::SourceOwnership::Borrowed)) {
+    return false;
   }
 
-  JS::RootedScript script(cx);
-  script = JS::Compile(cx, opts, srcBuf);
-  if (!script) return false;
-
-  bench_start();
-
-  // Execute the top-level script.
-  if (!JS_ExecuteScript(cx, script, result))
+  JS::SourceText<mozilla::Utf8Unit> mainSrcBuf;
+  if (!mainSrcBuf.init(cx, mainSrc, mainSrcLen, JS::SourceOwnership::Borrowed)) {
     return false;
+  }
 
+  // Compile and execute the top level of `marked.min.js`.
+  //
+  // Note that we do this outside of `bench_{start,end}` because this stuff will
+  // typically get Wizer'd away from what is the actual hot path for JS
+  // execution.
+  JS::CompileOptions markedOpts(cx);
+  markedOpts.setForceFullParse();
+  markedOpts.setFileAndLine("marked.min.js", 1);
+  JS::RootedScript markedScript(cx, JS::Compile(cx, markedOpts, markedSrcBuf));
+  if (!markedScript) {
+    return false;
+  }
+  JS::RootedValue result(cx);
+  if (!JS_ExecuteScript(cx, markedScript, &result)) {
+    return false;
+  }
+
+  // Similarly for `main.js`.
+  JS::CompileOptions mainOpts(cx);
+  mainOpts.setForceFullParse();
+  mainOpts.setFileAndLine("main.js", 1);
+  JS::RootedScript mainScript(cx, JS::Compile(cx, mainOpts, mainSrcBuf));
+  if (!mainScript) {
+    return false;
+  }
+  if (!JS_ExecuteScript(cx, mainScript, &result)) {
+    return false;
+  }
+
+  JS::RootedValue arg(cx, JS::StringValue(JS_NewStringCopyZ(cx, markdownInput)));
+
+  // Run `main(markdownInput)`. Do this within `bench_{start,end}` since this
+  // would be the actual JS hot path after Wizening.
+  bench_start();
+  if (!JS_CallFunctionName(cx, global, "main", JS::HandleValueArray(arg), &result)) {
+    return false;
+  }
   bench_end();
+
+  JS::RootedString resultStr(cx, result.toString());
+  JS::AutoAssertNoGC nogc(cx);
+  size_t len = 0;
+  const JS::Latin1Char* chars = JS_GetLatin1StringCharsAndLength(cx, nogc, resultStr, &len);
+  printf("%.*s", (int) len, chars);
 
   return true;
 }
 
+char* readFile(const char* path) {
+  FILE* f = fopen(path, "r");
+  assert(f && "should open path okay");
+
+  fseek(f, 0, SEEK_END);
+  ssize_t len = ftell(f);
+  fseek(f, 0, SEEK_SET);
+
+  char* contents = (char*) malloc(len + 1);
+  assert(contents && "should malloc contents okay");
+
+  ssize_t nread = fread(contents, len, 1, f);
+  assert(nread == 1 && "should read all bytes");
+
+  fclose(f);
+  contents[len] = '\0';
+  return contents;
+}
+
 int main(int argc, const char *argv[]) {
-  if (!init_js())
+
+  if (!init_js()) {
     exit(1);
+  }
 
   JSContext* cx = CONTEXT;
   RootedObject global(cx, GLOBAL);
   JSAutoRealm ar(cx, global);
   FETCH_HANDLERS = new JS::PersistentRootedObjectVector(cx);
 
-  RootedValue result(cx);
-  if (!eval_bench(cx, &result)) {
-    fprintf(stderr, "Error evaluating JS\n");
+  char* markdownInput = readFile("default.input.md");
+
+  if (!eval_bench(cx,
+                  global,
+                  (const char*) js_marked_min_js,
+                  js_marked_min_js_len,
+                  (const char*) js_main_js,
+                  js_main_js_len,
+                  markdownInput)) {
+    fprintf(stderr, "Error evaluating JS!\n");
+    JS::RootedValue exn(cx);
+    if (JS_GetPendingException(cx, &exn)) {
+      JS::RootedObject exnObj(cx, &exn.toObject());
+      JSErrorReport* report = JS_ErrorFromException(cx, exnObj);
+      JS::PrintError(stderr, report, true);
+    }
     exit(1);
   }
+
+  printf("All done!\n");
 }

@@ -18,10 +18,18 @@ RUN wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-14/w
 RUN tar zxvf wasi-sdk-14.0-linux.tar.gz
 RUN ln -s wasi-sdk-14.0 wasi-sdk
 
+RUN apt-get -y install xxd
+
 WORKDIR /usr/src
+
 RUN mkdir benchmark && cd benchmark/
+
 COPY runtime.cpp .
 COPY sightglass.h .
 COPY build.sh .
-RUN ./build.sh
 
+RUN mkdir js
+COPY js/marked.min.js js/marked.min.js
+COPY js/main.js js/main.js
+
+RUN ./build.sh
