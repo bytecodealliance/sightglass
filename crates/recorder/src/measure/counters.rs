@@ -30,7 +30,8 @@ impl CounterMeasure {
                 .build()
                 .expect(
                     "Unable to create CPU_CYCLES hardware counter. Does this system actually \
-                have such a counter? If it does, your kernel may not fully support this processor.",
+                     have such a counter? If it does, your kernel may not fully support this \
+                     processor.",
                 ),
             instructions_retired: Builder::new()
                 .group(&mut group)
@@ -39,7 +40,7 @@ impl CounterMeasure {
                 .expect(
                     "Unable to create INSTRUCTIONS hardware counter. Does this system actually \
                     have such a counter? If it does, your kernel may not fully support this \
-                processor.",
+                    processor.",
                 ),
             cache_accesses: Builder::new()
                 .group(&mut group)
@@ -47,7 +48,8 @@ impl CounterMeasure {
                 .build()
                 .expect(
                     "Unable to create CACHE_REFERENCES hardware counter. Does this system actually \
-                have such a counter? If it does, your kernel may not fully support this processor.",
+                     have such a counter? If it does, your kernel may not fully support this \
+                     processor.",
                 ),
             cache_misses: Builder::new()
                 .group(&mut group)
@@ -55,7 +57,8 @@ impl CounterMeasure {
                 .build()
                 .expect(
                     "Unable to create CACHE_MISSES hardware counter. Does this system actually \
-                have such a counter? If it does, your kernel may not fully support this processor.",
+                     have such a counter? If it does, your kernel may not fully support this \
+                     processor.",
                 ),
             event_group: group,
         }
