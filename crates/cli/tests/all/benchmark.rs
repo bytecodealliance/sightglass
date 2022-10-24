@@ -128,6 +128,42 @@ fn benchmark_summary() {
 }
 
 #[test]
+fn benchmark_iterations_completed_multi_process() {
+    sightglass_cli_benchmark()
+        .arg("--processes")
+        .arg("2")
+        .arg("--iterations-per-process")
+        .arg("2")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stderr(
+            predicate::str::contains("Iterations completed: 1/4")
+                .and(predicate::str::contains("Iterations completed: 2/4"))
+                .and(predicate::str::contains("Iterations completed: 3/4"))
+                .and(predicate::str::contains("Iterations completed: 4/4")),
+        );
+}
+
+#[test]
+fn benchmark_iterations_completed_single_process() {
+    sightglass_cli_benchmark()
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("2")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stderr(
+            predicate::str::contains("Iterations completed: 1/2")
+                .and(predicate::str::contains("Iterations completed: 2/2")),
+        );
+}
+
+#[test]
 fn benchmark_effect_size() -> anyhow::Result<()> {
     // Create a temporary copy of the test engine.
     let test_engine = test_engine();
