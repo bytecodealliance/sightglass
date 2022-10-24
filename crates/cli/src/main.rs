@@ -1,4 +1,5 @@
 mod benchmark;
+mod counter;
 mod effect_size;
 mod fingerprint;
 mod suite;

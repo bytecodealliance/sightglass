@@ -1,16 +1,17 @@
+use crate::counter;
 use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
-use sightglass_recorder::cpu_affinity::bind_to_single_core;
-use sightglass_recorder::measure::Measurements;
-use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
+use sightglass_recorder::{
+    bench_api::BenchApi, benchmark::benchmark, cpu_affinity::bind_to_single_core,
+    measure::MeasureType, measure::Measurements,
+};
 use std::{
-    fs,
+    env, fs,
     io::{self, BufWriter, Write},
     path::{Path, PathBuf},
-    process::Command,
-    process::Stdio,
+    process::{Command, Stdio},
 };
 use structopt::StructOpt;
 
@@ -161,6 +162,17 @@ impl BenchmarkCommand {
             .collect();
         let mut all_measurements = vec![];
 
+        // Track completion of each benchmark iteration for this process. This
+        // can get tricky because iterations can run across many processes. To
+        // communicate progress, the `SingleProcess` and `MultiProcess` counters
+        // communicate using environment variables (see `counter.rs`).
+        let mut counter = counter::SingleProcess::new(
+            self.iterations_per_process * wasm_files.len() * self.engines.len(),
+        )?;
+        if counter.is_empty() {
+            eprintln!("{}", counter.display_to_stderr());
+        }
+
         for engine in &self.engines {
             let engine_path = check_engine_path(engine)?;
             log::info!("Using benchmark engine: {}", engine_path.display());
@@ -212,6 +224,8 @@ impl BenchmarkCommand {
 
                     self.check_output(Path::new(wasm_file), stdout, stderr)?;
                     measurements.next_iteration();
+                    counter.increment();
+                    eprintln!("{}", counter.display_to_stderr());
                 }
 
                 all_measurements.extend(measurements.finish());
@@ -300,14 +314,12 @@ impl BenchmarkCommand {
             Box::new(io::stdout())
         };
 
-        let this_exe =
-            std::env::current_exe().context("failed to get the current executable's path")?;
+        let this_exe = env::current_exe().context("failed to get the current executable's path")?;
 
         // Shuffle the order in which we spawn benchmark processes. This helps
         // us avoid some measurement bias from CPU state transitions that aren't
         // constrained within the duration of process execution, like dynamic
         // CPU throttling due to overheating.
-
         let mut rng = SmallRng::seed_from_u64(0x1337_4242);
 
         // Worklist that we randomly sample from.
@@ -324,6 +336,11 @@ impl BenchmarkCommand {
             }
         }
 
+        // Track completion of each iteration across all processes.
+        let mut counter = counter::MultiProcess::new(
+            self.processes * self.iterations_per_process * choices.len(),
+        );
+
         // Accumulated measurements from all of our subprocesses.
         let mut measurements = vec![];
 
@@ -336,6 +353,7 @@ impl BenchmarkCommand {
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
                 .stderr(Stdio::inherit())
+                .envs(counter.to_environ_vars())
                 .arg("benchmark")
                 .arg("--processes")
                 .arg("1")
@@ -385,6 +403,8 @@ impl BenchmarkCommand {
                     .context("failed to read benchmark subprocess's results")?,
             );
 
+            counter.increment_by(self.iterations_per_process);
+
             *procs_left -= 1;
             if *procs_left == 0 {
                 choices.swap_remove(index);
@@ -420,7 +440,7 @@ impl BenchmarkCommand {
         } else if let Some(dir) = wasm_file.as_ref().parent() {
             dir.into()
         } else {
-            std::env::current_dir().context("failed to get the current working directory")?
+            env::current_dir().context("failed to get the current working directory")?
         };
         Ok(working_dir)
     }
