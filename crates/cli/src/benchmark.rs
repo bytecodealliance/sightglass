@@ -378,6 +378,8 @@ impl BenchmarkCommand {
                 "benchmark subprocess did not exit successfully"
             );
 
+            eprintln!(".");
+
             // Parse the subprocess's output and add its measurements to our
             // accumulation.
             measurements.extend(
