@@ -7,7 +7,7 @@ edition = "2018"
 publish = false
 
 [dependencies]
-image = { version = "0.23.14", default-features = false, features = ["gif", "jpeg", "ico", "png", "pnm", "tga", "tiff", "webp", "bmp", "hdr", "dxt", "dds", "farbfeld"]  }
+image = { version = "0.23.14", default-features = false, features = ["jpeg"]  }
 wasi-nn = "0.2.1"
 sightglass-api = "0.1"
 
