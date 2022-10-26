@@ -77,6 +77,7 @@ fn sort_results(buffer: &[f32]) -> Vec<InferenceResult> {
 
 // Take the image located at 'path', open it, resize it to height x width, and then converts
 // the pixel precision to FP32. The resulting BGR pixel vector is then returned.
+// TODO: Replace this function with the image2tensor crate once the next version is published.
 fn image_to_tensor(path: String, height: u32, width: u32) -> Vec<u8> {
     let pixels = Reader::open(path).unwrap().decode().unwrap();
     let dyn_img: DynamicImage = pixels.resize_exact(width, height, image::imageops::Triangle);
