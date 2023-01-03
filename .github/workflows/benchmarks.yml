@@ -18,6 +18,7 @@ jobs:
     - name: Install nightly
       uses: actions-rs/toolchain@v1
       with:
+        default: true
         toolchain: nightly
     - name: Rebuild benchmarks
       run: benchmarks/build-all.sh 5
@@ -29,6 +30,7 @@ jobs:
     - name: Install nightly
       uses: actions-rs/toolchain@v1
       with:
+        default: true
         toolchain: nightly
     - name: Run benchmarks
       run: benchmarks/run-all.sh
