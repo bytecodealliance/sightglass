@@ -32,5 +32,7 @@ jobs:
       with:
         default: true
         toolchain: nightly
+    - name: Check rust version
+      run: rustc --version
     - name: Run benchmarks
       run: benchmarks/run-all.sh
