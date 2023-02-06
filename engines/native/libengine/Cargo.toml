@@ -1,0 +1,28 @@
+[package]
+name = "libengine"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "native_bench_api"
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+anyhow = "1.0.22"
+libloading = "0.7"
+log = "0.4"
+
+shuffling-allocator = { version = "1.1.1", optional = true }
+target-lexicon = { version = "0.12.3", default-features = false, features = ["std"] }
+wasmtime = { version = "5.0.0", default-features = false  }
+wasmtime-cli-flags = { version = "5.0.0" }
+wasmtime-wasi = { version = "5.0.0" }
+#wasmtime-wasi-crypto = { version = "5.0.0" }
+wasmtime-wasi-nn = { version = "5.0.0" }
+wasi-cap-std-sync = { version = "5.0.0" }
+cap-std = "1.0.0"
+clap = { version = "3.2.0", features = ["color", "suggestions", "derive"] }
+
+[workspace]
