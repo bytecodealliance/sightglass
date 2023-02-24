@@ -141,21 +141,10 @@ use std::os::raw::{c_int, c_void};
 use std::slice;
 use std::{env, path::PathBuf};
 use target_lexicon::Triple;
-use wasmtime::{Config, Engine, Instance, Linker, Module, Store};
-use wasmtime_cli_flags::{CommonOptions, WasiModules};
-use wasmtime_wasi::{sync::WasiCtxBuilder, I32Exit, WasiCtx};
 
 pub type ExitCode = c_int;
 pub const OK: ExitCode = 0;
 pub const ERR: ExitCode = -1;
-
-// Randomize the location of heap objects to avoid accidental locality being an
-// uncontrolled variable that obscures performance evaluation in our
-// experiments.
-#[cfg(feature = "shuffling-allocator")]
-#[global_allocator]
-static ALLOC: shuffling_allocator::ShufflingAllocator<std::alloc::System> =
-    shuffling_allocator::wrap!(&std::alloc::System);
 
 /// Configuration options for the benchmark.
 #[repr(C)]
@@ -194,11 +183,6 @@ pub struct WasmBenchConfig {
     pub execution_timer: *mut u8,
     pub execution_start: extern "C" fn(*mut u8),
     pub execution_end: extern "C" fn(*mut u8),
-
-    /// The (optional) flags to use when running Wasmtime. These correspond to
-    /// the flags used when running Wasmtime from the command line.
-    pub execution_flags_ptr: *const u8,
-    pub execution_flags_len: usize,
 }
 
 impl WasmBenchConfig {
@@ -237,21 +221,6 @@ impl WasmBenchConfig {
             std::str::from_utf8(stdin_path).context("given stdin path is not valid UTF-8")?;
         Ok(Some(stdin_path.into()))
     }
-
-    fn execution_flags(&self) -> Result<Option<CommonOptions>> {
-        if self.execution_flags_ptr.is_null() {
-            return Ok(None);
-        }
-
-        let execution_flags = unsafe {
-            std::slice::from_raw_parts(self.execution_flags_ptr, self.execution_flags_len)
-        };
-        let execution_flags = std::str::from_utf8(execution_flags)
-            .context("given execution flags string is not valid UTF-8")?;
-
-        let options = CommonOptions::parse_from_str(execution_flags)?;
-        Ok(Some(options))
-    }
 }
 
 /// Exposes a C-compatible way of creating the engine from the bytes of a single
@@ -268,6 +237,9 @@ pub extern "C" fn wasm_bench_create(
 ) -> ExitCode {
     let result = (|| -> Result<_> {
         let working_dir = config.working_dir()?;
+        println!("HIIIIIIIII");
+        eprintln!("This is going to standard error!, {}", "awesome");
+        /*
         let working_dir =
             cap_std::fs::Dir::open_ambient_dir(&working_dir, cap_std::ambient_authority())
                 .with_context(|| {
@@ -276,14 +248,12 @@ pub extern "C" fn wasm_bench_create(
                         working_dir.display(),
                     )
                 })?;
-
+*/
         let stdout_path = config.stdout_path()?;
         let stderr_path = config.stderr_path()?;
         let stdin_path = config.stdin_path()?;
-        let options = config.execution_flags()?;
 
         let state = Box::new(BenchState::new(
-            options,
             config.compilation_timer,
             config.compilation_start,
             config.compilation_end,
@@ -293,42 +263,8 @@ pub extern "C" fn wasm_bench_create(
             config.execution_timer,
             config.execution_start,
             config.execution_end,
-            move || {
-                let mut cx = WasiCtxBuilder::new();
-
-                let stdout = std::fs::File::create(&stdout_path)
-                    .with_context(|| format!("failed to create {}", stdout_path.display()))?;
-                let stdout = cap_std::fs::File::from_std(stdout);
-                let stdout = wasi_cap_std_sync::file::File::from_cap_std(stdout);
-                cx = cx.stdout(Box::new(stdout));
-
-                let stderr = std::fs::File::create(&stderr_path)
-                    .with_context(|| format!("failed to create {}", stderr_path.display()))?;
-                let stderr = cap_std::fs::File::from_std(stderr);
-                let stderr = wasi_cap_std_sync::file::File::from_cap_std(stderr);
-                cx = cx.stderr(Box::new(stderr));
-
-                if let Some(stdin_path) = &stdin_path {
-                    let stdin = std::fs::File::open(stdin_path)
-                        .with_context(|| format!("failed to open {}", stdin_path.display()))?;
-                    let stdin = cap_std::fs::File::from_std(stdin);
-                    let stdin = wasi_cap_std_sync::file::File::from_cap_std(stdin);
-                    cx = cx.stdin(Box::new(stdin));
-                }
-
-                // Allow access to the working directory so that the benchmark can read
-                // its input workload(s).
-                cx = cx.preopened_dir(working_dir.try_clone()?, ".")?;
-
-                // Pass this env var along so that the benchmark program can use smaller
-                // input workload(s) if it has them and that has been requested.
-                if let Ok(val) = env::var("WASM_BENCH_USE_SMALL_WORKLOAD") {
-                    cx = cx.env("WASM_BENCH_USE_SMALL_WORKLOAD", &val)?;
-                }
-
-                Ok(cx.build())
-            },
         )?);
+        println!("HOOOOOOOOO");
         Ok(Box::into_raw(state) as _)
     })();
 
@@ -358,9 +294,11 @@ pub extern "C" fn wasm_bench_compile(
     wasm_bytes: *const u8,
     wasm_bytes_length: usize,
 ) -> ExitCode {
+    println!("HEEEEEEEEEEE");
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let wasm_bytes = unsafe { slice::from_raw_parts(wasm_bytes, wasm_bytes_length) };
     let result = state.compile(wasm_bytes).context("failed to compile");
+    println!("HEEEEEEEAAAA");
     to_exit_code(result)
 }
 
@@ -369,6 +307,7 @@ pub extern "C" fn wasm_bench_compile(
 pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let result = state.instantiate().context("failed to instantiate");
+    println!("HEEEEEEEBBBB");
     to_exit_code(result)
 }
 
@@ -377,6 +316,7 @@ pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
 pub extern "C" fn wasm_bench_execute(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let result = state.execute().context("failed to execute");
+    println!("HEEEEEEECCCC");
     to_exit_code(result)
 }
 
@@ -396,31 +336,40 @@ fn to_exit_code<T>(result: impl Into<Result<T>>) -> ExitCode {
 /// This structure contains the actual Rust implementation of the state required
 /// to manage the Wasmtime engine between calls.
 struct BenchState {
-    linker: Linker<HostState>,
     compilation_timer: *mut u8,
     compilation_start: extern "C" fn(*mut u8),
     compilation_end: extern "C" fn(*mut u8),
     instantiation_timer: *mut u8,
     instantiation_start: extern "C" fn(*mut u8),
     instantiation_end: extern "C" fn(*mut u8),
-    make_wasi_cx: Box<dyn FnMut() -> Result<WasiCtx>>,
-    module: Option<Module>,
-    store_and_instance: Option<(Store<HostState>, Instance)>,
-    epoch_interruption: bool,
-    fuel: Option<u64>,
+    execution_timer: *mut u8,
+    execution_start: extern "C" fn(*mut u8),
+    execution_end: extern "C" fn(*mut u8),
+    compiled_code_location: Option<PathBuf>,
 }
 
-struct HostState {
-    wasi: WasiCtx,
-    #[cfg(feature = "wasi-nn")]
-    wasi_nn: wasmtime_wasi_nn::WasiNnCtx,
-    #[cfg(feature = "wasi-crypto")]
-    wasi_crypto: wasmtime_wasi_crypto::WasiCryptoCtx,
+static mut NATIVE_EXECUTION_TIMER: Option<*mut u8> = None;
+static mut NATIVE_EXECUTION_START: Option<extern "C" fn(*mut u8)> = None;
+static mut NATIVE_EXECUTION_END: Option<extern "C" fn(*mut u8)> = None;
+
+#[no_mangle]
+pub extern "C" fn bench_start() {
+    println!("About to call native bench start");
+    let timer = unsafe { NATIVE_EXECUTION_TIMER.unwrap() };
+    unsafe { NATIVE_EXECUTION_START.unwrap()(timer) };
+    println!("Done call native bench start.");
+}
+
+#[no_mangle]
+pub extern "C" fn bench_end() {
+    println!("About to call native bench end.");
+    let timer = unsafe { NATIVE_EXECUTION_TIMER.unwrap() };
+    unsafe { NATIVE_EXECUTION_END.unwrap()(timer) };
+    println!("Done call native bench end");
 }
 
 impl BenchState {
     fn new(
-        options: Option<CommonOptions>,
         compilation_timer: *mut u8,
         compilation_start: extern "C" fn(*mut u8),
         compilation_end: extern "C" fn(*mut u8),
@@ -430,141 +379,64 @@ impl BenchState {
         execution_timer: *mut u8,
         execution_start: extern "C" fn(*mut u8),
         execution_end: extern "C" fn(*mut u8),
-        make_wasi_cx: impl FnMut() -> Result<WasiCtx> + 'static,
     ) -> Result<Self> {
-        let config = if let Some(o) = &options {
-            o.config(Some(&Triple::host().to_string()))?
-        } else {
-            Config::new()
-        };
-        // NB: do not configure a code cache.
-        let engine = Engine::new(&config)?;
-        let mut linker = Linker::<HostState>::new(&engine);
-
-        // Define the benchmarking start/end functions.
-        let execution_timer = unsafe {
-            // Safe because this bench API's contract requires that its methods
-            // are only ever called from a single thread.
-            UnsafeSendSync::new(execution_timer)
-        };
-        linker.func_wrap("bench", "start", move || {
-            execution_start(*execution_timer.get());
-            Ok(())
-        })?;
-        linker.func_wrap("bench", "end", move || {
-            execution_end(*execution_timer.get());
-            Ok(())
-        })?;
-
-        let mut epoch_interruption = false;
-        let mut fuel = None;
-        if let Some(opts) = &options {
-            epoch_interruption = opts.epoch_interruption;
-            fuel = opts.fuel;
-        }
-
-        let wasi_modules = options
-            .map(|o| o.wasi_modules)
-            .flatten()
-            .unwrap_or(WasiModules::default());
-
-        if wasi_modules.wasi_common {
-            wasmtime_wasi::add_to_linker(&mut linker, |cx| &mut cx.wasi)?;
-        }
-
-        #[cfg(feature = "wasi-nn")]
-        if wasi_modules.wasi_nn {
-            wasmtime_wasi_nn::add_to_linker(&mut linker, |cx| &mut cx.wasi_nn)?;
-        }
-
-        #[cfg(feature = "wasi-crypto")]
-        if wasi_modules.wasi_crypto {
-            wasmtime_wasi_crypto::add_to_linker(&mut linker, |cx| &mut cx.wasi_crypto)?;
-        }
-
         Ok(Self {
-            linker,
             compilation_timer,
             compilation_start,
             compilation_end,
             instantiation_timer,
             instantiation_start,
             instantiation_end,
-            make_wasi_cx: Box::new(make_wasi_cx) as _,
-            module: None,
-            store_and_instance: None,
-            epoch_interruption,
-            fuel,
+            execution_timer,
+            execution_start,
+            execution_end,
+            compiled_code_location: None,
         })
     }
 
-    fn compile(&mut self, bytes: &[u8]) -> Result<()> {
-        assert!(
-            self.module.is_none(),
-            "create a new engine to repeat compilation"
-        );
-
+    fn compile(&mut self, _bytes: &[u8]) -> Result<()> {
         (self.compilation_start)(self.compilation_timer);
-        let module = Module::from_binary(self.linker.engine(), bytes)?;
+         // TODO .. Compile the code
+        // set self.compile code to some path.
+        //self.compiled_code_location = PathBuf
+        println!("HEEEEEEECCCCompile");
+        self.compiled_code_location = Some(PathBuf::from("./benchmark.so"));
+        // if clang compilation fails we should return an error
+        // When we compile this ... link in the sightglass recorder
+        //Command::new("${CC} -fPIC ${COMMON_CFLAGS} "-DWORKLOAD_LOCATION=${SCRIPT_LOC}/benchmark" -shared -o implementation.so ../wrapper.c -fPIC")
         (self.compilation_end)(self.compilation_timer);
-
-        self.module = Some(module);
         Ok(())
     }
 
     fn instantiate(&mut self) -> Result<()> {
-        let module = self
-            .module
-            .as_ref()
-            .expect("compile the module before instantiating it");
-
-        let host = HostState {
-            wasi: (self.make_wasi_cx)().context("failed to create a WASI context")?,
-            #[cfg(feature = "wasi-nn")]
-            wasi_nn: wasmtime_wasi_nn::WasiNnCtx::new()?,
-            #[cfg(feature = "wasi-crypto")]
-            wasi_crypto: wasmtime_wasi_nn::WasiCryptoCtx::new(),
-        };
-
-        // NB: Start measuring instantiation time *after* we've created the WASI
-        // context, since that needs to do file I/O to setup
-        // stdin/stdout/stderr.
-        (self.instantiation_start)(self.instantiation_timer);
-        let mut store = Store::new(self.linker.engine(), host);
-        if self.epoch_interruption {
-            store.set_epoch_deadline(1);
-        }
-        if let Some(fuel) = self.fuel {
-            store.add_fuel(fuel).unwrap();
-        }
-
-        let instance = self.linker.instantiate(&mut store, &module)?;
-        (self.instantiation_end)(self.instantiation_timer);
-
-        self.store_and_instance = Some((store, instance));
         Ok(())
     }
 
     fn execute(&mut self) -> Result<()> {
-        let (mut store, instance) = self
-            .store_and_instance
-            .take()
-            .expect("instantiate the module before executing it");
-
-        let start_func = instance.get_typed_func::<(), ()>(&mut store, "_start")?;
-        match start_func.call(&mut store, ()) {
-            Ok(_) => Ok(()),
-            Err(trap) => {
-                // Since _start will likely return by using the system `exit` call, we must
-                // check the trap code to see if it actually represents a successful exit.
-                if let Some(exit) = trap.downcast_ref::<I32Exit>() {
-                    if exit.0 == 0 {
-                        return Ok(());
-                    }
-                }
-
-                Err(trap)
-            }
+        unsafe {
+            NATIVE_EXECUTION_TIMER = Some(self.execution_timer);
+            NATIVE_EXECUTION_START = Some(self.execution_start);
+            NATIVE_EXECUTION_END = Some(self.execution_end);
         }
+
+        let code_location_path = &self.compiled_code_location.as_ref().unwrap();
+        log::info!(
+            "Using native compiled code location: {}",
+            code_location_path.display()
+        );
+        //let native_compiled_code_lib = unsafe { libloading::Library::new(&self.compiled_code_location.unwrap())? };
+        // TODO: instead of doing new ... do an open and pass in RTL_NOW and RTL_GLOBAL
+        let native_compiled_code_lib = unsafe { libloading::Library::new(code_location_path)? };
+        //let native_entry: libloading::Symbol<'a, unsafe extern "C" fn() -> i32> =
+        //    native_compiled_code_lib.get(b"native_entry");
+        let native_entry: libloading::Symbol<'_, unsafe extern "C" fn() -> i32> =
+            unsafe { native_compiled_code_lib.get(b"native_entry").unwrap() };
+        println!("BLohhhhhhh\n");
+        let result = unsafe { (native_entry)() };
+        println!("BLASSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\n");
+        println!("Result {:?}", result);
+        Ok(())
+        // TODO Error checking .. if result is not zero maybe?
+        // Replace with a system call to run the executable at compiled code location
     }
 }
