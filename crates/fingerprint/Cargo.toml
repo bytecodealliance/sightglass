@@ -15,4 +15,4 @@ regex = "1.5"
 serde = { version = "1.0.136", features = ["derive"] }
 sha2 = "0.10"
 sightglass-build = { path = "../build" }
-sysinfo = "0.23"
+sysinfo = "0.28"
