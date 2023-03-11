@@ -1,7 +1,10 @@
 # Build native engine for sightglass
-cd libengine
-# wget https://raw.githubusercontent.com/bytecodealliance/wasmtime/dbc6db0cfb114f1cfa30866f602eff7c9025a597/crates/bench-api/src/lib.rs
-# wget https://raw.githubusercontent.com/bytecodealliance/wasmtime/dbc6db0cfb114f1cfa30866f602eff7c9025a597/crates/bench-api/src/unsafe_send_sync.rs
+cd <sightglass-base>/engines/native/libengine
 cargo build --release
 cp target/release/libnative_bench_api.so ../libengine.so
 cd -
+
+# To run a benchmark with the newly created library
+cd <sightglass-base>
+cargo build --release
+LD_LIBRARY_PATH=./engines/native/ ./target/release/sightglass-cli benchmark ./benchmarks/shootout-base64/benchmark.wasm --engine engines/native/libengine.so  --processes=1 --raw --output-format csv

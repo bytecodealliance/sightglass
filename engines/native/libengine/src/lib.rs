@@ -90,8 +90,6 @@
 //!     execution_timer: ptr::null_mut(),
 //!     execution_start,
 //!     execution_end,
-//!     execution_flags_ptr: ptr::null(),
-//!     execution_flags_len: 0,
 //! };
 //!
 //! let mut bench_api = ptr::null_mut();
@@ -133,14 +131,26 @@
 //! }
 //! ```
 
-mod unsafe_send_sync;
-
-use crate::unsafe_send_sync::UnsafeSendSync;
 use anyhow::{Context, Result};
 use std::os::raw::{c_int, c_void};
+use std::path::PathBuf;
 use std::slice;
-use std::{env, path::PathBuf};
-use target_lexicon::Triple;
+use nix::unistd::{close, dup, dup2,  pipe, read, write};
+use nix::libc::{fflush};
+use std::{
+    fs::File,
+    io::{self, Write},
+    os::unix::io::FromRawFd,
+};
+use nix::fcntl::fcntl;
+use nix::fcntl;
+use std::io::Read;
+use nix::fcntl::FcntlArg;
+pub use self::FcntlArg::*;
+use std::io::BufReader;
+use std::io::prelude::*;
+
+use std::io::stdout;
 
 pub type ExitCode = c_int;
 pub const OK: ExitCode = 0;
@@ -183,7 +193,12 @@ pub struct WasmBenchConfig {
     pub execution_timer: *mut u8,
     pub execution_start: extern "C" fn(*mut u8),
     pub execution_end: extern "C" fn(*mut u8),
+
+
+    pub stdout_file: File,
+    pub stderr_file: File,
 }
+
 
 impl WasmBenchConfig {
     fn working_dir(&self) -> Result<PathBuf> {
@@ -230,16 +245,15 @@ impl WasmBenchConfig {
 /// that contains the engine's initialized state, and `0` is returned. On
 /// failure, a non-zero status code is returned and `out_bench_ptr` is left
 /// untouched.
+
 #[no_mangle]
 pub extern "C" fn wasm_bench_create(
+//pub fn wasm_bench_create(
     config: WasmBenchConfig,
     out_bench_ptr: *mut *mut c_void,
 ) -> ExitCode {
     let result = (|| -> Result<_> {
         let working_dir = config.working_dir()?;
-        println!("HIIIIIIIII");
-        eprintln!("This is going to standard error!, {}", "awesome");
-        /*
         let working_dir =
             cap_std::fs::Dir::open_ambient_dir(&working_dir, cap_std::ambient_authority())
                 .with_context(|| {
@@ -248,10 +262,18 @@ pub extern "C" fn wasm_bench_create(
                         working_dir.display(),
                     )
                 })?;
-*/
+
         let stdout_path = config.stdout_path()?;
         let stderr_path = config.stderr_path()?;
         let stdin_path = config.stdin_path()?;
+        let stdout = std::fs::File::create(&stdout_path)
+            .with_context(|| format!("failed to create {}", stdout_path.display()))?;
+        let stderr = std::fs::File::create(&stderr_path)
+            .with_context(|| format!("failed to create {}", stderr_path.display()))?;
+        if let Some(stdin_path) = &stdin_path {
+            let stdin = std::fs::File::open(stdin_path)
+                .with_context(|| format!("failed to open {}", stdin_path.display()))?;
+        }
 
         let state = Box::new(BenchState::new(
             config.compilation_timer,
@@ -263,8 +285,46 @@ pub extern "C" fn wasm_bench_create(
             config.execution_timer,
             config.execution_start,
             config.execution_end,
+            stdout,
+            stderr,
+            /*
+            move || {
+                let mut cx = WasiCtxBuilder::new();
+
+                let stdout = std::fs::File::create(&stdout_path)
+                    .with_context(|| format!("failed to create {}", stdout_path.display()))?;
+                let stdout = cap_std::fs::File::from_std(stdout);
+                let stdout = wasi_cap_std_sync::file::File::from_cap_std(stdout);
+                cx = cx.stdout(Box::new(stdout));
+
+                let stderr = std::fs::File::create(&stderr_path)
+                    .with_context(|| format!("failed to create {}", stderr_path.display()))?;
+                let stderr = cap_std::fs::File::from_std(stderr);
+                let stderr = wasi_cap_std_sync::file::File::from_cap_std(stderr);
+                cx = cx.stderr(Box::new(stderr));
+
+                if let Some(stdin_path) = &stdin_path {
+                    let stdin = std::fs::File::open(stdin_path)
+                        .with_context(|| format!("failed to open {}", stdin_path.display()))?;
+                    let stdin = cap_std::fs::File::from_std(stdin);
+                    let stdin = wasi_cap_std_sync::file::File::from_cap_std(stdin);
+                    cx = cx.stdin(Box::new(stdin));
+                }
+
+                // Allow access to the working directory so that the benchmark can read
+                // its input workload(s).
+                cx = cx.preopened_dir(working_dir.try_clone()?, ".")?;
+
+                // Pass this env var along so that the benchmark program can use smaller
+                // input workload(s) if it has them and that has been requested.
+                if let Ok(val) = env::var("WASM_BENCH_USE_SMALL_WORKLOAD") {
+                    cx = cx.env("WASM_BENCH_USE_SMALL_WORKLOAD", &val)?;
+                }
+
+                Ok(cx.build())
+            },
+            */
         )?);
-        println!("HOOOOOOOOO");
         Ok(Box::into_raw(state) as _)
     })();
 
@@ -277,6 +337,8 @@ pub extern "C" fn wasm_bench_create(
 
     to_exit_code(result.map(|_| ()))
 }
+
+
 
 /// Free the engine state allocated by this library.
 #[no_mangle]
@@ -294,11 +356,9 @@ pub extern "C" fn wasm_bench_compile(
     wasm_bytes: *const u8,
     wasm_bytes_length: usize,
 ) -> ExitCode {
-    println!("HEEEEEEEEEEE");
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let wasm_bytes = unsafe { slice::from_raw_parts(wasm_bytes, wasm_bytes_length) };
     let result = state.compile(wasm_bytes).context("failed to compile");
-    println!("HEEEEEEEAAAA");
     to_exit_code(result)
 }
 
@@ -307,7 +367,6 @@ pub extern "C" fn wasm_bench_compile(
 pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let result = state.instantiate().context("failed to instantiate");
-    println!("HEEEEEEEBBBB");
     to_exit_code(result)
 }
 
@@ -316,7 +375,6 @@ pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
 pub extern "C" fn wasm_bench_execute(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
     let result = state.execute().context("failed to execute");
-    println!("HEEEEEEECCCC");
     to_exit_code(result)
 }
 
@@ -345,6 +403,8 @@ struct BenchState {
     execution_timer: *mut u8,
     execution_start: extern "C" fn(*mut u8),
     execution_end: extern "C" fn(*mut u8),
+    stdout_file: File,
+    stderr_file: File,
     compiled_code_location: Option<PathBuf>,
 }
 
@@ -354,21 +414,18 @@ static mut NATIVE_EXECUTION_END: Option<extern "C" fn(*mut u8)> = None;
 
 #[no_mangle]
 pub extern "C" fn bench_start() {
-    println!("About to call native bench start");
     let timer = unsafe { NATIVE_EXECUTION_TIMER.unwrap() };
     unsafe { NATIVE_EXECUTION_START.unwrap()(timer) };
-    println!("Done call native bench start.");
 }
 
 #[no_mangle]
 pub extern "C" fn bench_end() {
-    println!("About to call native bench end.");
     let timer = unsafe { NATIVE_EXECUTION_TIMER.unwrap() };
     unsafe { NATIVE_EXECUTION_END.unwrap()(timer) };
-    println!("Done call native bench end");
 }
 
 impl BenchState {
+
     fn new(
         compilation_timer: *mut u8,
         compilation_start: extern "C" fn(*mut u8),
@@ -379,6 +436,8 @@ impl BenchState {
         execution_timer: *mut u8,
         execution_start: extern "C" fn(*mut u8),
         execution_end: extern "C" fn(*mut u8),
+        stdout_file: File,
+        stderr_file: File,
     ) -> Result<Self> {
         Ok(Self {
             compilation_timer,
@@ -390,16 +449,18 @@ impl BenchState {
             execution_timer,
             execution_start,
             execution_end,
+            stdout_file,
+            stderr_file,
             compiled_code_location: None,
         })
     }
 
+
     fn compile(&mut self, _bytes: &[u8]) -> Result<()> {
         (self.compilation_start)(self.compilation_timer);
-         // TODO .. Compile the code
+        // TODO .. Compile the code
         // set self.compile code to some path.
         //self.compiled_code_location = PathBuf
-        println!("HEEEEEEECCCCompile");
         self.compiled_code_location = Some(PathBuf::from("./benchmark.so"));
         // if clang compilation fails we should return an error
         // When we compile this ... link in the sightglass recorder
@@ -424,19 +485,33 @@ impl BenchState {
             "Using native compiled code location: {}",
             code_location_path.display()
         );
-        //let native_compiled_code_lib = unsafe { libloading::Library::new(&self.compiled_code_location.unwrap())? };
-        // TODO: instead of doing new ... do an open and pass in RTL_NOW and RTL_GLOBAL
+
+        println!("{:?}", &self.stderr_file);
+
+
+        let pipe_stdout = pipe()?;
+        let mut original_stdout = dup(1)?;
+        let mut native_entry_stdout = dup2(pipe_stdout.1, 1)?;
+        close(pipe_stdout.1)?;
+
         let native_compiled_code_lib = unsafe { libloading::Library::new(code_location_path)? };
-        //let native_entry: libloading::Symbol<'a, unsafe extern "C" fn() -> i32> =
-        //    native_compiled_code_lib.get(b"native_entry");
         let native_entry: libloading::Symbol<'_, unsafe extern "C" fn() -> i32> =
-            unsafe { native_compiled_code_lib.get(b"native_entry").unwrap() };
-        println!("BLohhhhhhh\n");
+        unsafe { native_compiled_code_lib.get(b"native_entry").unwrap() };
         let result = unsafe { (native_entry)() };
-        println!("BLASSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\n");
-        println!("Result {:?}", result);
+        let fp = unsafe { libc::fdopen(pipe_stdout.1, &('w' as libc::c_char)) };
+        unsafe { fflush(fp) };
+
+
+        dup2(original_stdout, 1)?;
+
+        let mut buffer = [0];
+        while let count = read(pipe_stdout.0, &mut buffer).unwrap() {
+            if count == 0 { break; }
+            print!("{}", buffer[0] as char);
+            self.stdout_file.write_all(&buffer);
+        }
+
         Ok(())
-        // TODO Error checking .. if result is not zero maybe?
-        // Replace with a system call to run the executable at compiled code location
+
     }
 }
