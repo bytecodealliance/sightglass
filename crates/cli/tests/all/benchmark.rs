@@ -128,6 +128,7 @@ fn benchmark_summary() {
 }
 
 #[test]
+#[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
 fn benchmark_effect_size() -> anyhow::Result<()> {
     // Create a temporary copy of the test engine.
     let test_engine = test_engine();
