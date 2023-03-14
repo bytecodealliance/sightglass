@@ -1,135 +1,12 @@
-//! A C API for benchmarking Wasmtime's WebAssembly compilation, instantiation,
-//! and execution.
+//! Implements the engine API to support benchmarking native applications.
+//! Supports the collection of execution time. Compilation time from high level
+//! language to native binary is not recorded since (a) recording is currently
+//! a separate step taken by the user and (b) Wasm also does not record the
+//! equavilent step. Instantiation time is also not recorded. Because the sightglass
+//! framework is focused on Wasm first and because this is file is based on the
+//! benchmarking supporting for Wasmtime, some function and variable names are
+//! consistent with the assumption that we are executing a Wasm file.
 //!
-//! The API expects calls that match the following state machine:
-//!
-//! ```text
-//!               |
-//!               |
-//!               V
-//! .---> wasm_bench_create
-//! |        |        |
-//! |        |        |
-//! |        |        V
-//! |        |   wasm_bench_compile
-//! |        |     |            |
-//! |        |     |            |     .----.
-//! |        |     |            |     |    |
-//! |        |     |            V     V    |
-//! |        |     |     wasm_bench_instantiate <------.
-//! |        |     |            |        |             |
-//! |        |     |            |        |             |
-//! |        |     |            |        |             |
-//! |        |     |     .------'        '-----> wasm_bench_execute
-//! |        |     |     |                             |
-//! |        |     |     |                             |
-//! |        V     V     V                             |
-//! '------ wasm_bench_free <--------------------------'
-//!               |
-//!               |
-//!               V
-//! ```
-//!
-//! All API calls must happen on the same thread.
-//!
-//! Functions which return pointers use null as an error value. Function which
-//! return `int` use `0` as OK and non-zero as an error value.
-//!
-//! # Example
-//!
-//! ```
-//! use std::ptr;
-//! use wasmtime_bench_api::*;
-//!
-//! let working_dir = std::env::current_dir().unwrap().display().to_string();
-//! let stdout_path = "./stdout.log";
-//! let stderr_path = "./stderr.log";
-//!
-//! // Functions to start/end timers for compilation.
-//! //
-//! // The `compilation_timer` pointer configured in the `WasmBenchConfig` is
-//! // passed through.
-//! extern "C" fn compilation_start(timer: *mut u8) {
-//!     // Start your compilation timer here.
-//! }
-//! extern "C" fn compilation_end(timer: *mut u8) {
-//!     // End your compilation timer here.
-//! }
-//!
-//! // Similar for instantiation.
-//! extern "C" fn instantiation_start(timer: *mut u8) {
-//!     // Start your instantiation timer here.
-//! }
-//! extern "C" fn instantiation_end(timer: *mut u8) {
-//!     // End your instantiation timer here.
-//! }
-//!
-//! // Similar for execution.
-//! extern "C" fn execution_start(timer: *mut u8) {
-//!     // Start your execution timer here.
-//! }
-//! extern "C" fn execution_end(timer: *mut u8) {
-//!     // End your execution timer here.
-//! }
-//!
-//! let config = WasmBenchConfig {
-//!     working_dir_ptr: working_dir.as_ptr(),
-//!     working_dir_len: working_dir.len(),
-//!     stdout_path_ptr: stdout_path.as_ptr(),
-//!     stdout_path_len: stdout_path.len(),
-//!     stderr_path_ptr: stderr_path.as_ptr(),
-//!     stderr_path_len: stderr_path.len(),
-//!     stdin_path_ptr: ptr::null(),
-//!     stdin_path_len: 0,
-//!     compilation_timer: ptr::null_mut(),
-//!     compilation_start,
-//!     compilation_end,
-//!     instantiation_timer: ptr::null_mut(),
-//!     instantiation_start,
-//!     instantiation_end,
-//!     execution_timer: ptr::null_mut(),
-//!     execution_start,
-//!     execution_end,
-//! };
-//!
-//! let mut bench_api = ptr::null_mut();
-//! unsafe {
-//!     let code = wasm_bench_create(config, &mut bench_api);
-//!     assert_eq!(code, OK);
-//!     assert!(!bench_api.is_null());
-//! };
-//!
-//! let wasm = wat::parse_bytes(br#"
-//!     (module
-//!         (func $bench_start (import "bench" "start"))
-//!         (func $bench_end (import "bench" "end"))
-//!         (func $start (export "_start")
-//!             call $bench_start
-//!             i32.const 1
-//!             i32.const 2
-//!             i32.add
-//!             drop
-//!             call $bench_end
-//!         )
-//!     )
-//! "#).unwrap();
-//!
-//! // This will call the `compilation_{start,end}` timing functions on success.
-//! let code = unsafe { wasm_bench_compile(bench_api, wasm.as_ptr(), wasm.len()) };
-//! assert_eq!(code, OK);
-//!
-//! // This will call the `instantiation_{start,end}` timing functions on success.
-//! let code = unsafe { wasm_bench_instantiate(bench_api) };
-//! assert_eq!(code, OK);
-//!
-//! // This will call the `execution_{start,end}` timing functions on success.
-//! let code = unsafe { wasm_bench_execute(bench_api) };
-//! assert_eq!(code, OK);
-//!
-//! unsafe {
-//!     wasm_bench_free(bench_api);
-//! }
-//! ```
 
 pub use self::FcntlArg::*;
 use anyhow::{Context, Result};
@@ -146,10 +23,10 @@ pub type ExitCode = c_int;
 pub const OK: ExitCode = 0;
 pub const ERR: ExitCode = -1;
 
-/// Configuration options for the benchmark.
+// Configuration options for the benchmark.
 #[repr(C)]
 pub struct WasmBenchConfig {
-    /// The working directory where benchmarks should be executed.
+    // The working directory where benchmark should be executed.
     pub working_dir_ptr: *const u8,
     pub working_dir_len: usize,
 
@@ -213,28 +90,15 @@ impl WasmBenchConfig {
             std::str::from_utf8(stderr_path).context("given stderr path is not valid UTF-8")?;
         Ok(stderr_path.into())
     }
-
-    fn stdin_path(&self) -> Result<Option<PathBuf>> {
-        if self.stdin_path_ptr.is_null() {
-            return Ok(None);
-        }
-
-        let stdin_path =
-            unsafe { std::slice::from_raw_parts(self.stdin_path_ptr, self.stdin_path_len) };
-        let stdin_path =
-            std::str::from_utf8(stdin_path).context("given stdin path is not valid UTF-8")?;
-        Ok(Some(stdin_path.into()))
-    }
 }
 
-/// Exposes a C-compatible way of creating the engine from the bytes of a single
-/// Wasm module.
-///
-/// On success, the `out_bench_ptr` is initialized to a pointer to a structure
-/// that contains the engine's initialized state, and `0` is returned. On
-/// failure, a non-zero status code is returned and `out_bench_ptr` is left
-/// untouched.
-
+// Exposes a C-compatible way of creating the engine from the bytes of a single
+// Wasm module.
+//
+// On success, the `out_bench_ptr` is initialized to a pointer to a structure
+// that contains the engine's initialized state, and `0` is returned. On
+// failure, a non-zero status code is returned and `out_bench_ptr` is left
+// untouched.
 #[no_mangle]
 pub extern "C" fn wasm_bench_create(
     config: WasmBenchConfig,
@@ -244,15 +108,11 @@ pub extern "C" fn wasm_bench_create(
         let working_dir = config.working_dir()?;
         let stdout_path = config.stdout_path()?;
         let stderr_path = config.stderr_path()?;
-        let stdin_path = config.stdin_path()?;
+
         let stdout = std::fs::File::create(&stdout_path)
             .with_context(|| format!("failed to create {}", stdout_path.display()))?;
         let stderr = std::fs::File::create(&stderr_path)
             .with_context(|| format!("failed to create {}", stderr_path.display()))?;
-        if let Some(stdin_path) = &stdin_path {
-            let stdin = std::fs::File::open(stdin_path)
-                .with_context(|| format!("failed to open {}", stdin_path.display()))?;
-        }
 
         let state = Box::new(BenchState::new(
             config.compilation_timer,
@@ -281,7 +141,7 @@ pub extern "C" fn wasm_bench_create(
     to_exit_code(result.map(|_| ()))
 }
 
-/// Free the engine state allocated by this library.
+// Free the engine state allocated by this library.
 #[no_mangle]
 pub extern "C" fn wasm_bench_free(state: *mut c_void) {
     assert!(!state.is_null());
@@ -290,7 +150,7 @@ pub extern "C" fn wasm_bench_free(state: *mut c_void) {
     }
 }
 
-/// Compile the Wasm benchmark module.
+// Compile the benchmark module.
 #[no_mangle]
 pub extern "C" fn wasm_bench_compile(
     state: *mut c_void,
@@ -303,7 +163,7 @@ pub extern "C" fn wasm_bench_compile(
     to_exit_code(result)
 }
 
-/// Instantiate the Wasm benchmark module.
+// Instantiate the benchmark module.
 #[no_mangle]
 pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
@@ -311,7 +171,7 @@ pub extern "C" fn wasm_bench_instantiate(state: *mut c_void) -> ExitCode {
     to_exit_code(result)
 }
 
-/// Execute the Wasm benchmark module.
+// Execute the benchmark module.
 #[no_mangle]
 pub extern "C" fn wasm_bench_execute(state: *mut c_void) -> ExitCode {
     let state = unsafe { (state as *mut BenchState).as_mut().unwrap() };
@@ -319,9 +179,8 @@ pub extern "C" fn wasm_bench_execute(state: *mut c_void) -> ExitCode {
     to_exit_code(result)
 }
 
-/// Helper function for converting a Rust result to a C error code.
-///
-/// This will print an error indicating some information regarding the failure.
+// Helper function for converting a Rust result to a C error code.
+// This will print an error indicating some information regarding the failure.
 fn to_exit_code<T>(result: impl Into<Result<T>>) -> ExitCode {
     match result.into() {
         Ok(_) => OK,
@@ -332,8 +191,8 @@ fn to_exit_code<T>(result: impl Into<Result<T>>) -> ExitCode {
     }
 }
 
-/// This structure contains the actual Rust implementation of the state required
-/// to manage the Wasmtime engine between calls.
+// This structure contains the actual Rust implementation of the
+// benchmarking state
 struct BenchState {
     compilation_timer: *mut u8,
     compilation_start: extern "C" fn(*mut u8),
@@ -409,59 +268,51 @@ impl BenchState {
     }
 
     fn execute(&mut self) -> Result<()> {
+        // Initialize call back timers
         unsafe {
             NATIVE_EXECUTION_TIMER = Some(self.execution_timer);
             NATIVE_EXECUTION_START = Some(self.execution_start);
             NATIVE_EXECUTION_END = Some(self.execution_end);
         }
 
-        //self.working_dir.push("benchmark.so");
-        let native_lib = self.working_dir.join("./benchmark.so");
-
-        //eprintln!(
-        //    "This is going to standard error!, {:?} {:?}",
-        //    root_dir, working_dir
-        //);
-        //assert!(env::set_current_dir(&working_dir).is_ok());
-        //log::info!(
-        //     "Using native compiled code location: {:?}",
-        //     self.working_dir
-        // );
-        //eprintln!(
-        //    "This is going to standard error!, {:?}",
-        //    env::current_dir()?
-        //);
-
+        // Setup pipe for capturing stdout
         let pipe_stdout = pipe()?;
         let original_stdout = dup(1)?;
         dup2(pipe_stdout.1, 1)?;
         close(pipe_stdout.1)?;
 
+        // Load the library
+        let native_lib = self.working_dir.join("./benchmark.so");
         let native_compiled_code_lib = unsafe { libloading::Library::new(&native_lib)? };
         let native_entry: libloading::Symbol<'_, unsafe extern "C" fn() -> i32> =
             unsafe { native_compiled_code_lib.get(b"native_entry").unwrap() };
 
+        // Set working directory for loading any input files.
         let root_dir = env::current_dir()?;
         let working_dir = Path::new(&self.working_dir);
         assert!(env::set_current_dir(&working_dir).is_ok());
 
+        // Run the benchmark
         unsafe { (native_entry)() };
 
+        // Reset working directory
         assert!(env::set_current_dir(&root_dir).is_ok());
-        let fp = unsafe { libc::fdopen(pipe_stdout.1, &('w' as libc::c_char)) };
-        unsafe { fflush(fp) };
 
+        // Flush stdout and set fp for reading the buffer
+        let fp_stdout = unsafe { libc::fdopen(pipe_stdout.1, &('w' as libc::c_char)) };
+        unsafe { fflush(fp_stdout) };
         dup2(original_stdout, 1)?;
 
+        // Read the stdout buffer written by the benchmark and write results to a file
         let mut buffer = [0];
-
         while let Ok(count) = read(pipe_stdout.0, &mut buffer) {
             if count == 0 {
                 break;
             }
             self.stdout_file.write_all(&buffer)?;
         }
-        drop(fp);
+        drop(fp_stdout);
+
         Ok(())
     }
 }
