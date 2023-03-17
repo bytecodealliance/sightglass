@@ -7,18 +7,18 @@ RUN wget https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-12/w
 RUN tar xvf wasi-sdk-12.0-linux.tar.gz
 
 WORKDIR /usr/src
-RUN git clone https://github.com/jlb6740/meshoptimizer.git \
+RUN git clone https://github.com/zeux/meshoptimizer.git \
     && cd meshoptimizer \
-    && git checkout sightglass \
-    && git pull
+    && git reset --hard f734fd572aed5bf76e84d9ed62ca6f4f6c47d84e
 
 # Second, compile the benchmark to Wasm.
 
 WORKDIR /usr/src/meshoptimizer
 COPY sightglass.h .
+COPY sightglass.patch .
+RUN patch -Np1 < ./sightglass.patch
 
 # Meshoptimizer is expected to be compiled with emscripten but that build
 # does not run properly in wasmtime.
-ENV WASM_CC=/wasi-sdk-12.0/bin/clang++
-ENV WASI_SYSROOT=/wasi-sdk-12.0/share/wasi-sysroot/
-RUN make codecbench.wasm && mv codecbench.wasm /benchmark.wasm
+ENV WASI_SDK=/wasi-sdk-12.0
+RUN make codecbench-simd.wasm && mv codecbench-simd.wasm /benchmark.wasm
