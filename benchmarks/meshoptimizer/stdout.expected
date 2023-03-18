@@ -1,4 +1,1 @@
-source: vertex data 32064032 bytes, index data 24000000 bytes
-pass 0: vertex data 20521224 bytes, index data 2332680 bytes
-pass 1: vertex data 20522369 bytes, index data 2001016 bytes
-filters: oct8 data 32000000 bytes, oct12/quat12 data 64000000 bytes
+Algorithm   :	vtx	idx	oct8	oct12	quat12	exp
