@@ -1,6 +1,6 @@
 //! Implements the engine API to support benchmarking native applications.
 //! Supports the collection of execution time. Compilation time from high level
-//! language to native binary is not recorded since (a) recording is currently
+//! language to native binary is not recorded since (a) compilation is currently
 //! a separate step taken by the user and (b) Wasm also does not record the
 //! equavilent step. Instantiation time is also not recorded. Because the sightglass
 //! framework is focused on Wasm first and because this is file is based on the
