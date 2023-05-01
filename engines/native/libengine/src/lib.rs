@@ -2,7 +2,7 @@
 //! Supports the collection of execution time. Compilation time from high level
 //! language to native binary is not recorded since (a) compilation is currently
 //! a separate step taken by the user and (b) Wasm also does not record the
-//! equavilent step. Instantiation time is also not recorded. Because the sightglass
+//! equivalent step. Instantiation time is also not recorded. Since the Sightglass
 //! framework is focused on Wasm first and because this is file is based on the
 //! benchmarking supporting for Wasmtime, some function and variable names are
 //! consistent with the assumption that we are executing a Wasm file.

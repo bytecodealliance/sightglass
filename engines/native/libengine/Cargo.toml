@@ -14,5 +14,3 @@ anyhow = "1.0.22"
 libloading = "0.7"
 nix = "0.26.2"
 libc="0.2"
-
-[workspace]

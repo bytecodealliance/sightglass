@@ -127,3 +127,10 @@ following requirements:
 
 * The corpus of candidates should include programs that use a variety of
   languages, compilers, and toolchains.
+
+  ## Supporting builds for the native execution
+
+In addition to Sightglass supporting Wasmtime as a Wasm execution engine,
+Sightglass also includes a separate engine to support execution of native binaries.
+Specifically, the intent here is for both the Wasm and the native target
+with the same high level benchmark source.
