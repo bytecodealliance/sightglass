@@ -7,13 +7,12 @@
 #   randomize the list of benchmarks and pick a subset of them to build
 
 set -e
-#PROJECT_DIR=$(dirname "$0" | xargs dirname | xargs realpath)
+
 # Assumes this script is located at the base of the benchmark directory
 BENCHMARKS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 echo $BENCHMARKS_DIR
-#BENCHMARKS_DIR=$SCRIPT_DIR/benchmarks
 BUILD_SCRIPT=$BENCHMARKS_DIR/build-native.sh
-DOCKERFILES=$(find $BENCHMARKS_DIR -name Dockerfile.native)
+DOCKERFILES=$(find $BENCHMARKS_DIR -mindepth 2 -name Dockerfile.native)
 
 # If a numeric parameter `N` is provided to the script (e.g., `./build-all-native.sh 5`), randomly select
 # `N` benchmarks to rebuild; otherwise, rebuild all benchmarks.
