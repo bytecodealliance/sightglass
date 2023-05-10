@@ -17,4 +17,4 @@ jobs:
       with:
         toolchain: nightly
     - name: Rebuild benchmarks docker
-      run: benchmarks/build-all-native.sh
+      run: benchmarks/build-all-native.sh --run

@@ -10,9 +10,11 @@ fn main() {
             "-fPIC",
             "-I.",
             "-shared",
+            "-L../../engines/native",
             "-o",
             "./target/benchmark.so",
             "benchmark.c",
+            "-lengine",
         ])
         .output()
         .expect("failed to compile native benchmark");

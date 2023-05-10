@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-# Build a single native benchmark using
+# Build a single native benchmark
 
 set -e
+
+BENCHMARKS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+SIGHTGLASS_BASE=$(dirname $BENCHMARKS_DIR)
+ENGINE=$SIGHTGLASS_BASE/engines/native/libengine.so
 
 BENCHMARK_DIR="";
 
@@ -18,14 +22,23 @@ print_header() {
     >&2 echo ===== $@ =====
 }
 
-FLAG='--host'
 
 if [[ $BENCHMARK_DIR == "" ]]; then
     echo "Unknown benchmark directory; usage: ./build-native.sh [--host] <path to benchmark directory>"
     exit 1
 fi
 
+
+# Build engine if not availble since it needs to be present for linking
+if [[ ! -f $ENGINE ]]; then
+    cd $SIGHTGLASS_BASE/engines/native/libengine/
+    cargo build --release
+    cp target/release/libnative_bench_api.so ../libengine.so
+    cd - > /dev/null
+fi
+
 # Build directly on host
+FLAG='--host'
 if [[ $* == *$FLAG* ]]; then
 
 print_header "Build Native Benchmark Using Host"
@@ -41,7 +54,7 @@ IMAGE_NAME=sightglass-benchmark-$BENCHMARK_NAME-native
 # directory and `--dereference` (i.e., follow) all symlinks provided.
 print_header "Create build context"
 TMP_TAR=$(mktemp /tmp/sightglass-benchmark-dir-XXXXXX.tar)
-(set -x; cd $BENCHMARK_DIR && tar --create --file $TMP_TAR --dereference --verbose .)
+(set -x; cd $BENCHMARK_DIR && ln -f -s ../../engines/native/libengine.so ./libengine.so && tar --create --file $TMP_TAR --dereference --verbose . && rm libengine.so)
 
 # Build the benchmark and extract the build results from the container
 print_header "Build Native Benchmark Using Host"

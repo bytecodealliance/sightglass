@@ -10,18 +10,22 @@ set -e
 
 # Assumes this script is located at the base of the benchmark directory
 BENCHMARKS_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-echo $BENCHMARKS_DIR
 BUILD_SCRIPT=$BENCHMARKS_DIR/build-native.sh
+RUN_SCRIPT=$BENCHMARKS_DIR/run-native.sh
 DOCKERFILES=$(find $BENCHMARKS_DIR -mindepth 2 -name Dockerfile.native)
 
 # If a numeric parameter `N` is provided to the script (e.g., `./build-all-native.sh 5`), randomly select
 # `N` benchmarks to rebuild; otherwise, rebuild all benchmarks.
 re='^[0-9]+$'
-if [[ $1 =~ $re ]]; then
+if [[ $1 =~ $re ]] || [[ $2 =~ $re ]]; then
     DOCKERFILES=$(echo "$DOCKERFILES" | shuf -n $1)
 fi
 
+FLAG='--run'
 for DOCKERFILE in $DOCKERFILES; do
     BENCHMARK_DIR=$(dirname $DOCKERFILE)
     $BUILD_SCRIPT $BENCHMARK_DIR
+    if [[ $* == *$FLAG* ]]; then
+        $RUN_SCRIPT $BENCHMARK_DIR/target/benchmark.so
+    fi
 done
