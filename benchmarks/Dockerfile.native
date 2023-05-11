@@ -7,5 +7,6 @@ RUN apt update && apt-get install -y --no-install-recommends curl ca-certificate
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${RUST_VERSION} -y
 ENV PATH=/root/.cargo/bin:${PATH}
 COPY . /benchmark/
+WORKDIR /benchmark
 RUN cp /benchmark/libengine.so /usr/lib/libengine.so
-RUN cd /benchmark; LD_LIBRARY_PATH=/benchmark/ cargo run --release
+RUN LD_LIBRARY_PATH=/benchmark/ cargo run --release

@@ -21,17 +21,31 @@ fn main() {
     io::stdout().write_all(&output.stdout).unwrap();
     io::stderr().write_all(&output.stderr).unwrap();
 
-    let output = Command::new("ln")
-        .args(["-f", "-s", "../stdout.expected", "./target/stdout.expected"])
+    let output = Command::new("cp")
+        .args(["-f", "./stdout.expected", "./target/stdout.expected"])
         .output()
         .expect("failed to create symbolic link for stdout.expected");
     io::stdout().write_all(&output.stdout).unwrap();
     io::stderr().write_all(&output.stderr).unwrap();
 
-    let output = Command::new("ln")
-        .args(["-f", "-s", "../stderr.expected", "./target/stderr.expected"])
+    let output = Command::new("cp")
+        .args(["-f", "./stderr.expected", "./target/stderr.expected"])
         .output()
         .expect("failed to create symbolic link for stderr.expected");
+    io::stdout().write_all(&output.stdout).unwrap();
+    io::stderr().write_all(&output.stderr).unwrap();
+
+    let output = Command::new("cp")
+        .args(["-f", "./default.m.input", "./target/default.m.input"])
+        .output()
+        .expect("failed to create symbolic link for default.m.input");
+    io::stdout().write_all(&output.stdout).unwrap();
+    io::stderr().write_all(&output.stderr).unwrap();
+
+    let output = Command::new("cp")
+        .args(["-f", "./default.n.input", "./target/default.n.input"])
+        .output()
+        .expect("failed to create symbolic link for default.n.input");
     io::stdout().write_all(&output.stdout).unwrap();
     io::stderr().write_all(&output.stderr).unwrap();
 }

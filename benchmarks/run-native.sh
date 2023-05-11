@@ -45,6 +45,8 @@ fi
 
 # Run a benchmark with the newly created library
 cd $SIGHTGLASS_BASE
-LD_LIBRARY_PATH=./engines/native/ $SIGHTGLASS benchmark --engine engines/native/libengine.so -- $BENCHMARK_NATIVE_SO
+BENCH_DIR=$(dirname $BENCHMARK_NATIVE_SO)
+echo $BENCH_DIR
+LD_LIBRARY_PATH=./engines/native/ $SIGHTGLASS benchmark --engine engines/native/libengine.so --working-dir $BENCH_DIR -- $BENCHMARK_NATIVE_SO
 cd - > /dev/null
 

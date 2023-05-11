@@ -60,7 +60,7 @@ TMP_TAR=$(mktemp /tmp/sightglass-benchmark-dir-XXXXXX.tar)
 print_header "Build Native Benchmark Using Host"
 (set -x; docker build -f Dockerfile.native --tag $IMAGE_NAME - < $TMP_TAR)
 CONTAINER_ID=$(set -x; docker create $IMAGE_NAME)
-(set -x; mkdir -p $BENCHMARK_DIR/target; docker cp $CONTAINER_ID:/benchmark/target/benchmark.so $BENCHMARK_DIR/target/benchmark.so;)
+(set -x; mkdir -p $BENCHMARK_DIR/target; docker cp --follow-link $CONTAINER_ID:/benchmark/target/. $BENCHMARK_DIR/target/;)
 
 # Copy host files to container and build inside a container
 
