@@ -112,6 +112,8 @@ command is used:
 will simply copy the directory context and call cargo run as if compiling directly on host, there should be no need to
 supply a custom Dockerfile to make a container based build work.
 
+* Support for native is optional. If a benchmark is added for Wasm, corresponding build support for native is optional and
+will not break CI if it is not included.
 
 ## Additional Requirements
 
