@@ -120,6 +120,12 @@ instantiation, and execution times.
 $ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/benchmark.wasm
 ```
 
+### Optional Benchmarks
+
+These benchmarks won't be run by the run-all.sh script, because they require some additional setup which may take some time. You can read about how to run them using the provided links.
+
+- [Image Classification](benchmarks/image-classification/README.md)
+
 ### Comparing a Feature Branch to Main
 
 First, build `libwasmtime_bench_api.so` (or `.dylib` or `.dll` depending on your
