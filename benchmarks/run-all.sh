@@ -19,8 +19,22 @@ if [[ ! -f $ENGINE ]]; then
 fi
 
 # Benchmark each Wasm file.
+DENY_LIST=("shootout-ackermann")
 for BENCH_FILE in $(find $PROJECT_DIR/benchmarks -name benchmark.wasm); do
     BENCH_DIR=$(dirname $BENCH_FILE)
     BENCH_NAME=$(basename $BENCH_DIR)
+    for DENY_FILE in $DENY_LIST; do
+        if [[ $BENCH_NAME == $DENY_FILE ]]; then
+            echo ""
+            echo ""
+            echo "********************************************************************"
+            echo "Skipping $BENCH_NAME since it is included in the DENY_LIST:"
+            echo "($DENY_LIST)"
+            echo "********************************************************************"
+            echo ""
+            echo ""
+            continue 2
+        fi
+    done
     $SIGHTGLASS benchmark --engine $ENGINE --processes 1 --iterations-per-process 3 --working-dir $BENCH_DIR $BENCH_FILE
 done
