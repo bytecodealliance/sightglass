@@ -21,10 +21,10 @@ int ackermann(int M, int N)
 int read_int_from_file(char* path) {
     char* buf [32] = { 0 };
 
-    int fd = open(path, 0);
+    int fd = open(path, O_RDONLY);
     assert(fd != -1);
 
-    ssize_t m =0, n = 0;
+    size_t m = 0, n = 0;
     do {
         m = read(fd, (void*) &buf, sizeof(buf) - n - 1);
         assert(m >= 0);
