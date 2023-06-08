@@ -256,9 +256,10 @@ impl BenchmarkCommand {
         } else {
             log::warn!(
                 "Did not find `{}` for `{}`! Cannot assert that actual \
-                 `stdout` matches expectation.",
+                 `stdout` ({}) matches expectation.",
                 stdout_expected.display(),
-                wasm_file.display()
+                wasm_file.display(),
+                stdout.display()
             );
         }
 
@@ -282,9 +283,10 @@ impl BenchmarkCommand {
         } else {
             log::warn!(
                 "Did not find `{}` for `{}`! Cannot assert that actual \
-                 `stderr` matches expectation.",
+                 `stderr` ({}) matches expectation.",
                 stderr_expected.display(),
-                wasm_file.display()
+                wasm_file.display(),
+                stderr.display(),
             );
         }
 
