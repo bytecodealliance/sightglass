@@ -28,4 +28,7 @@ ENV PATH /wasi-sdk-19.0
 # Compile `benchmark.c` to `./benchmark.wasm`.
 COPY benchmark.c .
 COPY sightglass.h .
-RUN $CC $CFLAGS benchmark.c -O3 -g -I. -o benchmark.wasm
+WORKDIR /benchmark
+RUN $CC $CFLAGS ../benchmark.c -O3 -g -I.. -o benchmark.wasm
+# We output the Wasm file to the `/benchmark` directory, where the client
+# expects it.

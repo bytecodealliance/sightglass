@@ -21,4 +21,6 @@ RUN patch -Np1 < ./sightglass.patch
 # Meshoptimizer is expected to be compiled with emscripten but that build
 # does not run properly in wasmtime.
 ENV WASI_SDK=/wasi-sdk-12.0
-RUN make codecbench-simd.wasm && mv codecbench-simd.wasm /benchmark.wasm
+RUN make codecbench-simd.wasm
+RUN mkdir /benchmark
+RUN mv codecbench-simd.wasm /benchmark/benchmark.wasm
