@@ -1,5 +1,5 @@
 [package]
-name = "blind-sig"
+name = "blind-sig-benchmark"
 version = "0.1.0"
 authors = ["Jamey Sharp <jsharp@fastly.com>"]
 edition = "2021"
