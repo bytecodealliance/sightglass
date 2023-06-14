@@ -39,9 +39,12 @@ record its execution, it must:
   `bench.start` has already been called. This is when the benchmark runner will
   stop recording execution time and performance counters.
 
-* Provide reproducible builds via Docker.
+* Provide reproducible builds via Docker (see [`build.sh`](./build.sh)).
 
-* Be located at `sightglass/benchmarks/$BENCHMARK_NAME/benchmark.wasm`
+* Be located in a `sightglass/benchmarks/$BENCHMARK_NAME` directory. Typically
+  the benchmark is named `benchmark.wasm`, but benchmarks with multiple files
+  should use names like `<benchmark name>-<subtest name>.wasm` (e.g.,
+  `libsodium-chacha20.wasm`).
 
 * Input workloads must be files that live in the same directory as the `.wasm`
   benchmark program. The benchmark program is run within the directory where it
@@ -60,11 +63,11 @@ record its execution, it must:
   located next to the `benchmark.wasm` file. The runner will assert that the
   actual execution's output matches the expectation.
 
-Many of the above requirements can be checked by running the `.wasm` file through
-the `validate` command:
+Many of the above requirements can be checked by running the `.wasm` file
+through the `validate` command:
 
 ```
-$ cargo run -p sightglass-cli -- validate path/to/benchmark.wasm
+$ cargo run -- validate path/to/benchmark.wasm
 ```
 
 
