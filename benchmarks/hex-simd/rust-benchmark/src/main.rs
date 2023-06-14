@@ -8,7 +8,7 @@ use std::arch::x86::*;
 use std::arch::x86_64::*;
 
 fn main() {
-    let input = std::fs::read("./benchmark.wasm").unwrap();
+    let input = std::fs::read("./default.input").unwrap();
     let mut dst = vec![0; 2 * input.len()];
     bench::start();
     let s = hex_encode(&input, &mut dst).unwrap();
