@@ -33,3 +33,10 @@ jobs:
         toolchain: nightly
     - name: Run benchmarks
       run: benchmarks/run-all.sh
+
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check for missing paths in `all.suite`
+        run: benchmarks/check-incomplete-suite.sh

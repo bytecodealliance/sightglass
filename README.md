@@ -105,12 +105,13 @@ That said, here are a couple of typical usage scenarios.
 $ cd engines/wasmtime && rustc build.rs && ./build && cd ../../
 ```
 
-### Running the Full Benchmark Suite
+### Running the Default Benchmark Suite
 
 ```
-$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks/*/benchmark.wasm
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so
 ```
 
+This runs all benchmarks listed in [`default.suite`](benchmarks/default.suite).
 The output will be a summary of each benchmark program's compilation,
 instantiation, and execution times.
 
@@ -119,6 +120,19 @@ instantiation, and execution times.
 ```
 $ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/benchmark.wasm
 ```
+
+Append multiple `*.wasm` paths to the end of that command to run multiple
+benchmarks.
+
+### Running All Benchmarks
+
+```
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks/all.suite
+```
+
+`*.suite` files contain relative paths of a list of benchmarks to run. This is a
+convenience for organizing benchmarks but is functionally equivalent to listing
+all `*.wasm` paths at the end of the `benchmark` command.
 
 ### Comparing a Feature Branch to Main
 
@@ -149,7 +163,7 @@ $ cargo run -- \
     --engine /tmp/wasmtime_main.so \
     --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
     -- \
-    benchmarks/*/benchmark.wasm
+    benchmarks/all.suite
 ```
 
 The output will show a comparison between the `main` branch's results and your
@@ -168,7 +182,7 @@ $ cargo build --manifest-path ~/wasmtime/Cargo.toml --release -p wasmtime-bench-
       --engine /tmp/wasmtime_main.so \
       --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
       -- \
-      benchmarks/*/benchmark.wasm
+      benchmarks/all.suite
 ```
 
 ### Collecting Different Kinds of Results
@@ -182,8 +196,8 @@ frequency changes, context switches, etc.).
 
 Several _measures_ can be configured using the `--measure` option:
 - `cycles`: the number of CPU cycles elapsed
-- `perf-counters`: a selection of common `perf` counters (CPU cycles, instructions retired, cache
-accesses, cache misses); only available on Linux
+- `perf-counters`: a selection of common `perf` counters (CPU cycles,
+  instructions retired, cache accesses, cache misses); only available on Linux
 - `vtune`: record each phase as a VTune task for analysis; see [this help
   documentation](docs/vtune.md) for more details
 - `noop`: no measurement is performed
@@ -200,16 +214,17 @@ If you don't want the results to be summarized and displayed in a human-readable
 format, you can get raw JSON or CSV via the `--raw` flag:
 
 ```
-$ cargo run -- benchmark --raw --output-format csv -- benchmarks/*/benchmark.wasm
+$ cargo run -- benchmark --raw --output-format csv -- benchmark.wasm
 ```
 
-Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize the
-benchmark results.
+Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize
+the benchmark results.
 
 ### Adding a New Benchmark
 
-Add a Dockerfile under `benchmarks/<your benchmark>` building a Wasm file that brackets the work to
-measure with the `bench.start` and `bench.end` host calls. See the [benchmarks README] for a fuller
-set of requirements and the [`build.sh`] script for building this file.
+Add a Dockerfile under `benchmarks/<your benchmark>` building a Wasm file that
+brackets the work to measure with the `bench.start` and `bench.end` host calls.
+See the [benchmarks README] for a fuller set of requirements and the
+[`build.sh`] script for building this file.
 
 [`build.sh`]: benchmarks/build.sh
