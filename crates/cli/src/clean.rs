@@ -2,16 +2,13 @@ use anyhow::{Context, Result};
 use regex::Regex;
 use structopt::StructOpt;
 
-/// Remove cached artifacts and log files.
+/// Remove the log files emitted in Sightglass runs.
 #[derive(StructOpt, Debug)]
-#[structopt(name = "validate")]
+#[structopt(name = "clean")]
 pub struct CleanCommand {}
 
 impl CleanCommand {
     pub fn execute(&self) -> Result<()> {
-        // Remove cached data, e.g. engines.
-        sightglass_build::clean()?;
-
         // Remove log files.
         let log_file_regex = Regex::new(r"^(stdout|stderr)\-\w+\-\d+-\d+.log$").unwrap();
         for entry in std::env::current_dir()?.read_dir()? {
