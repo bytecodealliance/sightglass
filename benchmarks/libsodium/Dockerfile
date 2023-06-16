@@ -21,7 +21,7 @@ WORKDIR /libsodium
 COPY sightglass.h src/libsodium/include/
 COPY add-bench-calls.diff .
 RUN git apply add-bench-calls.diff
-RUN zig build -Dtarget=wasm32-wasi -Drelease-fast -Denable_benchmarks=true -Dcpu=generic+bulk_memory
+RUN zig build -Dtarget=wasm32-wasi -Drelease-fast -Denable_benchmarks=true -Dcpu=generic+bulk_memory+simd128
 
 # Place all of the WebAssembly benchmarks in `/benchmark`. Some benchmarks lose
 # the `bench_end` import for some reason and are removed (TODO).
