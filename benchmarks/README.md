@@ -55,13 +55,14 @@ record its execution, it must:
   should live at `sightglass/benchmarks/$BENCHMARK_NAME/input.json`, and it
   should open that file as `"./input.json"`.
 
-* Define the expected `stdout` output in a `./stdout.expected` sibling file
-  located next to the `benchmark.wasm` file. The runner will assert that the
-  actual execution's output matches the expectation.
+* Define the expected `stdout` output in a `./<benchmark name>.stdout.expected`
+  sibling file located next to the `benchmark.wasm` file (e.g.,
+  `benchmark.stdout.expected`). The runner will assert that the actual
+  execution's output matches the expectation.
 
-* Define the expected `stderr` output in a `./stderr.expected` sibling file
-  located next to the `benchmark.wasm` file. The runner will assert that the
-  actual execution's output matches the expectation.
+* Define the expected `stderr` output in a `./<benchmark name>.stderr.expected`
+  sibling file located next to the `benchmark.wasm` file. The runner will assert
+  that the actual execution's output matches the expectation.
 
 Many of the above requirements can be checked by running the `.wasm` file
 through the `validate` command:
