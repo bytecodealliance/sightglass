@@ -236,60 +236,19 @@ impl BenchmarkCommand {
             ".".into()
         };
 
-        let stdout_expected = wasm_file_dir.join("stdout.expected");
-        if stdout_expected.exists() {
-            let stdout_expected_data = std::fs::read_to_string(&stdout_expected)
-                .with_context(|| format!("failed to read `{}`", stdout_expected.display()))?;
-            let stdout_actual_data = std::fs::read_to_string(stdout)
-                .with_context(|| format!("failed to read `{}`", stdout.display()))?;
-            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
-            let stdout_expected_data = stdout_expected_data.lines().collect::<Vec<_>>();
-            let stdout_actual_data = stdout_actual_data.lines().collect::<Vec<_>>();
-            anyhow::ensure!(
-                stdout_expected_data == stdout_actual_data,
-                "Actual `stdout` does not match the expected `stdout`!\n\
-                 * Actual `stdout` is located at `{}`\n\
-                 * Expected `stdout` is located at `{}`",
-                stdout.display(),
-                stdout_expected.display(),
-            );
-        } else {
-            log::warn!(
-                "Did not find `{}` for `{}`! Cannot assert that actual \
-                 `stdout` ({}) matches expectation.",
-                stdout_expected.display(),
-                wasm_file.display(),
-                stdout.display()
-            );
-        }
+        // Find the output files with benchmark file stem: e.g., `<benchmark
+        // name>.stdout.expected`. This is extra prefix is needed to
+        // differentiate output in directories with multiple benchmarks.
+        let benchmark_name = wasm_file
+            .file_stem()
+            .with_context(|| "expected the benchmark file to have an extension")?
+            .to_str()
+            .with_context(|| "expected the benchmark file to have a printable name")?;
+        let stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", benchmark_name));
+        let stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
 
-        let stderr_expected = wasm_file_dir.join("stderr.expected");
-        if stderr_expected.exists() {
-            let stderr_expected_data = std::fs::read_to_string(&stderr_expected)
-                .with_context(|| format!("failed to read `{}`", stderr_expected.display()))?;
-            let stderr_actual_data = std::fs::read_to_string(stderr)
-                .with_context(|| format!("failed to read `{}`", stderr.display()))?;
-            // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
-            let stderr_expected_data = stderr_expected_data.lines().collect::<Vec<_>>();
-            let stderr_actual_data = stderr_actual_data.lines().collect::<Vec<_>>();
-            anyhow::ensure!(
-                stderr_expected_data == stderr_actual_data,
-                "Actual `stderr` does not match the expected `stderr`!\n\
-                 * Actual `stderr` is located at `{}`\n\
-                 * Expected `stderr` is located at `{}`",
-                stderr.display(),
-                stderr_expected.display(),
-            );
-        } else {
-            log::warn!(
-                "Did not find `{}` for `{}`! Cannot assert that actual \
-                 `stderr` ({}) matches expectation.",
-                stderr_expected.display(),
-                wasm_file.display(),
-                stderr.display(),
-            );
-        }
-
+        compare_output_file(wasm_file, stdout, &stdout_expected)?;
+        compare_output_file(wasm_file, stderr, &stderr_expected)?;
         Ok(())
     }
 
@@ -470,6 +429,37 @@ pub fn check_engine_path(engine: &str) -> Result<PathBuf> {
     } else {
         Err(anyhow!("invalid path to engine: {}", engine))
     }
+}
+
+/// Check that the `actual` output of benchmarking `wasm` (either `stdout` or
+/// `stderr`) is the same as the `expected` output.
+fn compare_output_file(wasm: &Path, actual: &Path, expected: &Path) -> Result<()> {
+    if expected.exists() {
+        let expected_data = std::fs::read_to_string(&expected)
+            .with_context(|| format!("failed to read `{}`", expected.display()))?;
+        let stdout_actual_data = std::fs::read_to_string(actual)
+            .with_context(|| format!("failed to read `{}`", actual.display()))?;
+        // Compare lines so that we ignore `\n` on *nix vs `\r\n` on Windows.
+        let expected_data = expected_data.lines().collect::<Vec<_>>();
+        let actual_data = stdout_actual_data.lines().collect::<Vec<_>>();
+        anyhow::ensure!(
+            expected_data == actual_data,
+            "Actual output does not match the expected output!\n\
+             * Actual output is located at `{}`\n\
+             * Expected output is located at `{}`",
+            actual.display(),
+            expected.display(),
+        );
+    } else {
+        log::warn!(
+            "Did not find `{}` for `{}`! Cannot assert that actual \
+             output ({}) matches expectation.",
+            expected.display(),
+            wasm.display(),
+            actual.display()
+        );
+    }
+    Ok(())
 }
 
 #[cfg(test)]
