@@ -1,0 +1,28 @@
+diff --git a/test/default/cmptest.h b/test/default/cmptest.h
+index 54a02070..36d98736 100644
+--- a/test/default/cmptest.h
++++ b/test/default/cmptest.h
+@@ -40,6 +40,7 @@ static unsigned char *guard_page;
+ #ifdef BENCHMARKS
+ 
+ # include <sys/time.h>
++# include "sightglass.h"
+ 
+ # ifndef ITERATIONS
+ #  define ITERATIONS 128
+@@ -150,13 +151,13 @@ int main(void)
+ #ifndef __EMSCRIPTEN__
+     randombytes_set_implementation(&randombytes_salsa20_implementation);
+ #endif
+-    ts_start = now();
++    bench_start();
+     for (i = 0; i < ITERATIONS; i++) {
+         if (xmain() != 0) {
+             abort();
+         }
+     }
+-    ts_end = now();
++    bench_end();
+     printf("%llu\n", 1000000ULL * (ts_end - ts_start) / ITERATIONS);
+     if (mempool_free_all() != 0) {
+         fprintf(stderr, "** memory leaks detected **\n");
