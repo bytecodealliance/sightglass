@@ -44,7 +44,7 @@ else
     print_header "Create build context"
     TMP_TAR=$(mktemp /tmp/sightglass-benchmark-dir-XXXXXX.tar)
     (set -x; cd $BENCHMARK_DIR && \
-        ln -f -s ../../engines/native/libengine.so ./libengine.so && \
+        ln -f -s $ENGINE ./libengine.so && \
         tar --create --file $TMP_TAR --dereference --verbose . && \
         rm libengine.so)
 

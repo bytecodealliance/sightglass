@@ -7,7 +7,7 @@ ENV SRC=/usr/src/shootout
 WORKDIR $SRC
 COPY src .
 COPY build-native.sh .
-COPY libengine.so /usr/lib
+COPY libengine.so /usr/lib/
 
 # Compile each of the benchmarks into the `/benchmark` directory.
 WORKDIR /benchmark

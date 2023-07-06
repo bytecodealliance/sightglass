@@ -32,15 +32,17 @@ BENCHMARK_NATIVE_SO="$(realpath $BENCHMARK_NATIVE_SO)"
 MD5SUM=$(md5sum $BENCHMARK_NATIVE_SO | awk '{ print $1 }')
 TMP_BENCHMARK_DIR=/tmp/sightglass-benchmark-native-$MD5SUM
 mkdir -p $TMP_BENCHMARK_DIR
-ln -fs $BENCHMARK_NATIVE_SO $TMP_BENCHMARK_DIR/benchmark.so
+(set -x; ln -fs $BENCHMARK_NATIVE_SO $TMP_BENCHMARK_DIR/benchmark.so)
 BENCHMARK_DIR=$(dirname $BENCHMARK_NATIVE_SO)
 NAME=$(basename $BENCHMARK_NATIVE_SO .so);
 for FILE in $(find $BENCHMARK_DIR -name "$NAME*.input"); do
-    ln -fs $FILE $TMP_BENCHMARK_DIR/
+    (set -x; ln -fs $FILE $TMP_BENCHMARK_DIR/)
 done
 
 # Run a benchmark with the native library.
 cd $SIGHTGLASS_BASE
-LD_LIBRARY_PATH=$(dirname $ENGINE) $SIGHTGLASS benchmark --engine $ENGINE \
-    --working-dir $TMP_BENCHMARK_DIR -- $TMP_BENCHMARK_DIR/benchmark.so
+ENGINE_DIR=$(dirname $ENGINE)
+(set -x; LD_LIBRARY_PATH=$ENGINE_DIR $SIGHTGLASS benchmark --engine $ENGINE \
+    --processes 1 --iterations-per-process 3 \
+    --working-dir $TMP_BENCHMARK_DIR -- $TMP_BENCHMARK_DIR/benchmark.so)
 cd - > /dev/null

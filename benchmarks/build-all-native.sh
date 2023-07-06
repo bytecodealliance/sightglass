@@ -2,9 +2,11 @@
 
 # Either build all of the benchmark's native target or a random subset of them.
 #
-# Usage: ./build-all-native.sh <number of benchmarks>
-# - <number of benchmarks>, an optional number of benchmarks to build; if provided, this script will
-#   randomize the list of benchmarks and pick a subset of them to build
+# Usage: ./build-all-native.sh <number of benchmarks> [--run]
+# - <number of benchmarks>, an optional number of benchmarks to build; if
+#   provided, this script will randomize the list of benchmarks and pick a
+#   subset of them to build
+# - --run, if set, this script will attempt to run the built benchmarks
 
 set -e
 
@@ -26,6 +28,8 @@ for DOCKERFILE in $DOCKERFILES; do
     BENCHMARK_DIR=$(dirname $DOCKERFILE)
     $BUILD_SCRIPT $BENCHMARK_DIR
     if [[ $* == *$FLAG* ]]; then
-        $RUN_SCRIPT $BENCHMARK_DIR/target/benchmark.so
+        for BENCHMARK in $(find $BENCHMARK_DIR -name '*.so'); do
+            $RUN_SCRIPT $BENCHMARK
+        done
     fi
 done
