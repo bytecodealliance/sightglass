@@ -38,8 +38,8 @@ int read_int_from_file(char* path) {
 
 int main()
 {
-    int M = read_int_from_file("./default.m.input");
-    int N = read_int_from_file("./default.n.input");
+    int M = read_int_from_file("./shootout-ackermann.m.input");
+    int N = read_int_from_file("./shootout-ackermann.n.input");
     printf("[ackermann] running with M = %d and N = %d\n", M, N);
 
     bench_start();
