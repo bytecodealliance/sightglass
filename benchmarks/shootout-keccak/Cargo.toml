@@ -1,6 +1,0 @@
-# Cargo.toml
-
-[package]
-name = "shootout-keccak-native"
-version = "0.1.0"
-edition = "2021"
