@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-
-  Build_Native_X86-64:
+  native:
+    name: Build and run native benchmarks
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,5 +16,5 @@ jobs:
       uses: actions-rs/toolchain@v1
       with:
         toolchain: nightly
-    - name: Rebuild benchmarks docker
+    - name: Rebuild and run native benchmarks using Docker
       run: benchmarks/build-all-native.sh --run
