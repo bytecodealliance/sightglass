@@ -37,10 +37,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
 
     - name: Download Cached Wasmtime engine
       uses: actions/cache@v2
@@ -57,7 +55,7 @@ jobs:
            ./build
 
     - name: Build all
-      run: cargo +nightly build --verbose --all
+      run: cargo build --verbose --all
 
     - name: Test all
-      run: cargo +nightly test --verbose --all
+      run: cargo test --verbose --all

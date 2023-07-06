@@ -12,9 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
     - name: Rebuild benchmarks docker
       run: benchmarks/build-all-native.sh --run

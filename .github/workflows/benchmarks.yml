@@ -16,10 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
     - name: Rebuild benchmarks
       run: benchmarks/build-all.sh 5
 
@@ -27,10 +25,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Install nightly
+    - name: Install Rust
       uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
     - name: Run benchmarks
       run: benchmarks/run-all.sh
 
