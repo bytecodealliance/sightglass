@@ -59,7 +59,7 @@ my_heapsort(int n, double* ra)
 int main()
 {
     int n = LENGTH;
-    double* ary = calloc(n + 1, sizeof(double*));
+    double* ary = calloc(n + 1, sizeof(double));
     double res;
 
     bench_start();
