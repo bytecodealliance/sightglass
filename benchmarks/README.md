@@ -71,53 +71,30 @@ through the `validate` command:
 $ cargo run -- validate path/to/benchmark.wasm
 ```
 
+## Compatibility Requirements for Native Execution
 
-## Compatibility Requirements for the Native Engine
+Sightglass can also measure the performance of a subset of benchmarks compiled
+to native code (i.e., not WebAssembly). To compile these benchmarks without
+changing their source code, this involves a delicate interface with the [native
+engine] with some additional requirements beyond the [Minimal Technical
+Requirements] noted above:
 
-In addition to knowing the performance of the benchmark when targeting Wasm,
-a user may also want to know the performance of that same benchmark when native
-is the original target. To facilitate this, Sightglass includes a native
-engine (similar to the Wasm engine) that can execute a natively compiled program
-such that the same high level source can be used to compile both Wasm and native
-targets without change. Because it is intended that the same high-level source be used,
-requirements listed in the section "Minimal Technical Requirement" above
-are required. In addition though, the benchmark folder is required to supply a Cargo based
-build support that targets a benchmark.so file copied to the base of the benchmark's
-target directory. Specifically:
+[native engine]: ../engines/native
+[Minimal Technical Requirements]: #minimal-technical-requirements
 
-* A Cargo.toml must be included and the base of the benchmark directory, <benchmark>/Cargo.toml,
-such that "cargo run" produces a benchmark.so dynamically linked library file at the base of the
-target folder, <benchmark>/target/benchmark.so
+* Generate an ELF shared library linked to the [native engine] shared library to
+  provide definitions for `bench_start` and `bench_end`.
 
-* The "main" function must be renamed to "native_entry". For C and C++ based source this can be done
-with a simple define directive passed to CC. For example to compile a shootout benchmark the following
-command is used:
+* Rename the `main` function to `native_entry`. For C- and C++-based source this
+  can be done with a simple define directive passed to `cc` (e.g.,
+  `-Dmain=native_entry`).
 
+* Provide reproducible builds via a `Dockerfile.native` file (see
+  [`build-native.sh`](./build-native.sh)).
 
- ```
- let output = Command::new("cc")
-        .args([
-            "-O3",
-            "-Dmain=native_entry",
-            "-fPIC",
-            "-I.",
-            "-shared",
-            "-o",
-            "./target/benchmark.so",
-            "benchmark.c",
-        ])
-        .output()
-        .expect("failed to compile native benchmark");
-    io::stdout().write_all(&output.stdout).unwrap();
-    io::stderr().write_all(&output.stderr).unwrap();
-````
-
-* Also, a symbolic link should be included to Dockerfile.native to allow building in a container. Because this Dockerfile
-will simply copy the directory context and call cargo run as if compiling directly on host, there should be no need to
-supply a custom Dockerfile to make a container based build work.
-
-* Support for native is optional. If a benchmark is added for Wasm, corresponding build support for native is optional and
-will not break CI if it is not included.
+Note that support for native execution is optional: adding a WebAssembly
+benchmark does not imply the need to support its native equivalent &mdash; CI
+will not fail if it is not included.
 
 ## Additional Requirements
 
