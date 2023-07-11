@@ -27,8 +27,7 @@ details.
 ```console
 $ cd <sightglass-base>
 $ cargo build --release
-$ LD_LIBRARY_PATH=./engines/native/ cargo run benchmark \
-    --engine engines/native/libengine.so \
-    -- /path/to/benchmark.so
+$ LD_LIBRARY_PATH=./engines/native/ benchmarks/run-native.sh \
+    /path/to/benchmark.so
 ```
 
