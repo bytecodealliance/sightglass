@@ -34,8 +34,7 @@ TMP_BENCHMARK_DIR=/tmp/sightglass-benchmark-native-$MD5SUM
 mkdir -p $TMP_BENCHMARK_DIR
 (set -x; ln -fs $BENCHMARK_NATIVE_SO $TMP_BENCHMARK_DIR/benchmark.so)
 BENCHMARK_DIR=$(dirname $BENCHMARK_NATIVE_SO)
-NAME=$(basename $BENCHMARK_NATIVE_SO .so);
-for FILE in $(find $BENCHMARK_DIR -name "$NAME*.input"); do
+for FILE in $(find $BENCHMARK_DIR -name "*.input"); do
     (set -x; ln -fs $FILE $TMP_BENCHMARK_DIR/)
 done
 
