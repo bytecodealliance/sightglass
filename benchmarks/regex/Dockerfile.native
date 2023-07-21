@@ -1,10 +1,4 @@
-#FROM ubuntu:20.04
 FROM rust:1.70
-#ENV DEBIAN_FRONTEND="noninteractive" TZ="America"
-#RUN apt update && apt-get install -y --no-install-recommends wget build-essential git ca-certificates
-
-# Install clang
-#RUN apt-get install -y --no-install-recommends clang
 
 # Copy in the `src` directory.
 ENV SRC=/usr/src/regex/
@@ -13,7 +7,7 @@ ADD rust-benchmark rust-benchmark
 COPY sightglass.native.patch ./
 COPY build-native.sh .
 COPY libengine.so /usr/lib/
-RUN ls -l
+
 # Compile each of the benchmarks into the `/benchmark` directory.
 RUN ./build-native.sh
 
