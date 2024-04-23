@@ -32,5 +32,6 @@ exclude = [
     "benchmarks/shootout-switch",
     "benchmarks/shootout-xblabla20",
     "benchmarks/shootout-xchacha20",
-    "engines/native/libengine"
+    "benchmarks/tract-onnx-image-classification",
+    "engines/native/libengine",
 ]
