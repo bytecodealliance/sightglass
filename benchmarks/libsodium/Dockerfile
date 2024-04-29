@@ -5,9 +5,9 @@ RUN apt update && apt install -y wget xz-utils unzip git
 # Download and extract the latest stable version of Zig and retrieve the
 # `stable` branch of libsodium that can be built by it.
 WORKDIR /
-RUN wget https://ziglang.org/download/0.11.0/zig-linux-x86_64-0.11.0.tar.xz
-RUN tar --extract --verbose --file=zig-linux-x86_64-0.11.0.tar.xz
-ENV PATH="${PATH}:/zig-linux-x86_64-0.11.0"
+RUN wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
+RUN tar --extract --verbose --file=zig-linux-x86_64-0.12.0.tar.xz
+ENV PATH="${PATH}:/zig-linux-x86_64-0.12.0"
 RUN echo "zig version = $(zig version)"
 RUN wget https://github.com/jedisct1/libsodium/archive/stable.zip
 RUN unzip stable.zip
