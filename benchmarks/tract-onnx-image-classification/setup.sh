@@ -5,6 +5,8 @@ set -euxo pipefail
 MODEL_URL="https://www.github.com/onnx/models/raw/main/validated/vision/classification/mobilenet/model/mobilenetv2-7.onnx?download=:"
 MODEL_FILE="assets/mobilenetv2-7.onnx"
 
+mkdir -p assets
+
 if [ ! -f $MODEL_FILE ]; then
 	echo "Downloading model to $MODEL_FILE"
 
