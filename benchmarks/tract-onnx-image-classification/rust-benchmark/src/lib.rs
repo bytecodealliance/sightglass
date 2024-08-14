@@ -78,7 +78,7 @@ fn classify(image: &[u8]) -> Result<Vec<Classification>, anyhow::Error> {
             .take(3)
             .map(|(score, i)| Classification {
                 label: LABELS[*i as usize].to_string(),
-                score: **score,
+                score: format!("{:.*}", 2, **score).parse().unwrap(),
             })
             .collect();
         Ok(labels)
