@@ -244,8 +244,14 @@ impl BenchmarkCommand {
             .with_context(|| "expected the benchmark file to have an extension")?
             .to_str()
             .with_context(|| "expected the benchmark file to have a printable name")?;
-        let stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", benchmark_name));
-        let stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
+        let mut stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", benchmark_name));
+        if !stdout_expected.exists() {
+            stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", "default"));
+        }
+        let mut stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
+        if !stderr_expected.exists() {
+            stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", "default"));
+        }
 
         compare_output_file(wasm_file, stdout, &stdout_expected)?;
         compare_output_file(wasm_file, stderr, &stderr_expected)?;
