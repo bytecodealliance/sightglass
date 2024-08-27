@@ -246,7 +246,7 @@ impl BenchmarkCommand {
             .with_context(|| "expected the benchmark file to have a printable name")?;
         let mut stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", benchmark_name));
         if !stdout_expected.exists() {
-            stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", "default"));
+            stdout_expected = wasm_file_dir.join("default.stdout.expected");
         }
         let mut stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
         if !stderr_expected.exists() {
