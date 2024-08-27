@@ -250,7 +250,7 @@ impl BenchmarkCommand {
         }
         let mut stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
         if !stderr_expected.exists() {
-            stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", "default"));
+            stderr_expected = wasm_file_dir.join("default.stderr.expected");
         }
 
         compare_output_file(wasm_file, stdout, &stdout_expected)?;
