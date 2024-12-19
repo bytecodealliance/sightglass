@@ -12,10 +12,10 @@ use sightglass_data::Phase;
 /// Optionally stop after the given `stop_after_phase`, rather than running all
 /// phases.
 pub fn benchmark<'a, 'b, 'c, M: Measure>(
-    engine: Engine<'_, '_, '_, M>,
+    engine: Engine<'a, 'b, 'c, M>,
     wasm_bytes: &[u8],
     stop_after_phase: Option<Phase>,
-) -> Result<()> {
+) -> Result<Engine<'a, 'b, 'c, M>> {
     #[cfg(target_os = "linux")]
     info!("Benchmark scheduled on CPU: {}", unsafe {
         libc::sched_getcpu()
@@ -26,7 +26,7 @@ pub fn benchmark<'a, 'b, 'c, M: Measure>(
     info!("Compiled successfully");
 
     if stop_after_phase == Some(Phase::Compilation) {
-        return Ok(());
+        return Ok(module.into_engine());
     }
 
     // Measure the module instantiation.
@@ -34,11 +34,11 @@ pub fn benchmark<'a, 'b, 'c, M: Measure>(
     info!("Instantiated successfully");
 
     if stop_after_phase == Some(Phase::Instantiation) {
-        return Ok(());
+        return Ok(instance.into_module().into_engine());
     }
 
-    instance.execute();
+    let module = instance.execute();
     info!("Executed successfully");
 
-    Ok(())
+    Ok(module.into_engine())
 }

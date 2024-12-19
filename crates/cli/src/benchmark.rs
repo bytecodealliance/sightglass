@@ -179,42 +179,49 @@ impl BenchmarkCommand {
                 let bytes = fs::read(&wasm_file).context("Attempting to read Wasm bytes")?;
                 log::debug!("Wasm benchmark size: {} bytes", bytes.len());
 
+                let wasm_hash = {
+                    use std::collections::hash_map::DefaultHasher;
+                    use std::hash::{Hash, Hasher};
+                    let mut hasher = DefaultHasher::new();
+                    wasm_file.hash(&mut hasher);
+                    hasher.finish()
+                };
+                let stdout = format!("stdout-{:x}-{}.log", wasm_hash, std::process::id());
+                let stdout = Path::new(&stdout);
+                let stderr = format!("stderr-{:x}-{}.log", wasm_hash, std::process::id());
+                let stderr = Path::new(&stderr);
+                let stdin = None;
+
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
                 let mut measure = self.measure.build();
 
+                let engine = Engine::new(
+                    &mut bench_api,
+                    &working_dir,
+                    stdout,
+                    stderr,
+                    stdin,
+                    &mut measurements,
+                    &mut measure,
+                    self.engine_flags.as_deref(),
+                );
+                let mut engine = Some(engine);
+
                 // Run the benchmark (compilation, instantiation, and execution) several times in
                 // this process.
-                for i in 0..self.iterations_per_process {
-                    let wasm_hash = {
-                        use std::collections::hash_map::DefaultHasher;
-                        use std::hash::{Hash, Hasher};
-                        let mut hasher = DefaultHasher::new();
-                        wasm_file.hash(&mut hasher);
-                        hasher.finish()
-                    };
-                    let stdout = format!("stdout-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
-                    let stdout = Path::new(&stdout);
-                    let stderr = format!("stderr-{:x}-{}-{}.log", wasm_hash, std::process::id(), i);
-                    let stderr = Path::new(&stderr);
-                    let stdin = None;
-
-                    let engine = Engine::new(
-                        &mut bench_api,
-                        &working_dir,
-                        stdout,
-                        stderr,
-                        stdin,
-                        &mut measurements,
-                        &mut measure,
-                        self.engine_flags.as_deref(),
-                    );
-
-                    benchmark(engine, &bytes, self.stop_after_phase.clone())?;
+                for _ in 0..self.iterations_per_process {
+                    let new_engine = benchmark(
+                        engine.take().unwrap(),
+                        &bytes,
+                        self.stop_after_phase.clone(),
+                    )?;
+                    engine = Some(new_engine);
 
                     self.check_output(Path::new(wasm_file), stdout, stderr)?;
-                    measurements.next_iteration();
+                    engine.as_mut().unwrap().measurements().next_iteration();
                 }
 
+                drop(engine);
                 all_measurements.extend(measurements.finish());
             }
         }

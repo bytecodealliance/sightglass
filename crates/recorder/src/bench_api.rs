@@ -134,6 +134,11 @@ where
         }
     }
 
+    /// Get this engine's measurements.
+    pub fn measurements(&mut self) -> &mut Measurements<'c> {
+        unsafe { (*self.measurement_data).get_mut().1 }
+    }
+
     /// Compile the Wasm into a module.
     pub fn compile(self, wasm: &[u8]) -> Module<'a, 'b, 'c, M> {
         let result =
@@ -215,6 +220,11 @@ pub struct Module<'a, 'b, 'c, M> {
 }
 
 impl<'a, 'b, 'c, M> Module<'a, 'b, 'c, M> {
+    /// Turn this module back into an engine.
+    pub fn into_engine(self) -> Engine<'a, 'b, 'c, M> {
+        self.engine
+    }
+
     /// Instantiate this module, returning the resulting `Instance`.
     pub fn instantiate(self) -> Instance<'a, 'b, 'c, M> {
         let result = unsafe { (self.engine.bench_api.wasm_bench_instantiate)(self.engine.engine) };
