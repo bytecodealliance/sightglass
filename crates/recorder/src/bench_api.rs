@@ -74,10 +74,7 @@ pub struct Engine<'a, 'b, 'c, M> {
     engine: *mut c_void,
 }
 
-impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M>
-where
-    M: Measure,
-{
+impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
     /// Construct a new engine from the given `BenchApi`.
     // NB: take a mutable reference to the `BenchApi` so that no one else can
     // call its API methods out of order.
@@ -90,7 +87,10 @@ where
         measurements: &'a mut Measurements<'c>,
         measure: &'a mut M,
         execution_flags: Option<&'a str>,
-    ) -> Self {
+    ) -> Self
+    where
+        M: Measure,
+    {
         let working_dir = working_dir.display().to_string();
         let stdout_path = stdout_path.display().to_string();
         let stderr_path = stderr_path.display().to_string();
@@ -148,7 +148,10 @@ where
     }
 
     /// Bench API callback for the start of compilation.
-    extern "C" fn compilation_start(data: *mut u8) {
+    extern "C" fn compilation_start(data: *mut u8)
+    where
+        M: Measure,
+    {
         log::debug!("Starting compilation measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
@@ -156,7 +159,10 @@ where
     }
 
     /// Bench API callback for the start of instantiation.
-    extern "C" fn instantiation_start(data: *mut u8) {
+    extern "C" fn instantiation_start(data: *mut u8)
+    where
+        M: Measure,
+    {
         log::debug!("Starting instantiation measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
@@ -164,7 +170,10 @@ where
     }
 
     /// Bench API callback for the start of execution.
-    extern "C" fn execution_start(data: *mut u8) {
+    extern "C" fn execution_start(data: *mut u8)
+    where
+        M: Measure,
+    {
         log::debug!("Starting execution measurement");
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let measure = unsafe { data.as_mut().unwrap().0.as_mut().unwrap() };
@@ -172,7 +181,10 @@ where
     }
 
     /// Bench API callback for the end of compilation.
-    extern "C" fn compilation_end(data: *mut u8) {
+    extern "C" fn compilation_end(data: *mut u8)
+    where
+        M: Measure,
+    {
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let (measure, measurements) = unsafe {
             let data = data.as_mut().unwrap();
@@ -183,7 +195,10 @@ where
     }
 
     /// Bench API callback for the end of instantiation.
-    extern "C" fn instantiation_end(data: *mut u8) {
+    extern "C" fn instantiation_end(data: *mut u8)
+    where
+        M: Measure,
+    {
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let (measure, measurements) = unsafe {
             let data = data.as_mut().unwrap();
@@ -194,7 +209,10 @@ where
     }
 
     /// Bench API callback for the end of execution.
-    extern "C" fn execution_end(data: *mut u8) {
+    extern "C" fn execution_end(data: *mut u8)
+    where
+        M: Measure,
+    {
         let data = data as *mut (*mut M, *mut Measurements<'b>);
         let (measure, measurements) = unsafe {
             let data = data.as_mut().unwrap();
@@ -223,6 +241,11 @@ impl<'a, 'b, 'c, M> Module<'a, 'b, 'c, M> {
     /// Turn this module back into an engine.
     pub fn into_engine(self) -> Engine<'a, 'b, 'c, M> {
         self.engine
+    }
+
+    /// Get this engine's measurements.
+    pub fn measurements(&mut self) -> &mut Measurements<'c> {
+        self.engine.measurements()
     }
 
     /// Instantiate this module, returning the resulting `Instance`.

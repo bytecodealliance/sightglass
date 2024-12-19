@@ -5,7 +5,7 @@ use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
 use sightglass_recorder::measure::Measurements;
-use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
+use sightglass_recorder::{bench_api::BenchApi, benchmark, measure::MeasureType};
 use std::{
     fs,
     io::{self, BufWriter, Write},
@@ -106,9 +106,10 @@ pub struct BenchmarkCommand {
     #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
     working_dir: Option<PathBuf>,
 
-    /// Stop measuring after the given phase (compilation/instantiation/execution).
-    #[structopt(long("stop-after"))]
-    stop_after_phase: Option<Phase>,
+    /// Benchmark only the given phase (compilation, instantiation, or
+    /// execution). Benchmarks all phases if omitted.
+    #[structopt(long("benchmark-phase"))]
+    benchmark_phase: Option<Phase>,
 
     /// The significance level for confidence intervals. Typical values are 0.01
     /// and 0.05, which correspond to 99% and 95% confidence respectively. This
@@ -195,6 +196,8 @@ impl BenchmarkCommand {
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
                 let mut measure = self.measure.build();
 
+                // Create the bench API engine and cache it for reuse across all
+                // iterations of this benchmark.
                 let engine = Engine::new(
                     &mut bench_api,
                     &working_dir,
@@ -207,23 +210,55 @@ impl BenchmarkCommand {
                 );
                 let mut engine = Some(engine);
 
+                // And if we are benchmarking just a post-compilation phase,
+                // then eagerly compile the Wasm module for reuse.
+                let mut module = None;
+                if let Some(Phase::Instantiation | Phase::Execution) = self.benchmark_phase {
+                    module = Some(engine.take().unwrap().compile(&bytes));
+                }
+
                 // Run the benchmark (compilation, instantiation, and execution) several times in
                 // this process.
                 for _ in 0..self.iterations_per_process {
-                    let new_engine = benchmark(
-                        engine.take().unwrap(),
-                        &bytes,
-                        self.stop_after_phase.clone(),
-                    )?;
-                    engine = Some(new_engine);
+                    match self.benchmark_phase {
+                        None => {
+                            let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
+                            engine = Some(new_engine);
+                        }
+                        Some(Phase::Compilation) => {
+                            let new_engine =
+                                benchmark::compilation(engine.take().unwrap(), &bytes)?;
+                            engine = Some(new_engine);
+                        }
+                        Some(Phase::Instantiation) => {
+                            let new_module = benchmark::instantiation(module.take().unwrap())?;
+                            module = Some(new_module);
+                        }
+                        Some(Phase::Execution) => {
+                            let new_module = benchmark::execution(module.take().unwrap())?;
+                            module = Some(new_module);
+                        }
+                    }
 
                     self.check_output(Path::new(wasm_file), stdout, stderr)?;
-                    engine.as_mut().unwrap().measurements().next_iteration();
+                    engine
+                        .as_mut()
+                        .map(|e| e.measurements())
+                        .or_else(|| module.as_mut().map(|m| m.measurements()))
+                        .unwrap()
+                        .next_iteration();
                 }
 
-                drop(engine);
+                drop((engine, module));
                 all_measurements.extend(measurements.finish());
             }
+        }
+
+        // If we are only benchmarking one phase then filter out any
+        // measurements for other phases. These get included because we have to
+        // compile at least once to measure instantiation, for example.
+        if let Some(phase) = self.benchmark_phase {
+            all_measurements.retain(|m| m.phase == phase);
         }
 
         self.write_results(&all_measurements, &mut output_file)?;
@@ -232,10 +267,11 @@ impl BenchmarkCommand {
 
     /// Assert that our actual `stdout` and `stderr` match our expectations.
     fn check_output(&self, wasm_file: &Path, stdout: &Path, stderr: &Path) -> Result<()> {
-        // If we aren't going through all phases and executing the Wasm, then we
-        // won't have any actual output to check.
-        if self.stop_after_phase.is_some() {
-            return Ok(());
+        match self.benchmark_phase {
+            None | Some(Phase::Execution) => {}
+            // If we aren't executing the Wasm, then we won't have any actual
+            // output to check.
+            Some(Phase::Compilation | Phase::Instantiation) => return Ok(()),
         }
 
         let wasm_file_dir: PathBuf = if let Some(dir) = wasm_file.parent() {
@@ -328,8 +364,8 @@ impl BenchmarkCommand {
                 command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
             }
 
-            if let Some(phase) = self.stop_after_phase {
-                command.arg("--stop-after").arg(phase.to_string());
+            if let Some(phase) = self.benchmark_phase {
+                command.arg("--benchmark-phase").arg(phase.to_string());
             }
 
             if let Some(flags) = &self.engine_flags {
