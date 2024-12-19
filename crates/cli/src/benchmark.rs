@@ -2,6 +2,7 @@ use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
+use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark::benchmark, measure::MeasureType};
@@ -197,18 +198,18 @@ impl BenchmarkCommand {
                     let stderr = Path::new(&stderr);
                     let stdin = None;
 
-                    benchmark(
+                    let engine = Engine::new(
                         &mut bench_api,
                         &working_dir,
                         stdout,
                         stderr,
                         stdin,
-                        &bytes,
-                        self.stop_after_phase.clone(),
-                        self.engine_flags.as_deref(),
-                        &mut measure,
                         &mut measurements,
-                    )?;
+                        &mut measure,
+                        self.engine_flags.as_deref(),
+                    );
+
+                    benchmark(engine, &bytes, self.stop_after_phase.clone())?;
 
                     self.check_output(Path::new(wasm_file), stdout, stderr)?;
                     measurements.next_iteration();
