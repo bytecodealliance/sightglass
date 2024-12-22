@@ -5,14 +5,14 @@ use sightglass_data::Measurement;
 use std::path::PathBuf;
 
 #[test]
-fn benchmark_stop_after_compilation() {
+fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
         .arg("--raw")
         .arg("--processes")
         .arg("2")
         .arg("--iterations-per-process")
         .arg("1")
-        .arg("--stop-after")
+        .arg("--benchmark-phase")
         .arg("compilation")
         .arg(benchmark("noop"))
         .assert()
@@ -25,22 +25,44 @@ fn benchmark_stop_after_compilation() {
 }
 
 #[test]
-fn benchmark_stop_after_instantiation() {
+fn benchmark_phase_instantiation() {
     sightglass_cli_benchmark()
         .arg("--raw")
         .arg("--processes")
         .arg("2")
         .arg("--iterations-per-process")
         .arg("1")
-        .arg("--stop-after")
+        .arg("--benchmark-phase")
         .arg("instantiation")
         .arg(benchmark("noop"))
         .assert()
         .success()
         .stdout(
             predicate::str::contains("Compilation")
+                .not()
                 .and(predicate::str::contains("Instantiation"))
                 .and(predicate::str::contains("Execution").not()),
+        );
+}
+
+#[test]
+fn benchmark_phase_execution() {
+    sightglass_cli_benchmark()
+        .arg("--raw")
+        .arg("--processes")
+        .arg("2")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--benchmark-phase")
+        .arg("execution")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("Compilation")
+                .not()
+                .and(predicate::str::contains("Instantiation").not())
+                .and(predicate::str::contains("Execution")),
         );
 }
 
