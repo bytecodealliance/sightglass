@@ -10,33 +10,81 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_LOG: info
+  PARTITIONS: 8
 
 jobs:
-  rebuild:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-    - name: Rebuild benchmarks
-      run: benchmarks/build-all.sh 5
+  # rebuild:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - run: rustup update
+  #   - name: Rebuild benchmarks
+  #     run: benchmarks/build-all.sh
 
-  run:
+  build-wasmtime:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # for now, limit this a bit
+        revision: ["main", "v25.0.0"]
+    env:
+      REVISION: ${{ matrix.revision }}
     steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly
-      uses: actions-rs/toolchain@v1
+    - uses: actions/checkout@v4
+    - run: rustup update
+    - name: Build Engine
+      run: |
+        pushd engines/wasmtime
+        rustc build.rs
+        ./build
+        popd
+    - name: Upload Wasmtime Shared Library
+      uses: actions/upload-artifact@v4
       with:
-        toolchain: nightly
-    - name: Run benchmarks
-      run: benchmarks/run-all.sh
+        name: wasmtime-${{ matrix.revision }}
+        path: engines/wasmtime/libengine.so
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: build-wasmtime
+    strategy:
+      matrix:
+        partition: ["00", "01", "02", "03", "04", "05", "06", "07"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Downloads All Artifacts (root)
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - run: ls -al . artifacts/
+    - run: rustup update
+    - run: chmod +x artifacts/*/*.so
+    - name: Partition Benchmark Suite
+      run: |
+        ceil_div() { echo "($1 + $2 - 1) / $2" | bc; }
+        tmpdir=$(mktemp -d)
+        grep -v '^\#' benchmarks/all.suite > $tmpdir/all.suite
+        line_count=$(wc -l "$tmpdir/all.suite" | awk '{print $1}')
+        lines_per_chunk=$(ceil_div "$line_count" "$PARTITIONS")
+        split -d -l "$lines_per_chunk" "$tmpdir/all.suite" "${tmpdir}/all.split."
+        cp "$tmpdir/all.split.${{ matrix.partition }}" benchmarks/split.${{ matrix.partition }}.suite
+        rm -rf "$tmpdir"
+
+    - name: Output Running Benchmarks
+      run: cat "benchmarks/split.${{ matrix.partition }}.suite"
+
+    - name: Benchmark Partition ${{ matrix.partition }}
+      run: |
+        cargo run benchmark \
+        --engine=artifacts/wasmtime-main/libengine.so \
+        --engine=artifacts/wasmtime-v25.0.0/libengine.so \
+        --processes=4 \
+        --iterations-per-process=1 \
+        -- "benchmarks/split.${{ matrix.partition }}.suite"
 
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Check for missing paths in `all.suite`
         run: benchmarks/check-incomplete-suite.sh
