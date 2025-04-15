@@ -67,7 +67,7 @@ jobs:
     - run: chmod +x artifacts/*/*.so
     - name: Partition Benchmark Suite
       run: |
-        benchmarks/split-suite.sh benchmarks/all.suite "${SPLIT_PREFIX}"
+        benchmarks/split-suite.sh benchmarks/all.suite ${PARTITIONS} "${SPLIT_PREFIX}"
 
     - name: Output Running Benchmarks
       run: cat "${PARTITION_SUITE}"
