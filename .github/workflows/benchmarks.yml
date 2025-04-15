@@ -50,6 +50,9 @@ jobs:
     strategy:
       matrix:
         partition: ["00", "01", "02", "03", "04", "05", "06", "07"]
+    env:
+      SPLIT_PREFIX: "benchmarks/split-"
+      PARTITION_SUITE: "benchmarks/split-${{ matrix.partition }}.suite"
     steps:
     - uses: actions/checkout@v4
     - name: Downloads All Artifacts (root)
@@ -61,17 +64,10 @@ jobs:
     - run: chmod +x artifacts/*/*.so
     - name: Partition Benchmark Suite
       run: |
-        ceil_div() { echo "($1 + $2 - 1) / $2" | bc; }
-        tmpdir=$(mktemp -d)
-        grep -v '^\#' benchmarks/all.suite > $tmpdir/all.suite
-        line_count=$(wc -l "$tmpdir/all.suite" | awk '{print $1}')
-        lines_per_chunk=$(ceil_div "$line_count" "$PARTITIONS")
-        split -d -l "$lines_per_chunk" "$tmpdir/all.suite" "${tmpdir}/all.split."
-        cp "$tmpdir/all.split.${{ matrix.partition }}" benchmarks/split.${{ matrix.partition }}.suite
-        rm -rf "$tmpdir"
+        benchmarks/split-suite.sh benchmarks/all.suite "${SPLIT_PREFIX}"
 
     - name: Output Running Benchmarks
-      run: cat "benchmarks/split.${{ matrix.partition }}.suite"
+      run: cat "${PARTITION_SUITE}"
 
     - name: Benchmark Partition ${{ matrix.partition }}
       run: |
@@ -80,7 +76,7 @@ jobs:
         --engine=artifacts/wasmtime-v25.0.0/libengine.so \
         --processes=4 \
         --iterations-per-process=1 \
-        -- "benchmarks/split.${{ matrix.partition }}.suite"
+        -- "${PARTITION_SUITE}"
 
   check:
     runs-on: ubuntu-latest
