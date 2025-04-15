@@ -13,13 +13,16 @@ env:
   PARTITIONS: 8
 
 jobs:
-  # rebuild:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - run: rustup update
-  #   - name: Rebuild benchmarks
-  #     run: benchmarks/build-all.sh
+  # verify that we are able to rebuild all benchmarks; the results here
+  # are not used in the CI pipeline but this verifies that changes have
+  # not regressed our ability to rebuild benchmarks.
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: rustup update
+    - name: Rebuild benchmarks
+      run: benchmarks/build-all.sh
 
   build-wasmtime:
     runs-on: ubuntu-latest
