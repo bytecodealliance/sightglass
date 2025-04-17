@@ -11,10 +11,7 @@ jobs:
     name: Build and run native benchmarks
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
+    - uses: actions/checkout@v4
+    - run: rustup update nightly
     - name: Rebuild and run native benchmarks using Docker
       run: benchmarks/build-all-native.sh --run
