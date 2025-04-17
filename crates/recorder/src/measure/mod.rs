@@ -83,6 +83,7 @@ pub mod counters;
 pub mod insts;
 
 pub mod cycles;
+pub mod multi;
 pub mod noop;
 pub mod time;
 pub mod vtune;
