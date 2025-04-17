@@ -84,6 +84,7 @@ pub mod insts;
 
 pub mod cycles;
 pub mod noop;
+pub mod time;
 pub mod vtune;
 
 /// [MeasureType] enumerates the implementations of [Measure] and allows us to `build` an instance
@@ -97,6 +98,9 @@ pub mod vtune;
 pub enum MeasureType {
     /// No measurement.
     Noop,
+
+    /// Simple time measurement.
+    Time,
 
     /// Measure cycles using, e.g., `RDTSC`.
     Cycles,
@@ -117,6 +121,7 @@ impl fmt::Display for MeasureType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             MeasureType::Noop => write!(f, "noop"),
+            MeasureType::Time => write!(f, "time"),
             MeasureType::Cycles => write!(f, "cycles"),
             MeasureType::VTune => write!(f, "vtune"),
             #[cfg(target_os = "linux")]
@@ -132,6 +137,7 @@ impl FromStr for MeasureType {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "noop" => Ok(Self::Noop),
+            "time" => Ok(Self::Time),
             "cycles" => Ok(Self::Cycles),
             "vtune" => Ok(Self::VTune),
             #[cfg(target_os = "linux")]
@@ -150,6 +156,7 @@ impl MeasureType {
     pub fn build(&self) -> Box<dyn Measure> {
         match self {
             Self::Noop => Box::new(noop::NoopMeasure::new()),
+            Self::Time => Box::new(time::TimeMeasure::new()),
             Self::Cycles => Box::new(cycles::CycleMeasure::new()),
             Self::VTune => Box::new(vtune::VTuneMeasure::new()),
             #[cfg(target_os = "linux")]
