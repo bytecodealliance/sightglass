@@ -4,6 +4,7 @@ use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
+use sightglass_recorder::measure::multi::MultiMeasure;
 use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark, measure::MeasureType};
 use std::{
@@ -80,9 +81,11 @@ pub struct BenchmarkCommand {
     output_file: Option<String>,
 
     /// The type of measurement to use (cycles, insts-retired, perf-counters, noop, vtune)
-    /// when recording the benchmark performance.
-    #[structopt(long, short, default_value = "cycles")]
-    measure: MeasureType,
+    /// when recording the benchmark performance.  This option can be specified more than
+    /// once if to record multiple measurements.  If no measures are specified,
+    /// the "cycles" measure will be used.
+    #[structopt(long = "measure", short = "m", multiple = true)]
+    measures: Vec<MeasureType>,
 
     /// Pass this flag to only run benchmarks over "small" workloads (rather
     /// than the larger, default workloads).
@@ -194,7 +197,12 @@ impl BenchmarkCommand {
                 let stdin = None;
 
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
-                let mut measure = self.measure.build();
+                let mut measure = if self.measures.len() <= 1 {
+                    let measure = self.measures.first().unwrap_or(&MeasureType::Cycles);
+                    measure.build()
+                } else {
+                    Box::new(MultiMeasure::new(self.measures.iter().map(|m| m.build())))
+                };
 
                 // Create the bench API engine and cache it for reuse across all
                 // iterations of this benchmark.
@@ -354,8 +362,12 @@ impl BenchmarkCommand {
                 .arg(self.iterations_per_process.to_string())
                 .arg("--engine")
                 .arg(&engine)
-                .arg("--measure")
-                .arg(self.measure.to_string())
+                .args(
+                    self.measures
+                        .iter()
+                        .map(|m| ["--measure".to_string(), m.to_string()])
+                        .flatten(),
+                )
                 .arg("--raw")
                 .arg("--output-format")
                 // Always use JSON when privately communicating with a
