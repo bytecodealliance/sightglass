@@ -55,8 +55,11 @@ impl Machine {
         // measurement commonly used for memory) but it is unclear whether `sysinfo` is returning KB
         // or KiB.
         sys.refresh_memory();
-        let memory_total_kb = sys.total_memory();
-        let memory = bytesize::to_string(bytesize::ByteSize::kib(memory_total_kb).0, true);
+        let memory_total_kb = sys.total_memory() / 1024;
+        let memory = bytesize::ByteSize::kib(memory_total_kb)
+            .display()
+            .iec()
+            .to_string();
 
         // Hash all properties into a unique identifier.
         let hash = hash::string(&format!(
