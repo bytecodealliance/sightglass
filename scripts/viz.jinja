@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Sightglass Benchmark Results</title>
+        <meta name="description" content="Sightglass Benchmark Results Visualization">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+        {% for benchmark in benchmarks %}
+        <script type="application/json" id="vega-lite-{{ benchmark.chart.id }}">
+            {{ benchmark.chart.json }}
+        </script>
+        <style>
+            .slower {
+                background: lightcoral;
+                font-weight: bold;
+            }
+
+            .faster {
+                background: lightgreen;
+                font-weight: bold;
+            }
+
+            .inconsistent {
+                background: lightgray;
+            }
+        </style>
+        {% endfor %}
+    </head>
+    <body>
+        <h1>Sightglass Benchmark Results</h1>
+        <div>
+            <span style="font-weight:bold">Key:</span>
+            <span class="inconsistent">Baseline CV > 5% -- Inconsistent Benchmark</span>
+            <span class="slower">Test Slower by CV%+ from baseline</span>
+            <span class="faster">Test Faster by CV%+ from baseline</span>
+        </div>
+        <div>
+            CV is the <a href="https://en.wikipedia.org/wiki/Coefficient_of_variation">Coefficient of Variation</a> for the baseline benchmark run.
+        </div>
+        <table style="padding-top:20px">
+            <thead>
+                <tr>
+                    <th scope="col">Benchmark</th>
+                    {% for prefix in prefixes %}
+                        <th scope="col">{% if prefix == baseline %}*{% endif %}{{ prefix }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for benchmark in benchmarks %}
+                <tr>
+                    <td><a href="#{{ benchmark.name }}">{{ benchmark.name }}</a></td>
+                    {% for prefix in prefixes %}
+                        {% set stats = benchmark.stats if prefix == baseline else benchmark.stats.relative[prefix] %}
+                        {% if prefix == baseline %}
+                            {% set class = "inconsistent" if stats.cv > 5 else "" %}
+                            <td class="{{ class }}">{{ "%.2f"|format(stats.p25) }} +/- {{ "%.2f"|format(stats.cv) }}%</td>
+                        {% else %}
+                            {% set class = "slower" if stats.p25_delta_pct > benchmark.stats.cv else "faster" if stats.p25_delta_pct < -1 * benchmark.stats.cv else "" %}
+                            <td class="{{ class }}">{{ "%.2f"|format(stats.p25_delta_pct) }}%</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div id="benchmark-details">
+        {% for benchmark in benchmarks %}
+            <h2 id="{{benchmark.name}}">{{ benchmark.name }}</h2>
+            <ul>
+                <li><strong {% if benchmark.stats.cv > 5 %}class="inconsistent"{% endif %}>Baseline CV:</strong> {{ "%.2f"|format(benchmark.stats.cv) }}%</li>
+                {% for prefix, stats in benchmark.stats.relative.items() %}
+                    {% set class = "slower" if stats.p25_delta_pct > benchmark.stats.cv else "faster" if stats.p25_delta_pct < -1 * benchmark.stats.cv else "" %}
+                    <li>{{ prefix }}: <span class="{{ class }}">{{ "%.2f"|format(stats.p25_delta_pct) }}%</span></li>
+                {% endfor %}
+            </ul>
+            <div id="viz-{{ benchmark.chart.id }}"></div>
+        {% endfor %}
+        </div>
+
+        <script type="text/javascript">
+         function renderViz(chart_id) {
+             let vl_text = document.getElementById(`vega-lite-${chart_id}`).textContent;
+             let vl_data = JSON.parse(vl_text);
+             vegaEmbed(`#viz-${chart_id}`, vl_data);
+         }
+         {% for benchmark in benchmarks %}
+             renderViz("{{ benchmark.chart.id }}");
+         {% endfor %}
+        </script>>
+    </body>
+</html>
