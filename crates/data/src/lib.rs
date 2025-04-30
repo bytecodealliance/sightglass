@@ -68,7 +68,7 @@ impl<'a> Engine<'a> {
         // name/flags and remove any common prefix.
         let self_str = format!("{self}");
         let other_str = format!("{other}");
-        let idx_end_of_shared = self_str
+        let mut idx_end_of_shared = self_str
             .char_indices()
             .zip(other_str.char_indices())
             .find_map(|((i, a), (j, b))| {
@@ -80,6 +80,13 @@ impl<'a> Engine<'a> {
                 }
             })
             .unwrap_or(0);
+
+        // Trim back to last path separator to keep meaningful context
+        if idx_end_of_shared > 0 {
+            if let Some(last_slash) = self_str[..idx_end_of_shared].rfind('/') {
+                idx_end_of_shared = last_slash + 1;
+            }
+        }
 
         (
             self_str[idx_end_of_shared..].into(),
@@ -486,6 +493,44 @@ impl<'a, 'de> Deserialize<'de> for EffectSize<'a> {
     }
 }
 
+/// Extract benchmark name from wasm file path.
+///
+/// This function handles various path formats commonly used in Sightglass:
+/// - `./benchmarks/foo/benchmark.wasm` -> `foo`
+/// - `benchmarks/bar/benchmark.wasm` -> `bar`
+/// - `benchmarks/foo/bar.wasm` -> `foo/bar`
+/// - `simple.wasm` -> `simple`
+///
+/// # Examples
+///
+/// ```
+/// use sightglass_data::extract_benchmark_name;
+///
+/// assert_eq!(extract_benchmark_name("./benchmarks/foo/benchmark.wasm"), "foo");
+/// assert_eq!(extract_benchmark_name("benchmarks/bar/benchmark.wasm"), "bar");
+/// assert_eq!(extract_benchmark_name("benchmarks/foo/bar.wasm"), "foo/bar");
+/// assert_eq!(extract_benchmark_name("simple.wasm"), "simple");
+/// ```
+pub fn extract_benchmark_name(wasm_path: &str) -> String {
+    let mut path = wasm_path;
+
+    // Remove prefix variations
+    if let Some(stripped) = path.strip_prefix("./benchmarks/") {
+        path = stripped;
+    } else if let Some(stripped) = path.strip_prefix("benchmarks/") {
+        path = stripped;
+    }
+
+    // Remove suffix variations
+    if let Some(stripped) = path.strip_suffix("/benchmark.wasm") {
+        path = stripped;
+    } else if let Some(stripped) = path.strip_suffix(".wasm") {
+        path = stripped;
+    }
+
+    path.to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -542,5 +587,191 @@ mod tests {
             assert_eq!(record.count, 5000);
         }
         Ok(())
+    }
+
+    #[test]
+    fn test_extract_benchmark_name() {
+        // Standard benchmark.wasm format with ./benchmarks/ prefix
+        assert_eq!(
+            extract_benchmark_name("./benchmarks/foo/benchmark.wasm"),
+            "foo"
+        );
+
+        // Standard benchmark.wasm format without ./ prefix
+        assert_eq!(
+            extract_benchmark_name("benchmarks/bar/benchmark.wasm"),
+            "bar"
+        );
+
+        // Direct .wasm file in benchmarks directory
+        assert_eq!(extract_benchmark_name("benchmarks/simple.wasm"), "simple");
+        assert_eq!(extract_benchmark_name("./benchmarks/simple.wasm"), "simple");
+
+        // Nested paths with .wasm extension
+        assert_eq!(extract_benchmark_name("benchmarks/foo/bar.wasm"), "foo/bar");
+        assert_eq!(
+            extract_benchmark_name("./benchmarks/nested/path/test.wasm"),
+            "nested/path/test"
+        );
+
+        // Simple .wasm files without benchmarks prefix
+        assert_eq!(extract_benchmark_name("simple.wasm"), "simple");
+        assert_eq!(extract_benchmark_name("test.wasm"), "test");
+
+        // Edge cases - no extensions or prefixes
+        assert_eq!(extract_benchmark_name("somefile"), "somefile");
+        assert_eq!(extract_benchmark_name("path/to/file"), "path/to/file");
+    }
+
+    #[test]
+    fn test_relative_labels_same_name_different_flags() {
+        let engine1 = Engine {
+            name: "wasmtime".into(),
+            flags: Some("-Wfoo=bar".into()),
+        };
+        let engine2 = Engine {
+            name: "wasmtime".into(),
+            flags: Some("-Wbaz=qux".into()),
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // When names match, should return just the flags
+        assert_eq!(label1, "-Wfoo=bar");
+        assert_eq!(label2, "-Wbaz=qux");
+    }
+
+    #[test]
+    fn test_relative_labels_same_name_no_flags() {
+        let engine1 = Engine {
+            name: "wasmtime".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "wasmtime".into(),
+            flags: Some("-Wfoo=bar".into()),
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        assert_eq!(label1, "(no flags)");
+        assert_eq!(label2, "-Wfoo=bar");
+    }
+
+    #[test]
+    fn test_relative_labels_different_names_simple() {
+        let engine1 = Engine {
+            name: "wasmtime".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "lucet".into(),
+            flags: None,
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // No common prefix, should return full names
+        assert_eq!(label1, "wasmtime");
+        assert_eq!(label2, "lucet");
+    }
+
+    #[test]
+    fn test_relative_labels_with_common_prefix() {
+        let engine1 = Engine {
+            name: "engines/wasmtime/v1.0/libengine.so".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "engines/wasmtime/v2.0/libengine.so".into(),
+            flags: None,
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // Should trim to last path separator before the difference
+        assert_eq!(label1, "v1.0/libengine.so");
+        assert_eq!(label2, "v2.0/libengine.so");
+    }
+
+    #[test]
+    fn test_relative_labels_with_path_and_flags() {
+        let engine1 = Engine {
+            name: "engines/wasmtime/v1.0/libengine.so".into(),
+            flags: Some("-Wepoch=y".into()),
+        };
+        let engine2 = Engine {
+            name: "engines/wasmtime/v2.0/libengine.so".into(),
+            flags: Some("-Wepoch=y".into()),
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // Should include flags in the shortened label
+        assert_eq!(label1, "v1.0/libengine.so (-Wepoch=y)");
+        assert_eq!(label2, "v2.0/libengine.so (-Wepoch=y)");
+    }
+
+    #[test]
+    fn test_relative_labels_long_common_prefix() {
+        let engine1 = Engine {
+            name: "/home/user/projects/engines/wasmtime/wasmtime-v38/libengine.dylib".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "/home/user/projects/engines/wasmtime/wasmtime-v39/libengine.dylib".into(),
+            flags: None,
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // Should cut at the path separator before the version difference
+        assert_eq!(label1, "wasmtime-v38/libengine.dylib");
+        assert_eq!(label2, "wasmtime-v39/libengine.dylib");
+    }
+
+    #[test]
+    fn test_relative_labels_no_path_separator_in_common_prefix() {
+        let engine1 = Engine {
+            name: "wasmtime-v1".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "wasmtime-v2".into(),
+            flags: None,
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // No path separator, trims at the first difference (after 'wasmtime-v')
+        assert_eq!(label1, "1");
+        assert_eq!(label2, "2");
+    }
+
+    #[test]
+    fn test_relative_labels_identical_engines() {
+        let engine1 = Engine {
+            name: "wasmtime".into(),
+            flags: Some("-Wfoo=bar".into()),
+        };
+        let engine2 = Engine {
+            name: "wasmtime".into(),
+            flags: Some("-Wfoo=bar".into()),
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // Identical engines should return the flags
+        assert_eq!(label1, "-Wfoo=bar");
+        assert_eq!(label2, "-Wfoo=bar");
+    }
+
+    #[test]
+    fn test_relative_labels_one_is_prefix_of_other() {
+        let engine1 = Engine {
+            name: "engines/wasmtime".into(),
+            flags: None,
+        };
+        let engine2 = Engine {
+            name: "engines/wasmtime/v2.0".into(),
+            flags: None,
+        };
+
+        let (label1, label2) = engine1.relative_labels(&engine2);
+        // When one is a prefix, there's no difference to detect, so returns full names
+        assert_eq!(label1, "engines/wasmtime");
+        assert_eq!(label2, "engines/wasmtime/v2.0");
     }
 }

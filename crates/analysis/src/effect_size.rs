@@ -21,8 +21,7 @@ pub fn calculate<'a>(
         (0.0..=1.0).contains(&significance_level),
         "The significance_level must be between 0.0 and 1.0. \
              Typical values are 0.05 and 0.01 (i.e. 95% and 99% confidence). \
-             Found {}.",
-        significance_level,
+             Found {significance_level}."
     );
 
     let keys = KeyBuilder::all()

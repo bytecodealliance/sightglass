@@ -214,11 +214,34 @@ If you don't want the results to be summarized and displayed in a human-readable
 format, you can get raw JSON or CSV via the `--raw` flag:
 
 ```
-$ cargo run -- benchmark --raw --output-format csv -- benchmark.wasm
+$ cargo run -- benchmark --raw --output-format json -- benchmark.wasm
 ```
 
 Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize
 the benchmark results.
+
+### HTML Report Generation
+
+For raw results collected in the JSON format, sightglass includes a built-in `report`
+subcommand that generates comprehensive HTML reports with statistical analysis and
+interactive visualizations. This approach provides rigorous statistical significance
+testing following the Bytecode Alliance RFC standards.
+
+```bash
+# Generate HTML report comparing multiple measurement files
+$ cargo run -- report --output-file report.html baseline.json experiment1.json experiment2.json
+
+# Specify which engine serves as the baseline for comparisons
+$ cargo run -- report --baseline-engine wasmtime-baseline --output-file report.html baseline.json experiment.json
+```
+
+The generated HTML report includes:
+- Statistical significance testing with confidence intervals
+- Interactive charts showing performance distributions
+- Effect size analysis with practical significance assessment
+- Filtering and sorting capabilities for large result sets
+
+See `cargo run -- report --help` for all available options.
 
 ### Adding a New Benchmark
 

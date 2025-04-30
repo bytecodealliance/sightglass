@@ -1,0 +1,12 @@
+# Configuration for increased stack size to handle vega_lite_4 stack requirements
+# See: https://github.com/procyon-rs/vega_lite_4.rs#stack-size
+
+[target.x86_64-pc-windows-msvc]
+rustflags = [
+  "-C", "link-args=/STACK:32000000",
+]
+
+[target.i686-pc-windows-msvc]
+rustflags = [
+  "-C", "link-args=/STACK:32000000",
+]
