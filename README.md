@@ -214,11 +214,26 @@ If you don't want the results to be summarized and displayed in a human-readable
 format, you can get raw JSON or CSV via the `--raw` flag:
 
 ```
-$ cargo run -- benchmark --raw --output-format csv -- benchmark.wasm
+$ cargo run -- benchmark --raw --output-format json -- benchmark.wasm
 ```
 
 Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize
-the benchmark results.
+the benchmark results.  The JSON output is also compatible with the viz.py
+script in tree.
+
+### Benchmark Results Visualization (viz.py)
+
+For results collected in the JSON format, a tool is provided in tree that can
+visualize benchmark results as an HTML document with embedded graphics.  This
+tool requires that the python
+[`uv`](https://docs.astral.sh/uv/getting-started/installation/) tool be
+installed.
+
+```
+$ ./scripts/viz.py -o experiment.html baseline.json experiment1.json experiment2.json
+```
+
+See the `--help` option on the tool for additional usage options.
 
 ### Adding a New Benchmark
 
