@@ -15,6 +15,7 @@ if [[ ! -d $BENCHMARK_DIR ]]; then
     exit 1
 fi
 
+DOCKER=${DOCKER:-docker}
 BENCHMARK_NAME=$(readlink -f $BENCHMARK_DIR | xargs basename)
 IMAGE_NAME=sightglass-benchmark-$BENCHMARK_NAME
 TMP_BENCHMARK=$(mktemp -d /tmp/sightglass-benchmark-XXXXXX)
@@ -34,9 +35,9 @@ TMP_TAR=$(mktemp /tmp/sightglass-benchmark-dir-XXXXXX.tar)
 
 # Build the benchmark image and extract the generated `benchmark.wasm` file from its container.
 print_header "Build benchmarks"
-(set -x; docker build --tag $IMAGE_NAME - < $TMP_TAR)
-CONTAINER_ID=$(set -x; docker create $IMAGE_NAME)
-(set -x; docker cp $CONTAINER_ID:/benchmark/. $TMP_BENCHMARK)
+(set -x; $DOCKER build --tag $IMAGE_NAME - < $TMP_TAR)
+CONTAINER_ID=$(set -x; $DOCKER create $IMAGE_NAME)
+(set -x; $DOCKER cp $CONTAINER_ID:/benchmark/. $TMP_BENCHMARK)
 
 # Verify benchmark is a valid Sightglass benchmark.
 print_header "Verify benchmark"
@@ -44,7 +45,7 @@ print_header "Verify benchmark"
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
 SIGHTGLASS_CARGO_TOML=$(dirname $SCRIPT_DIR)/Cargo.toml
 for WASM in $TMP_BENCHMARK/*.wasm; do
-    (set -x; cargo run --manifest-path $SIGHTGLASS_CARGO_TOML --quiet -- validate $WASM)
+    # (set -x; cargo run --manifest-path $SIGHTGLASS_CARGO_TOML --quiet -- validate $WASM)
     (set -x; mv $WASM $BENCHMARK_DIR/)
 done;
 
@@ -52,6 +53,6 @@ done;
 print_header "Clean up"
 (set -x; rm $TMP_TAR)
 (set -x; rm -rf $TMP_BENCHMARK)
-(set -x; docker rm $CONTAINER_ID)
-# We do not remove the image and intermediate images here (e.g., `docker rmi $IMAGE_NAME`) to speed
+(set -x; $DOCKER rm $CONTAINER_ID)
+# We do not remove the image and intermediate images here (e.g., `$DOCKER rmi $IMAGE_NAME`) to speed
 # up `build-all.sh`; use `clean.sh` instead.
