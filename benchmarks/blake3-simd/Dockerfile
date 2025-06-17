@@ -1,4 +1,4 @@
-FROM emscripten/emsdk:2.0.8
+FROM emscripten/emsdk:4.0.10
 
 WORKDIR /usr/src
 RUN git clone https://github.com/BLAKE3-team/BLAKE3.git
@@ -14,7 +14,7 @@ RUN emcc -O3 -s STANDALONE_WASM=1 \
     -s INITIAL_MEMORY=1048576 -s MAXIMUM_MEMORY=16777216 \
     -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=131072 \
     -s "EXPORTED_FUNCTIONS=['_main']" \
-    -msimd128 -msse2 -msse3 -msse4.1 -msse4.2 \
+    -msimd128 -msse4.1 -msse4.2 \
     -DBLAKE3_NO_SSE41 -DBLAKE3_NO_AVX2 -DBLAKE3_NO_AVX512 \
     -o /benchmark/benchmark.wasm \
     blake3.c blake3_sse2.c blake3_dispatch.c \

@@ -1,4 +1,4 @@
-FROM rust:1.70
+FROM rust:1.87
 
 # Copy in the `src` directory.
 ENV SRC=/usr/src/regex/
