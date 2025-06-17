@@ -3,7 +3,7 @@ name = "image-classification-benchmark"
 version = "0.1.0"
 authors = ["The Bytecode Alliance Developers"]
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dependencies]

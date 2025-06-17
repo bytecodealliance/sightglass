@@ -1,0 +1,111 @@
+diff --git a/Makefile b/Makefile
+index 6697c13..26e637f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -20,7 +20,9 @@ LIBRARY=$(BUILD)/libmeshoptimizer.a
+ DEMO=$(BUILD)/meshoptimizer
+
+ CFLAGS=-g -Wall -Wextra -Werror -std=c89
+-CXXFLAGS=-g -Wall -Wextra -Wshadow -Wno-missing-field-initializers -Werror -std=c++98
++CXXFLAGS=-O3 -Wall -Wextra -Wshadow -Wno-missing-field-initializers -Werror -std=c++17 -fPIC
++CXXFLAGS_SIGHTGLASS=-O3 -Wall -Wextra -Wshadow -Wno-missing-field-initializers  \
++ -std=c++17 -Dmain=native_entry -fno-exceptions -fPIC -I. -L../../../engines/native/ -shared
+ LDFLAGS=
+
+ $(GLTFPACK_OBJECTS): CXXFLAGS+=-std=c++11
+@@ -167,6 +169,9 @@ codecbench.wasm: tools/codecbench.cpp ${LIBRARY_SOURCES}
+ codecbench-simd.wasm: tools/codecbench.cpp ${LIBRARY_SOURCES}
+ 	$(WASMCC) $^ -fno-exceptions --target=wasm32-wasi --sysroot=$(WASIROOT) -lc++ -lc++abi -O3 -g -DNDEBUG -msimd128 -o $@
+
++codecbench-simd.so: $(LIBRARY_OBJECTS)
++	$(CXX) $^ $(CXXFLAGS_SIGHTGLASS) $(LDFLAGS) tools/codecbench.cpp -o ../codecbench-simd.so -lengine
++
+ codecfuzz: tools/codecfuzz.cpp src/vertexcodec.cpp src/indexcodec.cpp
+ 	$(CXX) $^ -fsanitize=fuzzer,address,undefined -O1 -g -o $@
+
+diff --git a/tools/codecbench.cpp b/tools/codecbench.cpp
+index 350cb9c..f06bcff 100644
+--- a/tools/codecbench.cpp
++++ b/tools/codecbench.cpp
+@@ -1,4 +1,5 @@
+ #include "../src/meshoptimizer.h"
++#include "../sightglass.h"
+
+ #include <vector>
+
+@@ -161,15 +162,12 @@ void benchFilters(size_t count, double& besto8, double& besto12, double& bestq12
+ 	}
+ }
+
+-int main(int argc, char** argv)
++extern "C" {
++int main()
+ {
+ 	meshopt_encodeIndexVersion(1);
+
+-	bool verbose = false;
+-
+-	for (int i = 1; i < argc; ++i)
+-		if (strcmp(argv[i], "-v") == 0)
+-			verbose = true;
++	bool verbose = true;
+
+ 	const int N = 1000;
+
+@@ -212,13 +210,21 @@ int main(int argc, char** argv)
+ 		}
+ 	}
+
++	bench_start();
++
+ 	double bestvd = 0, bestid = 0;
+ 	benchCodecs(vertices, indices, bestvd, bestid, verbose);
+
+ 	double besto8 = 0, besto12 = 0, bestq12 = 0, bestexp = 0;
+ 	benchFilters(8 * N * N, besto8, besto12, bestq12, bestexp, verbose);
+
++	bench_end();
++
+ 	printf("Algorithm   :\tvtx\tidx\toct8\toct12\tquat12\texp\n");
+-	printf("Score (GB/s):\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+-	       bestvd, bestid, besto8, besto12, bestq12, bestexp);
++	if (verbose)
++		printf("Score (GB/s):\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
++			bestvd, bestid, besto8, besto12, bestq12, bestexp);
++
++	return 0;
+ }
++}
+\ No newline at end of file
+diff --git a/sightglass.h b/sightglass.h
+index a767e9e..f12c956 100644
+--- a/sightglass.h
++++ b/sightglass.h
+@@ -8,7 +8,13 @@
+  */
+ __attribute__((import_module("bench")))
+ __attribute__((import_name("start")))
++#ifdef __cplusplus
++extern "C" {
++#endif
+ void bench_start();
++#ifdef __cplusplus
++}
++#endif
+
+ /**
+  * Call this function to indicate that recording should end. This call should be placed immediately
+@@ -17,7 +23,13 @@ void bench_start();
+  */
+ __attribute__((import_module("bench")))
+ __attribute__((import_name("end")))
++#ifdef __cplusplus
++extern "C" {
++#endif
+ void bench_end();
++#ifdef __cplusplus
++}
++#endif
+
+ /**
+  * Call this function to prevent certain compiler-related optimizations related to knowing the value

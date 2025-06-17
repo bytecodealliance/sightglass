@@ -5,30 +5,85 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
   RUST_LOG: info
+  PARTITIONS: 8
 
 jobs:
+  # verify that we are able to rebuild all benchmarks; the results here
+  # are not used in the CI pipeline but this verifies that changes have
+  # not regressed our ability to rebuild benchmarks.
   rebuild:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
+    - uses: actions/checkout@v4
+    - run: rustup update
     - name: Rebuild benchmarks
-      run: benchmarks/build-all.sh 5
+      run: benchmarks/build-all.sh
 
-  run:
+  build-wasmtime:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # for now, limit this a bit
+        revision: ["main", "v25.0.0"]
+    env:
+      REVISION: ${{ matrix.revision }}
+    steps:
+    - uses: actions/checkout@v4
+    - run: rustup update
+    - name: Build Engine
+      run: |
+        pushd engines/wasmtime
+        rustc build.rs
+        ./build
+        popd
+    - name: Upload Wasmtime Shared Library
+      uses: actions/upload-artifact@v4
+      with:
+        name: wasmtime-${{ matrix.revision }}
+        path: engines/wasmtime/libengine.so
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: build-wasmtime
+    strategy:
+      matrix:
+        partition: ["00", "01", "02", "03", "04", "05", "06", "07"]
+    env:
+      SPLIT_PREFIX: "benchmarks/split-"
+      PARTITION_SUITE: "benchmarks/split-${{ matrix.partition }}.suite"
+    steps:
+    - uses: actions/checkout@v4
+    - name: Downloads All Artifacts (root)
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+    - run: ls -al . artifacts/
+    - run: rustup update
+    - run: chmod +x artifacts/*/*.so
+    - name: Partition Benchmark Suite
+      run: |
+        benchmarks/split-suite.sh benchmarks/all.suite ${PARTITIONS} "${SPLIT_PREFIX}"
+
+    - name: Output Running Benchmarks
+      run: cat "${PARTITION_SUITE}"
+
+    - name: Benchmark Partition ${{ matrix.partition }}
+      run: |
+        cargo run benchmark \
+        --engine=artifacts/wasmtime-main/libengine.so \
+        --engine=artifacts/wasmtime-v25.0.0/libengine.so \
+        --processes=4 \
+        --iterations-per-process=1 \
+        -- "${PARTITION_SUITE}"
+
+  check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Install nightly
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: nightly
-    - name: Run benchmarks
-      run: benchmarks/run-all.sh
+      - uses: actions/checkout@v4
+      - name: Check for missing paths in `all.suite`
+        run: benchmarks/check-incomplete-suite.sh

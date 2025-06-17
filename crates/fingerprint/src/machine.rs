@@ -2,7 +2,7 @@ use crate::hash;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use std::env;
-use sysinfo::{ProcessorExt, System, SystemExt};
+use sysinfo::{CpuExt, System, SystemExt};
 
 /// Describes a fingerprinted system.
 ///
@@ -49,14 +49,17 @@ impl Machine {
         // Gather some CPU information.
         let arch = std::env::consts::ARCH.to_string();
         sys.refresh_cpu();
-        let cpu = sys.global_processor_info().brand().to_string();
+        let cpu = sys.global_cpu_info().brand().to_string();
 
         // Gather the memory information. The expected result should be in GiB (the 1024-base SI
         // measurement commonly used for memory) but it is unclear whether `sysinfo` is returning KB
         // or KiB.
         sys.refresh_memory();
-        let memory_total_kb = sys.total_memory();
-        let memory = bytesize::to_string(bytesize::ByteSize::kib(memory_total_kb).0, true);
+        let memory_total_kb = sys.total_memory() / 1024;
+        let memory = bytesize::ByteSize::kib(memory_total_kb)
+            .display()
+            .iec()
+            .to_string();
 
         // Hash all properties into a unique identifier.
         let hash = hash::string(&format!(

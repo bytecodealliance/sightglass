@@ -1,0 +1,17 @@
+name: native
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  native:
+    name: Build and run native benchmarks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: rustup update nightly
+    - name: Rebuild and run native benchmarks using Docker
+      run: benchmarks/build-all-native.sh --run

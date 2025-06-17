@@ -5,7 +5,10 @@
 # Usage: ./run-all.sh
 
 set -e
-PROJECT_DIR=$(dirname "$0" | xargs dirname)
+# From https://stackoverflow.com/a/246128:
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
+SUITE=${SUITE:-$SCRIPT_DIR/all.suite}
+PROJECT_DIR=$(dirname $SCRIPT_DIR)
 SIGHTGLASS="cargo +nightly run --bin sightglass-cli --"
 ENGINE=$PROJECT_DIR/engines/wasmtime/libengine.so
 export RUST_LOG=debug
@@ -19,8 +22,6 @@ if [[ ! -f $ENGINE ]]; then
 fi
 
 # Benchmark each Wasm file.
-for BENCH_FILE in $(find $PROJECT_DIR/benchmarks -name benchmark.wasm); do
-    BENCH_DIR=$(dirname $BENCH_FILE)
-    BENCH_NAME=$(basename $BENCH_DIR)
-    $SIGHTGLASS benchmark --engine $ENGINE --processes 1 --iterations-per-process 3 --working-dir $BENCH_DIR $BENCH_FILE
-done
+$SIGHTGLASS benchmark --engine $ENGINE \
+    --processes 1 --iterations-per-process 3 \
+    $SUITE

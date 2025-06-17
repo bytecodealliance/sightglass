@@ -50,14 +50,17 @@ pub fn main() {
     }
 
     let results = sort_results(&output_buffer);
-    eprintln!("{:?}", results[0]);
-
-    for i in 0..5 {
-        eprintln!(
-            "{}.) {}",
-            i + 1,
-            imagenet_classes::IMAGENET_CLASSES[results[i].0]
-        );
+    if results[0].1 > 0.9 {
+        eprintln!("Confidence is over 90%");
+        for i in 0..5 {
+            eprintln!(
+                "{}.) {}",
+                i + 1,
+                imagenet_classes::IMAGENET_CLASSES[results[i].0]
+            );
+        }
+    } else {
+        eprintln!("Benchmark failed, confidence is under 90%. Result = {}", results[0].1);
     }
 }
 

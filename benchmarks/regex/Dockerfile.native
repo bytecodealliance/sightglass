@@ -1,0 +1,17 @@
+FROM rust:1.70
+
+# Copy in the `src` directory.
+ENV SRC=/usr/src/regex/
+WORKDIR $SRC
+ADD rust-benchmark rust-benchmark
+COPY sightglass.native.patch ./
+COPY build-native.sh .
+COPY libengine.so /usr/lib/
+
+# Compile each of the benchmarks into the `/benchmark` directory.
+RUN ./build-native.sh
+
+# We copy the shared libraries to the `/benchmark` directory, where the client
+# expects it.
+WORKDIR /benchmark
+RUN cp $SRC/*so .

@@ -62,21 +62,9 @@ bool init_js() {
   if (!js::UseInternalJobQueues(cx) || !JS::InitSelfHostedCode(cx))
       return false;
 
-  JS::ContextOptionsRef(cx)
-    .setPrivateClassFields(true)
-    .setPrivateClassMethods(true)
-    .setClassStaticBlocks(true)
-    .setErgnomicBrandChecks(true);
-
   JS::RealmOptions options;
   options.creationOptions()
-    .setStreamsEnabled(true)
-    .setReadableByteStreamsEnabled(true)
-    .setBYOBStreamReadersEnabled(true)
-    .setReadableStreamPipeToEnabled(true)
-    .setWritableStreamsEnabled(true)
-    .setIteratorHelpersEnabled(true)
-    .setWeakRefsEnabled(JS::WeakRefSpecifier::EnabledWithoutCleanupSome);
+    .setStreamsEnabled(true);
 
   RootedObject global(cx, JS_NewGlobalObject(cx, &global_class, nullptr, JS::FireOnNewGlobalHook,
                                              options));

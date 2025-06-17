@@ -1,0 +1,31 @@
+diff --git a/tools/codecbench.cpp b/tools/codecbench.cpp
+index 350cb9c..5ca39a0 100644
+--- a/tools/codecbench.cpp
++++ b/tools/codecbench.cpp
+@@ -1,4 +1,5 @@
+ #include "../src/meshoptimizer.h"
++#include "../sightglass.h"
+ 
+ #include <vector>
+ 
+@@ -212,13 +213,18 @@ int main(int argc, char** argv)
+ 		}
+ 	}
+ 
++        bench_start();
++
+ 	double bestvd = 0, bestid = 0;
+ 	benchCodecs(vertices, indices, bestvd, bestid, verbose);
+ 
+ 	double besto8 = 0, besto12 = 0, bestq12 = 0, bestexp = 0;
+ 	benchFilters(8 * N * N, besto8, besto12, bestq12, bestexp, verbose);
+ 
++        bench_end();
++
+ 	printf("Algorithm   :\tvtx\tidx\toct8\toct12\tquat12\texp\n");
+-	printf("Score (GB/s):\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
+-	       bestvd, bestid, besto8, besto12, bestq12, bestexp);
++        if (verbose)
++          printf("Score (GB/s):\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",
++                 bestvd, bestid, besto8, besto12, bestq12, bestexp);
+ }

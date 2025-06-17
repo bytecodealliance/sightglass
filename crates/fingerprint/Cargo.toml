@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0"
-bytesize = "1.1"
+bytesize = "2.0"
 hostname = "0.3"
 log = "0.4"
 os_info = "3.2"
@@ -15,4 +15,4 @@ regex = "1.5"
 serde = { version = "1.0.136", features = ["derive"] }
 sha2 = "0.10"
 sightglass-build = { path = "../build" }
-sysinfo = "0.23"
+sysinfo = "0.28"

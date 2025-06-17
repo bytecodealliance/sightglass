@@ -1,0 +1,11 @@
+[package]
+name = "benchmark"
+version = "0.1.0"
+authors = ["Jamey Sharp <jsharp@fastly.com>"]
+edition = "2021"
+
+[dependencies]
+blind-rsa-signatures = "0.14.1"
+sightglass-api = "0.1.0"
+
+[workspace]

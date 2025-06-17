@@ -39,9 +39,12 @@ record its execution, it must:
   `bench.start` has already been called. This is when the benchmark runner will
   stop recording execution time and performance counters.
 
-* Provide reproducible builds via Docker.
+* Provide reproducible builds via Docker (see [`build.sh`](./build.sh)).
 
-* Be located at `sightglass/benchmarks/$BENCHMARK_NAME/benchmark.wasm`
+* Be located in a `sightglass/benchmarks/$BENCHMARK_NAME` directory. Typically
+  the benchmark is named `benchmark.wasm`, but benchmarks with multiple files
+  should use names like `<benchmark name>-<subtest name>.wasm` (e.g.,
+  `libsodium-chacha20.wasm`).
 
 * Input workloads must be files that live in the same directory as the `.wasm`
   benchmark program. The benchmark program is run within the directory where it
@@ -52,20 +55,46 @@ record its execution, it must:
   should live at `sightglass/benchmarks/$BENCHMARK_NAME/input.json`, and it
   should open that file as `"./input.json"`.
 
-* Define the expected `stdout` output in a `./stdout.expected` sibling file
-  located next to the `benchmark.wasm` file. The runner will assert that the
-  actual execution's output matches the expectation.
+* Define the expected `stdout` output in a `./<benchmark name>.stdout.expected`
+  sibling file located next to the `benchmark.wasm` file (e.g.,
+  `benchmark.stdout.expected`). The runner will assert that the actual
+  execution's output matches the expectation.
 
-* Define the expected `stderr` output in a `./stderr.expected` sibling file
-  located next to the `benchmark.wasm` file. The runner will assert that the
-  actual execution's output matches the expectation.
+* Define the expected `stderr` output in a `./<benchmark name>.stderr.expected`
+  sibling file located next to the `benchmark.wasm` file. The runner will assert
+  that the actual execution's output matches the expectation.
 
-Many of the above requirements can be checked by running the `.wasm` file through
-the `validate` command:
+Many of the above requirements can be checked by running the `.wasm` file
+through the `validate` command:
 
 ```
-$ cargo run -p sightglass-cli -- validate path/to/benchmark.wasm
+$ cargo run -- validate path/to/benchmark.wasm
 ```
+
+## Compatibility Requirements for Native Execution
+
+Sightglass can also measure the performance of a subset of benchmarks compiled
+to native code (i.e., not WebAssembly). To compile these benchmarks without
+changing their source code, this involves a delicate interface with the [native
+engine] with some additional requirements beyond the [Minimal Technical
+Requirements] noted above:
+
+[native engine]: ../engines/native
+[Minimal Technical Requirements]: #minimal-technical-requirements
+
+* Generate an ELF shared library linked to the [native engine] shared library to
+  provide definitions for `bench_start` and `bench_end`.
+
+* Rename the `main` function to `native_entry`. For C- and C++-based source this
+  can be done with a simple define directive passed to `cc` (e.g.,
+  `-Dmain=native_entry`).
+
+* Provide reproducible builds via a `Dockerfile.native` file (see
+  [`build-native.sh`](./build-native.sh)).
+
+Note that support for native execution is optional: adding a WebAssembly
+benchmark does not imply the need to support its native equivalent &mdash; CI
+will not fail if it is not included.
 
 ## Additional Requirements
 

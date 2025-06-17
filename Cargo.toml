@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "crates/analysis",
     "crates/api",
@@ -11,4 +12,27 @@ members = [
 ]
 default-members = [
     "crates/cli"
+]
+exclude = [
+    "benchmarks/shootout-ackermann",
+    "benchmarks/shootout-base64",
+    "benchmarks/shootout-ctype",
+    "benchmarks/shootout-ed25519",
+    "benchmarks/shootout-fib2",
+    "benchmarks/shootout-gimli",
+    "benchmarks/shootout-heapsort",
+    "benchmarks/shootout-keccak",
+    "benchmarks/shootout-matrix",
+    "benchmarks/shootout-memmove",
+    "benchmarks/shootout-minicsv",
+    "benchmarks/shootout-netstedloop",
+    "benchmarks/shootout-random",
+    "benchmarks/shootout-ratelimit",
+    "benchmarks/shootout-seqhash",
+    "benchmarks/shootout-sieve",
+    "benchmarks/shootout-switch",
+    "benchmarks/shootout-xblabla20",
+    "benchmarks/shootout-xchacha20",
+    "benchmarks/tract-onnx-image-classification",
+    "engines/native/libengine",
 ]

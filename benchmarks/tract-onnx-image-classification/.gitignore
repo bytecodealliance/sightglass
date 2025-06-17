@@ -1,0 +1,3 @@
+/rust-benchmark/target
+/rust-benchmark/Cargo.lock
+/assets/mobilenetv2-7.onnx
