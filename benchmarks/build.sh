@@ -45,7 +45,7 @@ print_header "Verify benchmark"
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
 SIGHTGLASS_CARGO_TOML=$(dirname $SCRIPT_DIR)/Cargo.toml
 for WASM in $TMP_BENCHMARK/*.wasm; do
-    # (set -x; cargo run --manifest-path $SIGHTGLASS_CARGO_TOML --quiet -- validate $WASM)
+    (set -x; cargo run --manifest-path $SIGHTGLASS_CARGO_TOML --quiet -- validate $WASM)
     (set -x; mv $WASM $BENCHMARK_DIR/)
 done;
 
