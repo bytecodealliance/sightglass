@@ -6,7 +6,7 @@ use std::io::Write;
 /// Summarize measurements grouped by: architecture, engine, benchmark file, phase and event.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
-    for k in KeyBuilder::all().keys(&measurements) {
+    for k in KeyBuilder::all().keys(measurements) {
         let mut grouped_counts: Vec<_> = measurements
             .iter()
             .filter(|m| k.matches(m))

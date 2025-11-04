@@ -77,7 +77,7 @@ impl<'a> UploadMeasurement<'a> {
     ) -> Self {
         let engine = engines.get(measurement.engine.as_ref()).unwrap().as_ref();
         let benchmark = benchmarks.get(measurement.wasm.as_ref()).unwrap().as_ref();
-        Self::convert(&machine, engine, benchmark, datetime, measurement)
+        Self::convert(machine, engine, benchmark, datetime, measurement)
     }
 }
 

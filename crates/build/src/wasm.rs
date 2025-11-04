@@ -12,7 +12,6 @@ use std::{
 };
 use thiserror::Error;
 use wasmparser::{Import, Payload, TypeRef};
-use wasmprinter;
 
 pub struct WasmBenchmark(PathBuf);
 
@@ -30,31 +29,33 @@ impl WasmBenchmark {
     pub fn is_valid(&self) -> Result<(), ValidationError> {
         // Check that the file actually exists.
         if !self.0.exists() {
-            return ValidationErrorKind::DoesNotExist.with(&self);
+            return ValidationErrorKind::DoesNotExist.with(self);
         }
 
         // Check that the contents are readable.
         let bytes = match fs::read(&self.0) {
             Ok(b) => b,
             Err(_) => {
-                return ValidationErrorKind::Unreadable.with(&self);
+                return ValidationErrorKind::Unreadable.with(self);
             }
         };
 
         // Check that it contains valid Wasm.
-        let mut features = wasmparser::WasmFeatures::default();
-        features.simd = true;
+        let features = wasmparser::WasmFeatures {
+            simd: true,
+            ..Default::default()
+        };
         let mut validator = wasmparser::Validator::new_with_features(features);
-        if let Err(_) = validator.validate_all(&bytes) {
-            return ValidationErrorKind::InvalidWasm.with(&self);
+        if validator.validate_all(&bytes).is_err() {
+            return ValidationErrorKind::InvalidWasm.with(self);
         }
 
         // Check that it has the expected imports/exports.
         if !has_import_function(&bytes, "bench", "start").unwrap() {
-            return ValidationErrorKind::MissingImport("bench.end").with(&self);
+            return ValidationErrorKind::MissingImport("bench.start").with(self);
         }
         if !has_import_function(&bytes, "bench", "end").unwrap() {
-            return ValidationErrorKind::MissingImport("bench.end").with(&self);
+            return ValidationErrorKind::MissingImport("bench.end").with(self);
         }
 
         Ok(())
@@ -80,7 +81,7 @@ impl WasmBenchmark {
         ));
         let mut file = File::create(&wat)?;
         file.write_all(wasmprinter::print_file(&self.0)?.as_bytes())?;
-        file.write(&['\n' as u8])?; // Append a newline on the end.
+        file.write_all(b"\n")?; // Append a newline on the end.
         Ok(wat)
     }
 }
@@ -91,9 +92,9 @@ impl AsRef<Path> for WasmBenchmark {
     }
 }
 
-impl Into<PathBuf> for WasmBenchmark {
-    fn into(self) -> PathBuf {
-        self.0
+impl From<WasmBenchmark> for PathBuf {
+    fn from(val: WasmBenchmark) -> Self {
+        val.0
     }
 }
 
@@ -134,25 +135,20 @@ impl Display for WasmBenchmark {
 
 fn has_import_function(bytes: &[u8], expected_module: &str, expected_field: &str) -> Result<bool> {
     let parser = wasmparser::Parser::new(0);
-    for payload in parser.parse_all(&bytes) {
-        match payload? {
-            Payload::ImportSection(imports) => {
-                for import in imports {
-                    match import? {
-                        Import {
-                            module,
-                            name: field,
-                            ty: TypeRef::Func(_),
-                        } => {
-                            if module == expected_module && field == expected_field {
-                                return Ok(true);
-                            }
-                        }
-                        _ => {}
+    for payload in parser.parse_all(bytes) {
+        if let Payload::ImportSection(imports) = payload? {
+            for import in imports {
+                if let Import {
+                    module,
+                    name: field,
+                    ty: TypeRef::Func(_),
+                } = import?
+                {
+                    if module == expected_module && field == expected_field {
+                        return Ok(true);
                     }
                 }
             }
-            _ => {}
         }
     }
     Ok(false)

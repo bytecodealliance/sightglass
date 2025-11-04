@@ -8,6 +8,12 @@ use sightglass_data::Phase;
 /// Measure CPU counters.
 pub struct InstsRetiredMeasure(Counter);
 
+impl Default for InstsRetiredMeasure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InstsRetiredMeasure {
     pub fn new() -> Self {
         let counter = Builder::new().kind(Hardware::INSTRUCTIONS).build().expect(

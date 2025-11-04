@@ -14,7 +14,7 @@ fn fingerprint_machine() {
         .assert();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
+    eprintln!("=== stdout ===\n{stdout}\n===========");
     assert!(serde_json::from_str::<Machine>(stdout).is_ok());
 }
 
@@ -30,7 +30,7 @@ fn fingerprint_benchmark() {
         .assert();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
+    eprintln!("=== stdout ===\n{stdout}\n===========");
     let mut reader = csv::Reader::from_reader(stdout.as_bytes());
     for measurement in reader.deserialize::<Benchmark>() {
         drop(measurement.unwrap());
@@ -58,7 +58,7 @@ fn fingerprint_engine() {
         .assert();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
+    eprintln!("=== stdout ===\n{stdout}\n===========");
     let mut reader = csv::Reader::from_reader(stdout.as_bytes());
     for measurement in reader.deserialize::<Benchmark>() {
         drop(measurement.unwrap());
@@ -73,7 +73,7 @@ fn fingerprint_engine() {
                 .and(contains(r#""id":"wasmtime-"#))
                 .and(contains(r#""name":"wasmtime""#))
                 .and(contains(r#""datetime":"20"#))
-                .and(contains(format!(r#""path":"{}""#, escaped_engine_path)))
+                .and(contains(format!(r#""path":"{escaped_engine_path}""#)))
                 .and(contains(r#""buildinfo":"NAME=wasmtime"#))
                 .and(ends_with("}")),
         )

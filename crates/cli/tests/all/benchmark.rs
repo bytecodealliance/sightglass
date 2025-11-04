@@ -81,7 +81,7 @@ fn benchmark_json() {
         .assert();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
+    eprintln!("=== stdout ===\n{stdout}\n===========");
     assert!(serde_json::from_str::<serde_json::Value>(stdout).is_ok());
 
     assert
@@ -109,7 +109,7 @@ fn benchmark_csv() {
         .assert();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    eprintln!("=== stdout ===\n{}\n===========", stdout);
+    eprintln!("=== stdout ===\n{stdout}\n===========");
     let mut reader = csv::Reader::from_reader(stdout.as_bytes());
     for measurement in reader.deserialize::<Measurement<'_>>() {
         drop(measurement.unwrap());
@@ -174,12 +174,12 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .assert()
         .success()
         .stdout(
-            predicate::str::contains(&format!("compilation :: cycles :: {}", benchmark("noop")))
-                .and(predicate::str::contains(&format!(
+            predicate::str::contains(format!("compilation :: cycles :: {}", benchmark("noop")))
+                .and(predicate::str::contains(format!(
                     "instantiation :: cycles :: {}",
                     benchmark("noop")
                 )))
-                .and(predicate::str::contains(&format!(
+                .and(predicate::str::contains(format!(
                     "execution :: cycles :: {}",
                     benchmark("noop")
                 )))

@@ -81,8 +81,8 @@ pub fn get_buildinfo_path_from_engine_path(engine_path: &Path) -> Result<PathBuf
 
 /// Calculate the path to a built engine's BUILD-INFO file.
 pub fn extract_value_from_buildinfo(buildinfo: &str, key: &str) -> Option<String> {
-    let re = Regex::new(&format!("(?m)^ *{} *= *([[[:alnum:]]-_:]+) *", key)).unwrap();
-    for cap in re.captures_iter(buildinfo) {
+    let re = Regex::new(&format!("(?m)^ *{key} *= *([[[:alnum:]]-_:]+) *")).unwrap();
+    if let Some(cap) = re.captures_iter(buildinfo).next() {
         return Some(cap[1].to_string());
     }
     None

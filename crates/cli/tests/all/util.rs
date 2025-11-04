@@ -24,7 +24,6 @@ pub fn test_engine() -> PathBuf {
         BUILD_WASMTIME.call_once(|| {
             if engine_path.is_file() {
                 // Use the already built engine library.
-                return;
             } else {
                 // Use this instead of `eprintln!` to avoid `cargo test`'s stdio
                 // capturing.
@@ -67,5 +66,5 @@ pub fn sightglass_cli_benchmark() -> Command {
 
 /// Get the benchmark path for the benchmark with the given name.
 pub fn benchmark(benchmark_name: &str) -> String {
-    format!("../../benchmarks/{}/benchmark.wasm", benchmark_name).into()
+    format!("../../benchmarks/{benchmark_name}/benchmark.wasm")
 }

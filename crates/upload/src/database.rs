@@ -34,7 +34,7 @@ impl Database {
     }
 
     /// Retrieve an object from the database, if it exists.
-    pub fn get<'a, T>(&self, index: &str, id: &str) -> Result<T>
+    pub fn get<T>(&self, index: &str, id: &str) -> Result<T>
     where
         T: DeserializeOwned,
     {
@@ -56,7 +56,7 @@ impl Database {
     ///     return the ID without creating a new database entry
     ///  3. if the ID is used and the existing object does not match `object`,
     ///     append a `!` to the ID and retry (up to 5 times).
-    pub fn create_if_not_exists<'a, T>(&self, index: &str, object: &T, id: &str) -> Result<String>
+    pub fn create_if_not_exists<T>(&self, index: &str, object: &T, id: &str) -> Result<String>
     where
         T: DeserializeOwned + Serialize + PartialEq,
     {
@@ -90,7 +90,7 @@ impl Database {
     where
         T: Serialize,
     {
-        log::debug!("Creating record in '{}' with ID {:?}", index, id);
+        log::debug!("Creating record in '{index}' with ID {id:?}");
         let url = if let Some(id) = id {
             format!("{}/{}/_doc/{}", self.url, index, id)
         } else {
@@ -116,7 +116,7 @@ impl Database {
 
             let success = response.status().is_success();
             let content: HashMap<String, Value> = serde_json::from_slice(&response.bytes()?)?;
-            log::debug!("ElasticSearch response: {:?}", content);
+            log::debug!("ElasticSearch response: {content:?}");
 
             if success {
                 let id = content.get("_id").unwrap().as_str().unwrap().to_string();
@@ -160,7 +160,7 @@ impl Database {
 
             let success = response.status().is_success();
             let content: HashMap<String, Value> = serde_json::from_slice(&response.bytes()?)?;
-            log::debug!("ElasticSearch response: {:?}", content);
+            log::debug!("ElasticSearch response: {content:?}");
 
             if success {
                 Ok(())

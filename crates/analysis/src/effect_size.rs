@@ -18,7 +18,7 @@ pub fn calculate<'a>(
     measurements: &[Measurement<'a>],
 ) -> Result<Vec<EffectSize<'a>>> {
     anyhow::ensure!(
-        0.0 <= significance_level && significance_level <= 1.0,
+        (0.0..=1.0).contains(&significance_level),
         "The significance_level must be between 0.0 and 1.0. \
              Typical values are 0.05 and 0.01 (i.e. 95% and 99% confidence). \
              Found {}.",

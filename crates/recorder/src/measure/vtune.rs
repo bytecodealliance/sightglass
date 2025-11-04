@@ -17,6 +17,12 @@ lazy_static! {
 
 pub struct VTuneMeasure(Option<Task<'static>>);
 
+impl Default for VTuneMeasure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl VTuneMeasure {
     pub fn new() -> Self {
         Self(None)
