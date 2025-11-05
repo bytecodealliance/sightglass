@@ -53,3 +53,5 @@ jobs:
 
     - name: Test all
       run: cargo test --verbose --all
+      env:
+        RUST_BACKTRACE: 1
