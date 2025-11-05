@@ -11,9 +11,7 @@ env:
   CARGO_TERM_COLOR: always
   RUST_LOG: info
 
-  # The Wasmtime commit that we build the bench API from for testing. Bumping
-  # this will automatically cause us to update our CI cache on the next run.
-  WASMTIME_COMMIT: "a2e71dafac4d2e42ed6edbc77081d39a40f4c3ff"
+  REVISION: "v38.0.3"
 
 jobs:
   format:
@@ -33,23 +31,25 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v4
-    - run: rustup update nightly
+    - run: rustup update
     - name: Download Cached Wasmtime engine
       uses: actions/cache@v4
       id: wasmtime-cache
       with:
         path: engines/wasmtime/*
-        key: wasmtime-${{ runner.os }}-${{ env.WASMTIME_COMMIT }}
+        key: wasmtime-${{ runner.os }}-${{ env.REVISION }}
 
     - name: Build Wasmtime engine
       if: steps.wasmtime-cache.outputs.cache-hit != 'true'
       working-directory: ./engines/wasmtime
+      env:
+        REVISION: ${{ env.REVISION }}
       run: |
            rustc build.rs
            ./build
 
     - name: Build all
-      run: cargo +nightly build --verbose --all
+      run: cargo build --verbose --all
 
     - name: Test all
-      run: cargo +nightly test --verbose --all
+      run: cargo test --verbose --all
