@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0"
 libloading = "0.7"
 log = "0.4"
-precision = "0.1.15"
+precision = { git = "https://github.com/posborne/rust-precision.git", branch = "target-stable-asm" }
 serde = { version = "1.0.118", features = ["derive"] }
 sightglass-build = { path = "../build" }
 sightglass-data = { path = "../data" }
