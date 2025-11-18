@@ -118,3 +118,7 @@ shootout/shootout-xblabla20.wasm
 shootout/shootout-xchacha20.wasm
 spidermonkey/benchmark.wasm
 tract-onnx-image-classification/benchmark.wasm
+richards/benchmark.wasm
+gcc-loops/benchmark.wasm
+quicksort/benchmark.wasm
+hashset/benchmark.wasm
