@@ -9,9 +9,9 @@ RUN wget https://ziglang.org/download/0.12.0/zig-linux-x86_64-0.12.0.tar.xz
 RUN tar --extract --verbose --file=zig-linux-x86_64-0.12.0.tar.xz
 ENV PATH="${PATH}:/zig-linux-x86_64-0.12.0"
 RUN echo "zig version = $(zig version)"
-RUN wget https://github.com/jedisct1/libsodium/archive/stable.zip
-RUN unzip stable.zip
-RUN mv /libsodium-stable /libsodium
+RUN wget https://github.com/jedisct1/libsodium/releases/download/1.0.20-RELEASE/libsodium-1.0.20.tar.gz
+RUN tar -xzf libsodium-1.0.20.tar.gz
+RUN mv /libsodium-1.0.20 /libsodium
 
 # Build the benchmarks. Note how we patch the self-timing code with calls to the
 # Sightglass `bench_start()` and `bench_end()` functions. Also note that each

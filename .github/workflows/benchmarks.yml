@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         # for now, limit this a bit
-        revision: ["main", "v25.0.0"]
+        revision: ["main", "v38.0.3"]
     env:
       REVISION: ${{ matrix.revision }}
     steps:
@@ -76,7 +76,7 @@ jobs:
       run: |
         cargo run benchmark \
         --engine=artifacts/wasmtime-main/libengine.so \
-        --engine=artifacts/wasmtime-v25.0.0/libengine.so \
+        --engine=artifacts/wasmtime-v38.0.3/libengine.so \
         --processes=4 \
         --iterations-per-process=1 \
         -- "${PARTITION_SUITE}"

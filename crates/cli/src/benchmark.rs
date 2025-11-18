@@ -398,7 +398,10 @@ impl BenchmarkCommand {
 
             anyhow::ensure!(
                 output.status.success(),
-                "benchmark subprocess did not exit successfully"
+                "benchmark subprocess did not exit successfully: {}\nstderr: {}\nstdout: {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr),
+                String::from_utf8_lossy(&output.stdout)
             );
 
             eprintln!(".");
