@@ -30,7 +30,7 @@ impl Format {
     }
 
     /// Read a list of `T` using the selected format.
-    pub fn read<'de, T, R>(&self, reader: R) -> Result<Vec<T>>
+    pub fn read<T, R>(&self, reader: R) -> Result<Vec<T>>
     where
         R: Read + Sized,
         T: DeserializeOwned,
@@ -52,7 +52,7 @@ impl Format {
         T: Serialize,
         W: Write + Sized,
     {
-        Ok(match self {
+        match self {
             Format::Json => serde_json::to_writer(writer, objects)?,
             Format::Csv { headers } => {
                 let mut csv = csv::WriterBuilder::new()
@@ -63,7 +63,8 @@ impl Format {
                 }
                 csv.flush()?;
             }
-        })
+        };
+        Ok(())
     }
 
     /// Write a list of `T` using the selected format.
@@ -72,7 +73,7 @@ impl Format {
         T: Serialize,
         W: Write + Sized,
     {
-        Ok(match self {
+        match self {
             Format::Json => serde_json::to_writer(writer, &object)?,
             Format::Csv { headers } => {
                 let mut csv = csv::WriterBuilder::new()
@@ -81,7 +82,8 @@ impl Format {
                 csv.serialize(&object)?;
                 csv.flush()?;
             }
-        })
+        };
+        Ok(())
     }
 }
 

@@ -19,6 +19,12 @@ lazy_static! {
 
 pub struct CycleMeasure(Option<Timestamp>);
 
+impl Default for CycleMeasure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CycleMeasure {
     pub fn new() -> Self {
         Self(None)

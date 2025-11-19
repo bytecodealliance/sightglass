@@ -78,6 +78,7 @@ impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
     /// Construct a new engine from the given `BenchApi`.
     // NB: take a mutable reference to the `BenchApi` so that no one else can
     // call its API methods out of order.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         bench_api: &'a mut BenchApi<'b>,
         working_dir: &Path,

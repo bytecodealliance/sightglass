@@ -25,7 +25,7 @@ pub struct BenchmarkCommand {
     /// The path to the file(s) to benchmark. This accepts one or more:
     ///
     /// - `*.wasm` files: individual benchmarks that meet the requirements
-    /// outlined in `benchmarks/README.md`
+    ///   outlined in `benchmarks/README.md`
     ///
     /// - `*.suite` files: a file containing a newline-delimited list of
     ///   benchmarks to execute. A `*.suite` file may contain `#`-prefixed line
@@ -180,7 +180,7 @@ impl BenchmarkCommand {
                 log::info!("Using working directory: {}", working_dir.display());
 
                 // Read the Wasm bytes.
-                let bytes = fs::read(&wasm_file).context("Attempting to read Wasm bytes")?;
+                let bytes = fs::read(wasm_file).context("Attempting to read Wasm bytes")?;
                 log::debug!("Wasm benchmark size: {} bytes", bytes.len());
 
                 let wasm_hash = {
@@ -296,11 +296,11 @@ impl BenchmarkCommand {
             .with_context(|| "expected the benchmark file to have an extension")?
             .to_str()
             .with_context(|| "expected the benchmark file to have a printable name")?;
-        let mut stdout_expected = wasm_file_dir.join(format!("{}.stdout.expected", benchmark_name));
+        let mut stdout_expected = wasm_file_dir.join(format!("{benchmark_name}.stdout.expected"));
         if !stdout_expected.exists() {
             stdout_expected = wasm_file_dir.join("default.stdout.expected");
         }
-        let mut stderr_expected = wasm_file_dir.join(format!("{}.stderr.expected", benchmark_name));
+        let mut stderr_expected = wasm_file_dir.join(format!("{benchmark_name}.stderr.expected"));
         if !stderr_expected.exists() {
             stderr_expected = wasm_file_dir.join("default.stderr.expected");
         }
@@ -365,8 +365,7 @@ impl BenchmarkCommand {
                 .args(
                     self.measures
                         .iter()
-                        .map(|m| ["--measure".to_string(), m.to_string()])
-                        .flatten(),
+                        .flat_map(|m| ["--measure".to_string(), m.to_string()]),
                 )
                 .arg("--raw")
                 .arg("--output-format")
@@ -387,7 +386,7 @@ impl BenchmarkCommand {
             }
 
             if let Some(flags) = &self.engine_flags {
-                command.arg(format!("--engine-flags={}", flags));
+                command.arg(format!("--engine-flags={flags}"));
             }
 
             command.arg("--").arg(&wasm);
@@ -500,7 +499,7 @@ pub fn check_engine_path(engine: &str) -> Result<PathBuf> {
 /// `stderr`) is the same as the `expected` output.
 fn compare_output_file(wasm: &Path, actual: &Path, expected: &Path) -> Result<()> {
     if expected.exists() {
-        let expected_data = std::fs::read_to_string(&expected)
+        let expected_data = std::fs::read_to_string(expected)
             .with_context(|| format!("failed to read `{}`", expected.display()))?;
         let stdout_actual_data = std::fs::read_to_string(actual)
             .with_context(|| format!("failed to read `{}`", actual.display()))?;
@@ -540,7 +539,7 @@ mod tests {
         display_summaries(&measurements, &mut output)?;
 
         let actual = String::from_utf8(output)?;
-        eprintln!("=== Actual ===\n{}", actual);
+        eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
 compilation
@@ -574,7 +573,7 @@ execution
       [3556483 3729210.70 4349778] /tmp/old_backend_2.so
       [3639688 4025470.30 5782529] /tmp/old_backend_3.so
 "#;
-        eprintln!("=== Expected ===\n{}", expected);
+        eprintln!("=== Expected ===\n{expected}");
 
         assert_eq!(actual.trim(), expected.trim());
         Ok(())
@@ -589,7 +588,7 @@ execution
         display_effect_size(&measurements, 0.05, &mut output)?;
 
         let actual = String::from_utf8(output)?;
-        eprintln!("=== Actual ===\n{}", actual);
+        eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
 compilation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
@@ -642,7 +641,7 @@ instantiation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
   [65929 71540.70 112190] new_backend.so
   [61849 69023.59 115015] old_backend.so
 "#;
-        eprintln!("=== Expected ===\n{}", expected);
+        eprintln!("=== Expected ===\n{expected}");
 
         assert_eq!(actual.trim(), expected.trim());
         Ok(())

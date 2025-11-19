@@ -24,7 +24,7 @@ pub(crate) fn hexify(bytes: &[u8]) -> String {
     use std::fmt::Write;
     let mut s = String::new();
     for byte in bytes {
-        write!(&mut s, "{:x}", byte).expect("unable to write byte as hex");
+        write!(&mut s, "{byte:x}").expect("unable to write byte as hex");
     }
     s
 }

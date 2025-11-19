@@ -22,7 +22,7 @@ fn upload_dryrun() {
 
     // Gather up the logged output from stderr.
     let stderr = std::str::from_utf8(&assert.get_output().stderr).unwrap();
-    eprintln!("=== stderr ===\n{}\n===========", stderr);
+    eprintln!("=== stderr ===\n{stderr}\n===========");
 
     // Gather the fingerprints of the system under test.
     let engine = sightglass_fingerprint::Engine::fingerprint(test_engine()).unwrap();

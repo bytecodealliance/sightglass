@@ -94,11 +94,11 @@ pub struct Key<'a> {
 impl Key<'_> {
     /// Does the given measurement match this key?
     pub fn matches(&self, m: &Measurement) -> bool {
-        self.arch.as_ref().map_or(true, |x| *x == m.arch)
-            && self.engine.as_ref().map_or(true, |x| *x == m.engine)
-            && self.wasm.as_ref().map_or(true, |x| *x == m.wasm)
-            && self.phase.as_ref().map_or(true, |x| *x == m.phase)
-            && self.event.as_ref().map_or(true, |x| *x == m.event)
+        self.arch.as_ref().is_none_or(|x| *x == m.arch)
+            && self.engine.as_ref().is_none_or(|x| *x == m.engine)
+            && self.wasm.as_ref().is_none_or(|x| *x == m.wasm)
+            && self.phase.as_ref().is_none_or(|x| *x == m.phase)
+            && self.event.as_ref().is_none_or(|x| *x == m.event)
     }
 }
 

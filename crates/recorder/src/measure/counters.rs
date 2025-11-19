@@ -21,6 +21,12 @@ pub struct CounterMeasure {
     task_clock: Counter,
 }
 
+impl Default for CounterMeasure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CounterMeasure {
     pub fn new() -> Self {
         let mut group = Group::new().expect(

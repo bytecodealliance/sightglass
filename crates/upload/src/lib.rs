@@ -123,7 +123,7 @@ pub fn upload_package(
     // Insert all of the measurements.
     for batch in package.measurements.chunks(batch_size) {
         let batch = batch
-            .into_iter()
+            .iter()
             .map(|m| {
                 UploadMeasurement::map_and_convert(
                     &machine,

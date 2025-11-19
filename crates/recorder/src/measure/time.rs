@@ -10,6 +10,12 @@ use sightglass_data::Phase;
 
 pub struct TimeMeasure(Option<Instant>);
 
+impl Default for TimeMeasure {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TimeMeasure {
     pub fn new() -> Self {
         Self(None)

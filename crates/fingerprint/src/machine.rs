@@ -62,10 +62,7 @@ impl Machine {
             .to_string();
 
         // Hash all properties into a unique identifier.
-        let hash = hash::string(&format!(
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            name, arch, os, kernel, cpu, memory
-        ));
+        let hash = hash::string(&format!("{name}\n{arch}\n{os}\n{kernel}\n{cpu}\n{memory}"));
         let id = format!(
             "{}-{}-{}",
             env::consts::ARCH,
