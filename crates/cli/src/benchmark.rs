@@ -209,7 +209,12 @@ impl BenchmarkCommand {
                 let stderr = Path::new(&stderr);
                 let stdin = None;
 
-                let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
+                let mut measurements = Measurements::with_flags(
+                    this_arch(),
+                    engine_name,
+                    wasm_file,
+                    self.engine_flags.as_deref(),
+                );
                 let mut measure = if self.measures.len() <= 1 {
                     let measure = self.measures.first().unwrap_or(&MeasureType::Cycles);
                     measure.build()

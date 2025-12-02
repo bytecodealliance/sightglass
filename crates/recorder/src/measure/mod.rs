@@ -10,6 +10,7 @@ pub struct Measurements<'a> {
     arch: &'a str,
     engine: &'a str,
     wasm: &'a str,
+    engine_flags: Option<&'a str>,
     process: u32,
     iteration: u32,
     measurements: Vec<Measurement<'a>>,
@@ -22,6 +23,25 @@ impl<'a> Measurements<'a> {
             arch,
             engine,
             wasm,
+            engine_flags: None,
+            process: std::process::id(),
+            iteration: 0,
+            measurements: vec![],
+        }
+    }
+
+    /// Construct a new `Measurements` with engine flags.
+    pub fn with_flags(
+        arch: &'a str,
+        engine: &'a str,
+        wasm: &'a str,
+        engine_flags: Option<&'a str>,
+    ) -> Self {
+        Measurements {
+            arch,
+            engine,
+            wasm,
+            engine_flags,
             process: std::process::id(),
             iteration: 0,
             measurements: vec![],
@@ -50,6 +70,7 @@ impl<'a> Measurements<'a> {
             phase,
             event,
             count,
+            engine_flags: self.engine_flags.map(|flags| flags.into()),
         });
     }
 

@@ -52,6 +52,12 @@ pub struct Measurement<'a> {
     /// of microseconds if the event is wall time, or it might be a count of
     /// instructions if the event is instructions retired.
     pub count: u64,
+
+    /// The engine-specific flags used when recording this measurement.
+    /// This allows disambiguation when the same engine is used with different
+    /// configurations.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine_flags: Option<Cow<'a, str>>,
 }
 
 /// A phase in a Wasm program's lifecycle.
