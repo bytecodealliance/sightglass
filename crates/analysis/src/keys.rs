@@ -6,6 +6,7 @@ use std::{borrow::Cow, collections::BTreeSet};
 pub struct KeyBuilder {
     arch: bool,
     engine: bool,
+    engine_flags: bool,
     wasm: bool,
     phase: bool,
     event: bool,
@@ -20,6 +21,7 @@ impl KeyBuilder {
             wasm: true,
             phase: true,
             event: true,
+            engine_flags: true,
         }
     }
 
@@ -31,6 +33,7 @@ impl KeyBuilder {
             wasm: false,
             phase: false,
             event: false,
+            engine_flags: false,
         }
     }
 
@@ -49,6 +52,12 @@ impl KeyBuilder {
     /// Whether to group keys by wasm or not.
     pub fn wasm(mut self, wasm: bool) -> Self {
         self.wasm = wasm;
+        self
+    }
+
+    /// Whether to group keys by engine flags or not.
+    pub fn engine_flags(mut self, engine_flags: bool) -> Self {
+        self.engine_flags = engine_flags;
         self
     }
 
@@ -72,6 +81,11 @@ impl KeyBuilder {
             .map(|m| Key {
                 arch: if self.arch { Some(m.arch) } else { None },
                 engine: if self.engine { Some(m.engine) } else { None },
+                engine_flags: if self.engine_flags {
+                    m.engine_flags
+                } else {
+                    None
+                },
                 wasm: if self.wasm { Some(m.wasm) } else { None },
                 phase: if self.phase { Some(m.phase) } else { None },
                 event: if self.event { Some(m.event) } else { None },
@@ -89,6 +103,7 @@ pub struct Key<'a> {
     pub wasm: Option<Cow<'a, str>>,
     pub phase: Option<Phase>,
     pub event: Option<Cow<'a, str>>,
+    pub engine_flags: Option<Cow<'a, str>>,
 }
 
 impl Key<'_> {
@@ -99,6 +114,10 @@ impl Key<'_> {
             && self.wasm.as_ref().is_none_or(|x| *x == m.wasm)
             && self.phase.as_ref().is_none_or(|x| *x == m.phase)
             && self.event.as_ref().is_none_or(|x| *x == m.event)
+            && self
+                .engine_flags
+                .as_ref()
+                .is_none_or(|x| Some(x) == m.engine_flags.as_ref())
     }
 }
 
@@ -115,6 +134,7 @@ mod tests {
             wasm: Some("bench.wasm".into()),
             phase: Some(Phase::Compilation),
             event: Some("cycles".into()),
+            engine_flags: Some("-Wfoo=bar".into()),
         };
 
         // More test cases are needed, but this provides a sanity check for the matched key and
@@ -128,7 +148,7 @@ mod tests {
             phase: Phase::Compilation,
             event: "cycles".into(),
             count: 42,
-            engine_flags: None,
+            engine_flags: Some("-Wfoo=bar".into()),
         }));
     }
 }

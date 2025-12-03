@@ -108,6 +108,9 @@ pub struct Summary<'a> {
     /// record this measurement.
     pub engine: Cow<'a, str>,
 
+    /// The flags, if any, used to record this measurement.
+    pub engine_flags: Option<Cow<'a, str>>,
+
     /// The file path of the Wasm benchmark program.
     pub wasm: Cow<'a, str>,
 
@@ -164,6 +167,13 @@ pub struct EffectSize<'a> {
     /// to record this measurement.
     pub a_engine: Cow<'a, str>,
 
+    /// The first engine flags being compared.
+    ///
+    /// When provided, this is a string capturing the engine flags passed
+    /// to the benchmark invocation that are in turn used to configure
+    /// wasmtime/cranelift.
+    pub a_engine_flags: Option<Cow<'a, str>>,
+
     /// The first engine's result's arithmetic mean of the `count` field.
     pub a_mean: f64,
 
@@ -172,6 +182,13 @@ pub struct EffectSize<'a> {
     /// This is the file path of the wasmtime benchmark API shared library used
     /// to record this measurement.
     pub b_engine: Cow<'a, str>,
+
+    /// The second engine flags being compared.
+    ///
+    /// When provided, this is a string capturing the engine flags passed
+    /// to the benchmark invocation that are in turn used to configure
+    /// wasmtime/cranelift.
+    pub b_engine_flags: Option<Cow<'a, str>>,
 
     /// The second engine's result's arithmetic mean of the `count` field.
     pub b_mean: f64,

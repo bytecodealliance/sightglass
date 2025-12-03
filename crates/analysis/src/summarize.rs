@@ -3,7 +3,7 @@ use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
 use std::io::Write;
 
-/// Summarize measurements grouped by: architecture, engine, benchmark file, phase and event.
+/// Summarize measurements grouped by: architecture, engine, flags, benchmark file, phase and event.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
     for k in KeyBuilder::all().keys(measurements) {
@@ -15,6 +15,7 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
         summaries.push(Summary {
             arch: k.arch.unwrap(),
             engine: k.engine.unwrap(),
+            engine_flags: k.engine_flags,
             wasm: k.wasm.unwrap(),
             phase: k.phase.unwrap(),
             event: k.event.unwrap(),
@@ -69,6 +70,7 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
             .then_with(|| x.engine.cmp(&y.engine))
+            .then_with(|| x.engine_flags.cmp(&y.engine_flags))
     });
 
     let mut last_phase = None;
@@ -93,9 +95,16 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
             writeln!(output_file, "    {}", summary.event)?;
         }
 
+        let engine_flags = match summary.engine_flags {
+            None => "".into(),
+            Some(ef) => {
+                format!(" ({ef})")
+            }
+        };
+
         writeln!(
             output_file,
-            "      [{} {:.2} {}] {}",
+            "      [{} {:.2} {}] {}{engine_flags}",
             summary.min, summary.mean, summary.max, summary.engine,
         )?;
     }
@@ -130,6 +139,7 @@ mod tests {
             vec![Summary {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
+                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 phase: Phase::Compilation,
                 event: "cycles".into(),
