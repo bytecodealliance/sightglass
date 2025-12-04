@@ -82,7 +82,7 @@ impl KeyBuilder {
                 arch: if self.arch { Some(m.arch) } else { None },
                 engine: if self.engine { Some(m.engine) } else { None },
                 engine_flags: if self.engine_flags {
-                    m.engine_flags
+                    Some(m.engine_flags)
                 } else {
                     None
                 },
@@ -96,14 +96,14 @@ impl KeyBuilder {
 }
 
 /// A key for grouping measurements together.
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug)]
 pub struct Key<'a> {
     pub arch: Option<Cow<'a, str>>,
     pub engine: Option<Cow<'a, str>>,
+    pub engine_flags: Option<Option<Cow<'a, str>>>,
     pub wasm: Option<Cow<'a, str>>,
     pub phase: Option<Phase>,
     pub event: Option<Cow<'a, str>>,
-    pub engine_flags: Option<Cow<'a, str>>,
 }
 
 impl Key<'_> {
@@ -111,13 +111,13 @@ impl Key<'_> {
     pub fn matches(&self, m: &Measurement) -> bool {
         self.arch.as_ref().is_none_or(|x| *x == m.arch)
             && self.engine.as_ref().is_none_or(|x| *x == m.engine)
-            && self.wasm.as_ref().is_none_or(|x| *x == m.wasm)
-            && self.phase.as_ref().is_none_or(|x| *x == m.phase)
-            && self.event.as_ref().is_none_or(|x| *x == m.event)
             && self
                 .engine_flags
                 .as_ref()
-                .is_none_or(|x| Some(x) == m.engine_flags.as_ref())
+                .is_none_or(|x| *x == m.engine_flags)
+            && self.wasm.as_ref().is_none_or(|x| *x == m.wasm)
+            && self.phase.as_ref().is_none_or(|x| *x == m.phase)
+            && self.event.as_ref().is_none_or(|x| *x == m.event)
     }
 }
 
@@ -134,7 +134,7 @@ mod tests {
             wasm: Some("bench.wasm".into()),
             phase: Some(Phase::Compilation),
             event: Some("cycles".into()),
-            engine_flags: Some("-Wfoo=bar".into()),
+            engine_flags: Some(Some("-Wfoo=bar".into())),
         };
 
         // More test cases are needed, but this provides a sanity check for the matched key and

@@ -15,7 +15,7 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
         summaries.push(Summary {
             arch: k.arch.unwrap(),
             engine: k.engine.unwrap(),
-            engine_flags: k.engine_flags,
+            engine_flags: k.engine_flags.unwrap(),
             wasm: k.wasm.unwrap(),
             phase: k.phase.unwrap(),
             event: k.event.unwrap(),
@@ -123,6 +123,7 @@ mod tests {
             Measurement {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
+                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 process: 42,
                 iteration: 0,
@@ -158,6 +159,7 @@ mod tests {
             Measurement {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
+                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 process: 42,
                 iteration: 0,
@@ -173,5 +175,32 @@ mod tests {
         ];
 
         assert_eq!(calculate(&measurements).len(), 2);
+    }
+
+    #[test]
+    fn differing_engine_flags() {
+        use std::borrow::Cow;
+
+        fn measurement<'a>(flags: Option<Cow<'a, str>>, count: u64) -> Measurement<'a> {
+            Measurement {
+                arch: "x86".into(),
+                engine: "wasmtime".into(),
+                engine_flags: flags,
+                wasm: "bench.wasm".into(),
+                process: 42,
+                iteration: 0,
+                phase: Phase::Execution,
+                event: "cycles".into(),
+                count,
+            }
+        }
+        let measurements = vec![
+            measurement(Some("-Wfoo=bar".into()), 0),
+            measurement(Some("-Wfoo=bar".into()), 1),
+            measurement(Some("-Wdead=beeef".into()), 2),
+            measurement(None, 3),
+        ];
+
+        assert_eq!(calculate(&measurements).len(), 3);
     }
 }
