@@ -15,7 +15,6 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
         summaries.push(Summary {
             arch: k.arch.unwrap(),
             engine: k.engine.unwrap(),
-            engine_flags: k.engine_flags.unwrap(),
             wasm: k.wasm.unwrap(),
             phase: k.phase.unwrap(),
             event: k.event.unwrap(),
@@ -70,7 +69,6 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
             .then_with(|| x.engine.cmp(&y.engine))
-            .then_with(|| x.engine_flags.cmp(&y.engine_flags))
     });
 
     let mut last_phase = None;
@@ -95,16 +93,9 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
             writeln!(output_file, "    {}", summary.event)?;
         }
 
-        let engine_flags = match summary.engine_flags {
-            None => "".into(),
-            Some(ef) => {
-                format!(" ({ef})")
-            }
-        };
-
         writeln!(
             output_file,
-            "      [{} {:.2} {}] {}{engine_flags}",
+            "      [{} {:.2} {}] {}",
             summary.min, summary.mean, summary.max, summary.engine,
         )?;
     }
@@ -115,7 +106,7 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sightglass_data::Phase;
+    use sightglass_data::{Engine, Phase};
 
     #[test]
     fn simple_statistics() {
@@ -123,7 +114,6 @@ mod tests {
             Measurement {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
-                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 process: 42,
                 iteration: 0,
@@ -140,7 +130,6 @@ mod tests {
             vec![Summary {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
-                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 phase: Phase::Compilation,
                 event: "cycles".into(),
@@ -159,7 +148,6 @@ mod tests {
             Measurement {
                 arch: "x86".into(),
                 engine: "wasmtime".into(),
-                engine_flags: None,
                 wasm: "bench.wasm".into(),
                 process: 42,
                 iteration: 0,
@@ -184,8 +172,10 @@ mod tests {
         fn measurement<'a>(flags: Option<Cow<'a, str>>, count: u64) -> Measurement<'a> {
             Measurement {
                 arch: "x86".into(),
-                engine: "wasmtime".into(),
-                engine_flags: flags,
+                engine: Engine {
+                    name: "wasmtime".into(),
+                    flags,
+                },
                 wasm: "bench.wasm".into(),
                 process: 42,
                 iteration: 0,

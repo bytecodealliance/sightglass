@@ -1,4 +1,4 @@
-use sightglass_data::{EffectSize, Phase};
+use sightglass_data::{EffectSize, Engine, Phase};
 
 #[test]
 fn effect_size_serialized_to_csv() {
@@ -12,10 +12,11 @@ fn effect_size_serialized_to_csv() {
             phase: Phase::Execution,
             event: "cycles".into(),
             a_engine: "control.so".into(),
-            a_engine_flags: None,
             a_mean: 100.0,
-            b_engine: "feature.so".into(),
-            b_engine_flags: Some("-Wfoo=bar".into()),
+            b_engine: Engine {
+                name: "feature.so".into(),
+                flags: Some("-Wfoo=bar".into()),
+            },
             b_mean: 110.0,
             significance_level: 0.05,
             half_width_confidence_interval: 1.3,

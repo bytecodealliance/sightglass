@@ -117,11 +117,13 @@ fn benchmark_csv() {
 
     assert
         .stdout(
-            predicate::str::starts_with("arch,engine,wasm,process,iteration,phase,event,count\n")
-                .and(predicate::str::contains(benchmark("noop")))
-                .and(predicate::str::contains("Compilation"))
-                .and(predicate::str::contains("Instantiation"))
-                .and(predicate::str::contains("Execution")),
+            predicate::str::starts_with(
+                "arch,engine,engine_flags,wasm,process,iteration,phase,event,count\n",
+            )
+            .and(predicate::str::contains(benchmark("noop")))
+            .and(predicate::str::contains("Compilation"))
+            .and(predicate::str::contains("Instantiation"))
+            .and(predicate::str::contains("Execution")),
         )
         .success();
 }

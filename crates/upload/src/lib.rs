@@ -44,7 +44,7 @@ pub fn package(measurements: Vec<Measurement>) -> Result<MeasurementPackage> {
     let mut found_engines = HashSet::new();
     let mut found_benchmarks = HashSet::new();
     for m in measurements.iter() {
-        found_engines.insert(m.engine.clone());
+        found_engines.insert(m.engine.name.clone());
         found_benchmarks.insert(m.wasm.clone());
     }
 

@@ -174,13 +174,13 @@ impl BenchmarkCommand {
             .collect();
         let mut all_measurements = vec![];
 
-        for (i, engine) in self.engines.iter().enumerate() {
-            let engine_path = check_engine_path(engine)?;
+        for (i, engine_name) in self.engines.iter().enumerate() {
+            let engine_path = check_engine_path(engine_name)?;
             let engine_name = self
                 .names
                 .as_ref()
                 .and_then(|names| names.get(i).map(|s| s.as_str()))
-                .unwrap_or(engine);
+                .unwrap_or(engine_name);
             log::info!("Using benchmark engine: {}", engine_path.display());
             let lib = unsafe { libloading::Library::new(&engine_path)? };
             let mut bench_api = unsafe { BenchApi::new(&lib)? };
@@ -209,12 +209,11 @@ impl BenchmarkCommand {
                 let stderr = Path::new(&stderr);
                 let stdin = None;
 
-                let mut measurements = Measurements::with_flags(
-                    this_arch(),
-                    engine_name,
-                    wasm_file,
-                    self.engine_flags.as_deref(),
-                );
+                let engine = sightglass_data::Engine {
+                    name: engine_name.into(),
+                    flags: self.engine_flags.as_ref().map(|ef| ef.into()),
+                };
+                let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
                 let mut measure = if self.measures.len() <= 1 {
                     let measure = self.measures.first().unwrap_or(&MeasureType::Cycles);
                     measure.build()

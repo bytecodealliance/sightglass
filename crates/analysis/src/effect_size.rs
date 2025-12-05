@@ -1,7 +1,7 @@
 use crate::keys::KeyBuilder;
 use anyhow::Result;
-use sightglass_data::{EffectSize, Measurement, Phase, Summary};
-use std::{borrow::Cow, collections::BTreeSet, io::Write};
+use sightglass_data::{EffectSize, Engine, Measurement, Phase, Summary};
+use std::{collections::BTreeSet, io::Write};
 
 /// Find the effect size (and confidence interval) of between two different
 /// engines (i.e. two different commits of Wasmtime).
@@ -35,10 +35,7 @@ pub fn calculate<'a>(
         let key_measurements: Vec<_> = measurements.iter().filter(|m| key.matches(m)).collect();
 
         // NB: `BTreeSet` so they're always sorted.
-        let engines: BTreeSet<_> = key_measurements
-            .iter()
-            .map(|m| (&m.engine, &m.engine_flags))
-            .collect();
+        let engines: BTreeSet<_> = key_measurements.iter().map(|m| &m.engine).collect();
         anyhow::ensure!(
             engines.len() == 2,
             "Can only test significance between exactly two different engines. Found {} \
@@ -47,17 +44,17 @@ pub fn calculate<'a>(
         );
 
         let mut engines = engines.into_iter();
-        let (engine_a, engine_a_flags) = engines.next().unwrap();
-        let (engine_b, engine_b_flags) = engines.next().unwrap();
+        let engine_a = engines.next().unwrap();
+        let engine_b = engines.next().unwrap();
 
         let a: behrens_fisher::Stats = key_measurements
             .iter()
-            .filter(|m| m.engine.as_ref() == engine_a && &m.engine_flags == engine_a_flags)
+            .filter(|m| &m.engine == engine_a)
             .map(|m| m.count as f64)
             .collect();
         let b: behrens_fisher::Stats = key_measurements
             .iter()
-            .filter(|m| m.engine.as_ref() == engine_b && &m.engine_flags == engine_b_flags)
+            .filter(|m| &m.engine == engine_b)
             .map(|m| m.count as f64)
             .collect();
 
@@ -68,10 +65,8 @@ pub fn calculate<'a>(
             phase: key.phase.unwrap(),
             event: key.event.unwrap(),
             a_engine: engine_a.clone(),
-            a_engine_flags: engine_a_flags.clone(),
             a_mean: a.mean,
             b_engine: engine_b.clone(),
-            b_engine_flags: engine_b_flags.clone(),
             b_mean: b.mean,
             significance_level,
             half_width_confidence_interval: ci,
@@ -79,18 +74,6 @@ pub fn calculate<'a>(
     }
 
     Ok(results)
-}
-
-fn engine_label(engine: &str, engine_flags: &Option<Cow<str>>) -> String {
-    format!(
-        "{}{}",
-        engine,
-        if let Some(ef) = engine_flags {
-            format!(" ({ef})")
-        } else {
-            "".into()
-        }
-    )
 }
 
 /// Write a vector of [EffectSize] structures to the passed `output_file` in human-readable form.
@@ -120,50 +103,13 @@ pub fn write(
         )?;
         writeln!(output_file)?;
 
-        let end_of_shared_prefix = |astr: &str, bstr: &str| {
-            astr.char_indices()
-                .zip(bstr.char_indices())
-                .find_map(|((i, a), (j, b))| {
-                    if a == b {
-                        None
-                    } else {
-                        debug_assert_eq!(i, j);
-                        Some(i)
-                    }
-                })
-                .unwrap_or(0)
-        };
-
         // For readability, trim the shared prefix from our two engine names.
         //
         // Furthermore, there are a few special cases:
         // 1. If the engines are the same, show just the flags.
         // 2. If not, show the computed full label with common prefix removed.
-        let (a_eng_label, b_eng_label) = if effect_size.a_engine == effect_size.b_engine {
-            (
-                effect_size
-                    .a_engine_flags
-                    .as_ref()
-                    .map(|ref ef| ef.to_string())
-                    .unwrap_or_else(|| "(no flags)".into())
-                    .to_string(),
-                effect_size
-                    .b_engine_flags
-                    .as_ref()
-                    .map(|ref ef| ef.to_string())
-                    .unwrap_or_else(|| "(no flags)".into())
-                    .to_string(),
-            )
-        } else {
-            let a_label = engine_label(&effect_size.a_engine, &effect_size.a_engine_flags);
-            let b_label = engine_label(&effect_size.b_engine, &effect_size.b_engine_flags);
-            let idx_end_of_shared = end_of_shared_prefix(&a_label, &b_label);
-
-            (
-                a_label[idx_end_of_shared..].into(),
-                b_label[idx_end_of_shared..].into(),
-            )
-        };
+        let (a_eng_label, b_eng_label) =
+            effect_size.a_engine.relative_labels(&effect_size.b_engine);
 
         if effect_size.is_significant() {
             writeln!(
@@ -199,28 +145,19 @@ pub fn write(
         }
         writeln!(output_file)?;
 
-        let get_summary = |engine: &str,
-                           engine_flags: Option<Cow<str>>,
-                           wasm: &str,
-                           phase: Phase,
-                           event: &str| {
+        let get_summary = |engine: &Engine, wasm: &str, phase: Phase, event: &str| {
             // TODO this sorting is not using `arch` which is not guaranteed to be the same in
             // result sets; potentially this could re-use `Key` functionality.
             summaries
                 .iter()
                 .find(|s| {
-                    s.engine == engine
-                        && s.engine_flags == engine_flags
-                        && s.wasm == wasm
-                        && s.phase == phase
-                        && s.event == event
+                    &s.engine == engine && s.wasm == wasm && s.phase == phase && s.event == event
                 })
                 .unwrap()
         };
 
         let a_summary = get_summary(
             &effect_size.a_engine,
-            effect_size.a_engine_flags,
             &effect_size.wasm,
             effect_size.phase,
             &effect_size.event,
@@ -233,7 +170,6 @@ pub fn write(
 
         let b_summary = get_summary(
             &effect_size.b_engine,
-            effect_size.b_engine_flags,
             &effect_size.wasm,
             effect_size.phase,
             &effect_size.event,

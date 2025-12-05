@@ -75,7 +75,10 @@ impl<'a> UploadMeasurement<'a> {
         datetime: &'a str,
         measurement: &'a Measurement,
     ) -> Self {
-        let engine = engines.get(measurement.engine.as_ref()).unwrap().as_ref();
+        let engine = engines
+            .get(measurement.engine.name.as_ref())
+            .unwrap()
+            .as_ref();
         let benchmark = benchmarks.get(measurement.wasm.as_ref()).unwrap().as_ref();
         Self::convert(machine, engine, benchmark, datetime, measurement)
     }
