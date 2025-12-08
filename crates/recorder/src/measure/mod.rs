@@ -1,4 +1,4 @@
-use sightglass_data::{Measurement, Phase};
+use sightglass_data::{Engine, Measurement, Phase};
 use std::{
     borrow::Cow,
     fmt::{self, Debug},
@@ -8,7 +8,7 @@ use std::{
 /// An in-progress collection of measurements that are currently being recorded.
 pub struct Measurements<'a> {
     arch: &'a str,
-    engine: &'a str,
+    engine: Engine<'a>,
     wasm: &'a str,
     process: u32,
     iteration: u32,
@@ -17,7 +17,7 @@ pub struct Measurements<'a> {
 
 impl<'a> Measurements<'a> {
     /// Construct a new `Measurements`.
-    pub fn new(arch: &'a str, engine: &'a str, wasm: &'a str) -> Self {
+    pub fn new(arch: &'a str, engine: Engine<'a>, wasm: &'a str) -> Self {
         Measurements {
             arch,
             engine,
@@ -43,7 +43,7 @@ impl<'a> Measurements<'a> {
     pub fn add(&mut self, phase: Phase, event: Cow<'a, str>, count: u64) {
         self.measurements.push(Measurement {
             arch: self.arch.into(),
-            engine: self.engine.into(),
+            engine: self.engine.clone(),
             wasm: self.wasm.into(),
             process: self.process,
             iteration: self.iteration,

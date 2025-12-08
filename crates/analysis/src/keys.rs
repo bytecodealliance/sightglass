@@ -1,4 +1,4 @@
-use sightglass_data::{Measurement, Phase};
+use sightglass_data::{Engine, Measurement, Phase};
 use std::{borrow::Cow, collections::BTreeSet};
 
 /// A builder for finding keys in a set of measurements.
@@ -6,6 +6,7 @@ use std::{borrow::Cow, collections::BTreeSet};
 pub struct KeyBuilder {
     arch: bool,
     engine: bool,
+    engine_flags: bool,
     wasm: bool,
     phase: bool,
     event: bool,
@@ -20,6 +21,7 @@ impl KeyBuilder {
             wasm: true,
             phase: true,
             event: true,
+            engine_flags: true,
         }
     }
 
@@ -31,6 +33,7 @@ impl KeyBuilder {
             wasm: false,
             phase: false,
             event: false,
+            engine_flags: false,
         }
     }
 
@@ -49,6 +52,12 @@ impl KeyBuilder {
     /// Whether to group keys by wasm or not.
     pub fn wasm(mut self, wasm: bool) -> Self {
         self.wasm = wasm;
+        self
+    }
+
+    /// Whether to group keys by engine flags or not.
+    pub fn engine_flags(mut self, engine_flags: bool) -> Self {
+        self.engine_flags = engine_flags;
         self
     }
 
@@ -82,10 +91,10 @@ impl KeyBuilder {
 }
 
 /// A key for grouping measurements together.
-#[derive(PartialOrd, Ord, PartialEq, Eq, Hash)]
+#[derive(PartialOrd, Ord, PartialEq, Eq, Hash, Debug)]
 pub struct Key<'a> {
     pub arch: Option<Cow<'a, str>>,
-    pub engine: Option<Cow<'a, str>>,
+    pub engine: Option<Engine<'a>>,
     pub wasm: Option<Cow<'a, str>>,
     pub phase: Option<Phase>,
     pub event: Option<Cow<'a, str>>,
@@ -111,7 +120,10 @@ mod tests {
     fn matching_fields() {
         let key = Key {
             arch: Some("x86".into()),
-            engine: Some("wasmtime".into()),
+            engine: Some(Engine {
+                name: "wasmtime".into(),
+                flags: None,
+            }),
             wasm: Some("bench.wasm".into()),
             phase: Some(Phase::Compilation),
             event: Some("cycles".into()),

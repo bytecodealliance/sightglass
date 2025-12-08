@@ -57,6 +57,14 @@ pub struct BenchmarkCommand {
     #[structopt(long = "processes", default_value = "10", value_name = "PROCESSES")]
     processes: usize,
 
+    /// Override the "engine" name; this is useful if running experiments that might
+    /// not have a differentiating engine name (e.g. if customizing the flags).
+    ///
+    /// If multiple engines are provided, the order of names provided here should
+    /// match the order of the engines specified.
+    #[structopt(long = "name", short = "n")]
+    names: Option<Vec<String>>,
+
     /// How many times should we run a benchmark in a single process?
     #[structopt(
         long = "iterations-per-process",
@@ -166,14 +174,19 @@ impl BenchmarkCommand {
             .collect();
         let mut all_measurements = vec![];
 
-        for engine in &self.engines {
-            let engine_path = check_engine_path(engine)?;
+        for (i, engine_name) in self.engines.iter().enumerate() {
+            let engine_path = check_engine_path(engine_name)?;
+            let engine_name = self
+                .names
+                .as_ref()
+                .and_then(|names| names.get(i).map(|s| s.as_str()))
+                .unwrap_or(engine_name);
             log::info!("Using benchmark engine: {}", engine_path.display());
             let lib = unsafe { libloading::Library::new(&engine_path)? };
             let mut bench_api = unsafe { BenchApi::new(&lib)? };
 
             for wasm_file in &wasm_files {
-                log::info!("Using Wasm benchmark: {}", wasm_file);
+                log::info!("Using Wasm benchmark: {wasm_file}");
 
                 // Use the provided --working-dir, otherwise find the Wasm file's parent directory.
                 let working_dir = self.get_working_directory(&wasm_file)?;
@@ -196,6 +209,10 @@ impl BenchmarkCommand {
                 let stderr = Path::new(&stderr);
                 let stdin = None;
 
+                let engine = sightglass_data::Engine {
+                    name: engine_name.into(),
+                    flags: self.engine_flags.as_ref().map(|ef| ef.into()),
+                };
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
                 let mut measure = if self.measures.len() <= 1 {
                     let measure = self.measures.first().unwrap_or(&MeasureType::Cycles);
@@ -488,10 +505,10 @@ fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Wri
 // engine's dylib.
 pub fn check_engine_path(engine: &str) -> Result<PathBuf> {
     if Path::new(engine).exists() {
-        log::debug!("Using engine path: {}", engine);
+        log::debug!("Using engine path: {engine}");
         Ok(PathBuf::from(engine))
     } else {
-        Err(anyhow!("invalid path to engine: {}", engine))
+        Err(anyhow!("invalid path to engine: {engine}"))
     }
 }
 

@@ -3,7 +3,7 @@ use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
 use std::io::Write;
 
-/// Summarize measurements grouped by: architecture, engine, benchmark file, phase and event.
+/// Summarize measurements grouped by: architecture, engine, flags, benchmark file, phase and event.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
     let mut summaries = Vec::new();
     for k in KeyBuilder::all().keys(measurements) {
@@ -106,7 +106,7 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sightglass_data::Phase;
+    use sightglass_data::{Engine, Phase};
 
     #[test]
     fn simple_statistics() {
@@ -163,5 +163,34 @@ mod tests {
         ];
 
         assert_eq!(calculate(&measurements).len(), 2);
+    }
+
+    #[test]
+    fn differing_engine_flags() {
+        use std::borrow::Cow;
+
+        fn measurement<'a>(flags: Option<Cow<'a, str>>, count: u64) -> Measurement<'a> {
+            Measurement {
+                arch: "x86".into(),
+                engine: Engine {
+                    name: "wasmtime".into(),
+                    flags,
+                },
+                wasm: "bench.wasm".into(),
+                process: 42,
+                iteration: 0,
+                phase: Phase::Execution,
+                event: "cycles".into(),
+                count,
+            }
+        }
+        let measurements = vec![
+            measurement(Some("-Wfoo=bar".into()), 0),
+            measurement(Some("-Wfoo=bar".into()), 1),
+            measurement(Some("-Wdead=beeef".into()), 2),
+            measurement(None, 3),
+        ];
+
+        assert_eq!(calculate(&measurements).len(), 3);
     }
 }
