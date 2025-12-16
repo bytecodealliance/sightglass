@@ -120,7 +120,9 @@ shootout/shootout-sieve.wasm
 shootout/shootout-switch.wasm
 shootout/shootout-xblabla20.wasm
 shootout/shootout-xchacha20.wasm
-spidermonkey/benchmark.wasm
+spidermonkey/spidermonkey-markdown.wasm
+spidermonkey/spidermonkey-json.wasm
+spidermonkey/spidermonkey-regex.wasm
 tract-onnx-image-classification/benchmark.wasm
 richards/benchmark.wasm
 gcc-loops/benchmark.wasm
