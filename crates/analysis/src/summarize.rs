@@ -165,7 +165,6 @@ mod tests {
                 phase: Phase::Compilation,
                 event: "cycles".into(),
                 count,
-                engine_flags: None,
             }
         }
 
@@ -200,7 +199,6 @@ mod tests {
                 phase,
                 event: "cycles".into(),
                 count,
-                engine_flags: None,
             }
         }
         let measurements = vec![
@@ -241,6 +239,7 @@ mod tests {
         assert_eq!(calculate(&measurements).len(), 3);
     }
 
+    #[test]
     fn test_std_deviation() {
         let numbers = vec![2, 4, 4, 4, 5, 5, 7, 9];
         let std_dev = std_deviation(&numbers);

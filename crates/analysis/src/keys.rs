@@ -140,7 +140,6 @@ mod tests {
             phase: Phase::Compilation,
             event: "cycles".into(),
             count: 42,
-            engine_flags: None,
         }));
     }
 }
