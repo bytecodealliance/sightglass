@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package benchmark;
+
+message User {
+  uint64 id = 1;
+  string username = 2;
+  string email = 3;
+  string full_name = 4;
+  bool is_active = 5;
+  string created_at = 6;
+  string updated_at = 7;
+  Profile profile = 8;
+  Settings settings = 9;
+  repeated Post posts = 10;
+}
+
+message Profile {
+  string bio = 1;
+  string avatar_url = 2;
+  string location = 3;
+  optional string website = 4;
+  repeated string social_links = 5;
+}
+
+message Settings {
+  string theme = 1;
+  string language = 2;
+  bool notifications_enabled = 3;
+  string privacy_level = 4;
+  map<string, string> preferences = 5;
+}
+
+message Post {
+  uint64 id = 1;
+  string title = 2;
+  string content = 3;
+  repeated string tags = 4;
+  uint32 likes = 5;
+  uint32 comments_count = 6;
+  string published_at = 7;
+}
+
+message UserList {
+  repeated User users = 1;
+}
