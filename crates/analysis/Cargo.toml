@@ -7,4 +7,6 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.40"
 behrens-fisher = "0.1.0"
+serde = { version = "1.0", features = ["derive"] }
 sightglass-data = { path = "../data" }
+thiserror = "1.0"

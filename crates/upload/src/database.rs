@@ -40,7 +40,7 @@ impl Database {
     {
         let url = format!("{}/{}/_doc/{}", self.url, index, id);
         if self.dry_run {
-            bail!("could not retrieve object with ID: {}", id);
+            bail!("could not retrieve object with ID: {id}");
         } else {
             let client = Client::new();
             let response = client.get(url).send()?;
@@ -122,7 +122,7 @@ impl Database {
                 let id = content.get("_id").unwrap().as_str().unwrap().to_string();
                 Ok(id)
             } else {
-                bail!("Failed to create record: {:?}", content)
+                bail!("Failed to create record: {content:?}")
             }
         }
     }
@@ -165,7 +165,7 @@ impl Database {
             if success {
                 Ok(())
             } else {
-                bail!("Failed to batch-create records: {:?}", content)
+                bail!("Failed to batch-create records: {content:?}")
             }
         }
     }

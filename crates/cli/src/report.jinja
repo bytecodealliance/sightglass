@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en-us">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>Sightglass Benchmark Results</title>
+        <meta name="description" content="Sightglass Benchmark Results Visualization">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script src="https://cdn.jsdelivr.net/npm/vega@6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+        <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+        {% for benchmark in stats.benchmarks %}
+        <script type="application/json" id="vega-lite-{{ benchmark.chart.id }}">
+            {{ benchmark.chart.json }}
+        </script>
+        {% endfor %}
+        <style>
+            /* Base styles */
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                line-height: 1.5;
+                color: #333;
+                margin: 20px;
+            }
+
+            /* Performance indicators */
+            .slower {
+                background: lightcoral;
+                font-weight: bold;
+            }
+
+            .faster {
+                background: lightgreen;
+                font-weight: bold;
+            }
+
+            .inconsistent {
+                background: lightgray;
+            }
+
+            /* Main results section */
+            .results-section {
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                margin: 20px 0;
+                overflow: hidden;
+            }
+
+            .controls {
+                background: #f5f5f5;
+                padding: 15px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .control-group {
+                display: inline-block;
+                margin-right: 20px;
+                vertical-align: top;
+            }
+
+            .control-group label {
+                display: block;
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+
+            /* Main results table */
+            #results-table {
+                margin: 0;
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            #results-table th,
+            #results-table td {
+                padding: 12px 8px;
+                border-bottom: 1px solid #eee;
+                text-align: left;
+            }
+
+            #results-table th {
+                background: #f8f9fa;
+                font-weight: bold;
+                border-bottom: 2px solid #ddd;
+            }
+
+            #results-table tbody tr:hover {
+                background-color: #f8f9fa;
+            }
+
+            /* Benchmark detail tables */
+            .benchmark-detail-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+                font-size: 0.95em;
+            }
+
+            .benchmark-detail-table th {
+                background: #f8f9fa;
+                padding: 10px 8px;
+                border-bottom: 2px solid #ddd;
+                font-weight: bold;
+                text-align: left;
+            }
+
+            .benchmark-detail-table td {
+                padding: 8px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .benchmark-detail-table tbody tr:hover {
+                background-color: #f8f9fa;
+            }
+
+            .benchmark-detail-table .engine-name {
+                font-weight: bold;
+            }
+
+            .benchmark-detail-table .baseline-row {
+                background-color: #f0f8ff;
+            }
+
+            .benchmark-detail-table .cycles-col {
+                text-align: right;
+            }
+
+            .benchmark-detail-table .performance-col {
+                text-align: center;
+            }
+
+            .benchmark-detail-table .confidence-col {
+                text-align: center;
+            }
+
+            .benchmark-detail-table .cv-col {
+                text-align: right;
+            }
+
+            /* Benchmark sections */
+            .benchmark-detail {
+                margin: 30px 0;
+                padding: 20px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .benchmark-detail:last-child {
+                border-bottom: none;
+            }
+
+            .benchmark-detail h2 {
+                margin-top: 0;
+                margin-bottom: 20px;
+                color: #333;
+            }
+
+            /* Utility classes */
+            .hidden-benchmark {
+                display: none;
+            }
+
+            .hidden-row {
+                display: none;
+            }
+
+            /* High CV highlighting */
+            .high-cv {
+                background-color: lightgray;
+            }
+
+            /* Baseline star styling */
+            .baseline-star {
+                cursor: help;
+                display: inline-block;
+                transition: transform 0.2s ease;
+            }
+
+            .baseline-star:hover {
+                transform: scale(1.3);
+            }
+
+            /* Baseline column separator in summary table */
+            #results-table th:nth-child(3),
+            #results-table td:nth-child(3) {
+                border-left: 3px solid #ddd;
+                padding-left: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Sightglass Benchmark Results</h1>
+        <div>
+            Results use {{ confidence_pct|floatfmt }}% confidence intervals (α = {{ significance_level }}).
+            CV is <a href="https://en.wikipedia.org/wiki/Coefficient_of_variation">Coefficient of Variation</a> (measurement consistency).
+        </div>
+
+
+        <div class="results-section">
+            <div class="controls">
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="significant-only" onchange="updateFilters()">
+                        Significant results only
+                    </label>
+                </div>
+                <div class="control-group">
+                    <label>
+                        <input type="checkbox" id="hide-noisy" onchange="updateFilters()">
+                        Hide noisy tests (CV > 5%)
+                    </label>
+                </div>
+                <div class="control-group">
+                    <span id="visible-benchmarks"></span>
+                </div>
+            </div>
+
+            <table id="results-table">
+            <thead>
+                <tr>
+                    <th scope="col">Benchmark</th>
+                    <th scope="col">CV%</th>
+                    <th scope="col"><span class="baseline-star" title="Baseline engine">📊</span> {{ stats.baseline_engine }}</th>
+                    {% for engine in stats.benchmarks[0].stats_by_engine %}
+                        {% if engine != stats.baseline_engine %}
+                        <th scope="col">{{ stats.benchmarks[0].short_names[engine] }}</th>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for benchmark in stats.benchmarks %}
+                {% set bstats = benchmark.baseline_stats %}
+                {% set has_significant = namespace(value=false) %}
+                {% set best_confidence = namespace(value=1.0) %}
+                {% for engine, pstats in benchmark.stats_by_engine|items %}
+                    {% if pstats.relative_stats and pstats.relative_stats.is_significant %}
+                        {% set has_significant.value = true %}
+                        {% if pstats.significance_level < best_confidence.value %}
+                            {% set best_confidence.value = pstats.significance_level %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <tr class="benchmark-row"
+                    data-has-significant="{{ has_significant.value|lower }}"
+                    data-baseline-cv="{{ bstats.cv }}"
+                    data-benchmark-name="{{ benchmark.name }}">
+                    <td><a href="#{{ benchmark.name }}">{{ benchmark.name }}</a></td>
+                    {# CV% column #}
+                    {% set bstats = benchmark.stats_by_engine[stats.baseline_engine] %}
+                    {% set cv_class = "inconsistent" if bstats.cv > 5 else "" %}
+                    <td class="{{ cv_class }}">{{ bstats.cv|floatfmt }}%</td>
+                    {# Baseline column without CV #}
+                    <td class="cycle-count">{{ bstats.p25|cyclefmt }} cycles (p25)</td>
+                    {# Then show other engines #}
+                    {% for engine, pstats in benchmark.stats_by_engine|items %}
+                        {% if pstats.relative_stats %}
+                        {% set rel = pstats.relative_stats %}
+                        {% set class = "slower" if rel.is_significant and rel.speedup_ratio > 1 else "faster" if rel.is_significant and rel.speedup_ratio < 1 else "" %}
+                        {% if rel.is_significant %}
+                            {% if rel.speedup_ratio < 1 %}
+                                {% set pct_faster = ((1 - rel.speedup_ratio) * 100)|floatfmt %}
+                                <td class="{{ class }}">{{ pct_faster }}% faster</td>
+                            {% else %}
+                                {% set pct_slower = ((rel.speedup_ratio - 1) * 100)|floatfmt %}
+                                <td class="{{ class }}">{{ pct_slower }}% slower</td>
+                            {% endif %}
+                        {% else %}
+                            <td>No significant difference</td>
+                        {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+
+        <div id="benchmark-details">
+            {% for benchmark in stats.benchmarks %}
+            {% set bstats = benchmark.baseline_stats %}
+            {% set has_significant = namespace(value=false) %}
+            {% for engine, pstats in benchmark.stats_by_engine|items %}
+                {% if pstats.relative_stats and pstats.relative_stats.is_significant %}
+                    {% set has_significant.value = true %}
+                {% endif %}
+            {% endfor %}
+            <div class="benchmark-detail"
+                 data-has-significant="{{ has_significant.value|lower }}"
+                 data-baseline-cv="{{ bstats.cv }}"
+                 data-benchmark-name="{{ benchmark.name }}">
+                <h2 id="{{benchmark.name}}">{{ benchmark.name }}</h2>
+            <table class="benchmark-detail-table">
+                <thead>
+                    <tr>
+                        <th>Engine</th>
+                        <th class="cycles-col">Cycles (p25)</th>
+                        <th class="performance-col">Performance</th>
+                        <th class="confidence-col">Confidence Interval</th>
+                        <th class="cv-col">CV%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="baseline-row">
+                        <td class="engine-name"><span class="baseline-star" title="Baseline engine">📊</span> {{ stats.baseline_engine }}</td>
+                        <td class="cycles-col">{{ bstats.p25|cyclefmt }} cycles (p25)</td>
+                        <td class="performance-col">—</td>
+                        <td class="confidence-col">—</td>
+                        <td class="cv-col{% if bstats.cv > 5 %} high-cv{% endif %}">{{ bstats.cv|floatfmt }}%</td>
+                    </tr>
+                    {% for engine, pstats in benchmark.stats_by_engine|items %}
+                        {% if pstats.relative_stats and engine != stats.baseline_engine %}
+                            {% set rel = pstats.relative_stats %}
+                            <tr>
+                                <td class="engine-name">{{ benchmark.short_names[engine] }}</td>
+                                <td class="cycles-col">{{ pstats.p25|cyclefmt }} cycles</td>
+                                <td class="performance-col">
+                                    {% if rel.is_significant %}
+                                        {% set class = "slower" if rel.speedup_ratio > 1 else "faster" %}
+                                        {% if rel.speedup_ratio < 1 %}
+                                            {% set pct_faster = ((1 - rel.speedup_ratio) * 100)|floatfmt %}
+                                            <span class="{{ class }}">{{ pct_faster }}% faster</span>
+                                        {% else %}
+                                            {% set pct_slower = ((rel.speedup_ratio - 1) * 100)|floatfmt %}
+                                            <span class="{{ class }}">{{ pct_slower }}% slower</span>
+                                        {% endif %}
+                                    {% else %}
+                                        No significant difference
+                                    {% endif %}
+                                </td>
+                                <td class="confidence-col">
+                                    {% if rel.confidence_interval_half_width %}
+                                        ±{{ rel.confidence_interval_half_width|cyclefmt }} cycles
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td class="cv-col{% if pstats.cv > 5 %} high-cv{% endif %}">{{ pstats.cv|floatfmt }}%</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div id="viz-{{ benchmark.chart.id }}"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <script type="text/javascript">
+         function renderViz(chart_id) {
+           let vl_text = document.getElementById(`vega-lite-${chart_id}`).textContent;
+           let vl_data = JSON.parse(vl_text);
+           vegaEmbed(`#viz-${chart_id}`, vl_data);
+         }
+         {% for benchmark in stats.benchmarks %}
+         renderViz("{{ benchmark.chart.id }}");
+         {% endfor %}
+
+         // Simple data for filtering - most data is now in HTML data attributes
+
+         function updateFilters() {
+             const significantOnly = document.getElementById('significant-only').checked;
+             const hideNoisy = document.getElementById('hide-noisy').checked;
+
+             const rows = document.querySelectorAll('.benchmark-row');
+             const details = document.querySelectorAll('.benchmark-detail');
+             let visibleCount = 0;
+
+             // Filter table rows and benchmark details
+             rows.forEach((row, index) => {
+                 const hasSignificant = row.dataset.hasSignificant === 'true';
+                 const baselineCv = parseFloat(row.dataset.baselineCv);
+
+                 let shouldShow = true;
+
+                 // Apply noise filter
+                 if (hideNoisy && baselineCv > 5) {
+                     shouldShow = false;
+                 }
+
+                 // Apply significance filter
+                 if (significantOnly && !hasSignificant) {
+                     shouldShow = false;
+                 }
+
+                 // Show/hide row and corresponding detail
+                 row.style.display = shouldShow ? '' : 'none';
+                 if (details[index]) {
+                     details[index].style.display = shouldShow ? '' : 'none';
+                 }
+
+                 if (shouldShow) visibleCount++;
+             });
+
+             // Update counter
+             document.getElementById('visible-benchmarks').textContent =
+                 `Showing ${visibleCount} of ${rows.length} benchmarks`;
+         }
+
+         // Initialize filters on page load
+         document.addEventListener('DOMContentLoaded', function() {
+             updateFilters();
+         });
+        </script>
+
+        <div id="effect-size-methodology" style="margin-top: 40px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
+            <h2>Statistical Methods</h2>
+            <p>
+                Uses effect size analysis with confidence intervals based on Student's t-test.
+                Statistical significance indicates the difference is likely real (not measurement noise).
+                Tests with CV > 5% may have unreliable measurements.
+            </p>
+            <p>
+                <strong>Baseline Engine (📊):</strong> The baseline engine is the reference point for all comparisons.
+                Performance differences are calculated relative to the baseline. The baseline engine appears with a chart icon (📊) and is highlighted with a light blue background in detailed tables.
+            </p>
+            <p>
+                <strong>P25 Metric:</strong> Cycle counts show the 25th percentile (p25) rather than mean or median.
+                This metric is more robust to outliers, as noise in benchmarking typically appears as spikes on the higher end (system interrupts, background processes, etc.).
+                P25 represents a "good run" that is consistently achievable—25% of runs are this fast or faster.
+            </p>
+            <p>
+                <strong>Color Coding:</strong>
+                <span style="background: lightgreen; padding: 2px 6px; border-radius: 3px;">Green</span> indicates significantly faster performance,
+                <span style="background: lightcoral; padding: 2px 6px; border-radius: 3px;">red</span> indicates significantly slower, and
+                <span style="background: lightgray; padding: 2px 6px; border-radius: 3px;">gray</span> indicates high measurement noise (CV > 5%).
+                No highlighting means no statistically significant difference from baseline.
+            </p>
+            <p>
+                <strong>References:</strong>
+                <a href="https://github.com/bytecodealliance/rfcs/blob/main/accepted/benchmark-suite.md" target="_blank">Benchmark Suite RFC</a> |
+                <a href="https://github.com/bytecodealliance/sightglass#benchmarking-with-sightglass" target="_blank">Sightglass Documentation</a>
+            </p>
+        </div>
+    </body>
+</html>
