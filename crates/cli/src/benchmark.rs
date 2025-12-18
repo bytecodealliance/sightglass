@@ -125,6 +125,11 @@ pub struct BenchmarkCommand {
     /// `cpu_affinity` in the `sightglass-recorder` crate for more information.
     #[structopt(long)]
     pin: bool,
+
+    /// Keep log files after successful benchmark runs. By default, logs are
+    /// only kept on failures.
+    #[structopt(short = "k", long = "keep-logs")]
+    keep_logs: bool,
 }
 
 impl BenchmarkCommand {
@@ -190,10 +195,15 @@ impl BenchmarkCommand {
                     wasm_file.hash(&mut hasher);
                     hasher.finish()
                 };
-                let stdout = format!("stdout-{:x}-{}.log", wasm_hash, std::process::id());
-                let stdout = Path::new(&stdout);
-                let stderr = format!("stderr-{:x}-{}.log", wasm_hash, std::process::id());
-                let stderr = Path::new(&stderr);
+
+                // Create log files in temp directory
+                let log_dir = std::env::temp_dir().join("sightglass-logs");
+                std::fs::create_dir_all(&log_dir).context("Failed to create log directory")?;
+
+                let stdout =
+                    log_dir.join(format!("stdout-{wasm_hash:x}-{}.log", std::process::id()));
+                let stderr =
+                    log_dir.join(format!("stderr-{wasm_hash:x}-{}.log", std::process::id()));
                 let stdin = None;
 
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
@@ -209,8 +219,8 @@ impl BenchmarkCommand {
                 let engine = Engine::new(
                     &mut bench_api,
                     &working_dir,
-                    stdout,
-                    stderr,
+                    &stdout,
+                    &stderr,
                     stdin,
                     &mut measurements,
                     &mut measure,
@@ -248,7 +258,31 @@ impl BenchmarkCommand {
                         }
                     }
 
-                    self.check_output(Path::new(wasm_file), stdout, stderr)?;
+                    let check_result = self.check_output(Path::new(wasm_file), &stdout, &stderr);
+
+                    // Handle log cleanup based on success/failure and --keep-logs flag
+                    match check_result {
+                        Ok(()) => {
+                            if !self.keep_logs {
+                                let _ = fs::remove_file(&stdout);
+                                let _ = fs::remove_file(&stderr);
+                            } else {
+                                log::info!(
+                                    "Kept log files: {} and {}",
+                                    stdout.display(),
+                                    stderr.display()
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            // Failure: keep logs and inform user
+                            eprintln!("Benchmark output check failed. Log files preserved:");
+                            eprintln!("  stdout: {}", stdout.display());
+                            eprintln!("  stderr: {}", stderr.display());
+                            return Err(e);
+                        }
+                    }
+
                     engine
                         .as_mut()
                         .map(|e| e.measurements())
@@ -375,6 +409,10 @@ impl BenchmarkCommand {
 
             if self.pin {
                 command.arg("--pin");
+            }
+
+            if self.keep_logs {
+                command.arg("--keep-logs");
             }
 
             if self.small_workloads {
