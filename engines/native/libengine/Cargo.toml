@@ -9,6 +9,6 @@ crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 anyhow = "1.0.22"
-libloading = "0.7"
+libloading = "0.9"
 nix = "0.26.2"
 libc="0.2"
