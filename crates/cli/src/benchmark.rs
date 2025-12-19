@@ -373,6 +373,17 @@ impl BenchmarkCommand {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
 
+        let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
+        eprintln!(
+            "\nRunning {} total iterations ({} engines * {} benchmarks * {} processes * {} iterations per process)",
+            self.engines.len() * wasm_files.len() * self.processes * self.iterations_per_process,
+            self.engines.len(),
+            wasm_files.len(),
+            self.processes,
+            self.iterations_per_process
+        );
+        eprint!("\n[Done] [Elapsed    ] [Est. Rem.  ]");
+
         // Shuffle the order in which we spawn benchmark processes. This helps
         // us avoid some measurement bias from CPU state transitions that aren't
         // constrained within the duration of process execution, like dynamic
@@ -389,13 +400,17 @@ impl BenchmarkCommand {
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
-            for wasm in self.benchmarks.iter().flat_map(|s| s.paths()) {
+            for wasm in wasm_files.iter().cloned() {
                 choices.push((engine.clone(), wasm, self.processes));
             }
         }
 
         // Accumulated measurements from all of our subprocesses.
         let mut measurements = vec![];
+
+        let mut i = 0;
+        let n = choices.len() * self.processes;
+        let start = std::time::Instant::now();
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
@@ -458,7 +473,33 @@ impl BenchmarkCommand {
                 String::from_utf8_lossy(&output.stdout)
             );
 
-            eprintln!(".");
+            const PRINT_EVERY: usize = 10;
+            i += 1;
+            debug_assert!(i <= n);
+            if i % PRINT_EVERY == 1 {
+                let percent_done = (i as f64) / (n as f64) * 100.0;
+
+                let elapsed = start.elapsed().as_secs();
+                let elapsed_hours = elapsed / 60 / 60;
+                let elapsed_mins = elapsed / 60 % 60;
+                let elapsed_secs = elapsed % 60;
+
+                let secs_per_proc = (elapsed as f64) / (i as f64);
+                let procs_left = n - i;
+                let eta = (procs_left as f64) * secs_per_proc;
+                let eta = eta.round() as u64;
+                let eta_hours = eta / 60 / 60;
+                let eta_mins = eta / 60 % 60;
+                let eta_secs = eta % 60;
+
+                eprint!(
+                    "\n\
+                     [{percent_done:>3.0}%] \
+                     [{elapsed_hours:02}h:{elapsed_mins:02}m:{elapsed_secs:02}s] \
+                     [{eta_hours:02}h:{eta_mins:02}m:{eta_secs:02}s] ",
+                )
+            }
+            eprint!(".");
 
             // Parse the subprocess's output and add its measurements to our
             // accumulation.
@@ -472,6 +513,12 @@ impl BenchmarkCommand {
                 choices.swap_remove(index);
             }
         }
+
+        let elapsed = start.elapsed();
+        let hours = elapsed.as_secs() / 60 / 60;
+        let mins = elapsed.as_secs() / 60 % 60;
+        let secs = elapsed.as_secs() % 60;
+        eprintln!("\n\nFinished benchmarking in {hours:02}h:{mins:02}m:{secs:02}s");
 
         self.write_results(&measurements, &mut output_file)?;
         Ok(())
