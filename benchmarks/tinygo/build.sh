@@ -24,7 +24,7 @@ for dir in */; do
     cd "$dir"
 
     # Build with TinyGo
-    "$TINYGO" build -o "$OUTPUT_DIR/tinygo-$benchmark.wasm" -target=wasi .
+    "$TINYGO" build -o "$OUTPUT_DIR/tinygo-$benchmark.wasm" -target=wasi -opt=2 -gc=leaking .
 
     cd "$SCRIPT_DIR"
 
