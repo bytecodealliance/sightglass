@@ -6,11 +6,10 @@
 blake3-scalar/benchmark.wasm
 blind-sig/benchmark.wasm
 hex-simd/benchmark.wasm
-# image-classification/image-classification-benchmark.wasm
 pulldown-cmark/benchmark.wasm
 regex/benchmark.wasm
 rust-compression/benchmark.wasm
 rust-html-rewriter/benchmark.wasm
 rust-json/benchmark.wasm
 rust-protobuf/benchmark.wasm
-# tract-onnx-image-classification/benchmark.wasm
+tract-onnx-image-classification/benchmark.wasm
