@@ -311,6 +311,12 @@ impl BenchmarkCommand {
                 drop((engine, module));
                 all_measurements.extend(measurements.finish());
             }
+
+            // Explicitly close the library to handle any unload errors.
+            // We log errors but don't fail since measurements have been collected.
+            if let Err(e) = lib.close() {
+                log::warn!("Error unloading library: {e}");
+            }
         }
 
         // If we are only benchmarking one phase then filter out any
