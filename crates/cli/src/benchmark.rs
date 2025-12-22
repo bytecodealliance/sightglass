@@ -50,7 +50,11 @@ pub struct BenchmarkCommand {
 
     /// Configure an engine using engine-specific flags. (For the Wasmtime
     /// engine, these can be a subset of flags from `wasmtime run --help`).
-    #[structopt(long("engine-flags"), value_name = "ENGINE_FLAGS")]
+    #[structopt(
+        long("engine-flags"),
+        value_name = "ENGINE_FLAGS",
+        allow_hyphen_values = true
+    )]
     engine_flags: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
