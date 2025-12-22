@@ -1,0 +1,15 @@
+# Rust benchmarks - all benchmarks written in Rust.
+#
+# This suite includes both existing and newly added Rust benchmarks,
+# covering various workloads from cryptography to serialization to HTML processing.
+
+blake3-scalar/benchmark.wasm
+blind-sig/benchmark.wasm
+hex-simd/benchmark.wasm
+pulldown-cmark/benchmark.wasm
+regex/benchmark.wasm
+rust-compression/benchmark.wasm
+rust-html-rewriter/benchmark.wasm
+rust-json/benchmark.wasm
+rust-protobuf/benchmark.wasm
+tract-onnx-image-classification/benchmark.wasm

@@ -97,6 +97,10 @@ meshoptimizer/benchmark.wasm
 noop/benchmark.wasm
 pulldown-cmark/benchmark.wasm
 regex/benchmark.wasm
+rust-compression/benchmark.wasm
+rust-html-rewriter/benchmark.wasm
+rust-json/benchmark.wasm
+rust-protobuf/benchmark.wasm
 shootout/shootout-ackermann.wasm
 shootout/shootout-base64.wasm
 shootout/shootout-ctype.wasm

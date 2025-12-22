@@ -1,8 +1,11 @@
 FROM rust:1.87
 RUN rustup target add wasm32-wasip1
+# Install protobuf compiler for rust-protobuf benchmark
+RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
 WORKDIR /usr/src
-ADD rust-benchmark rust-benchmark
-WORKDIR /usr/src/rust-benchmark
+# Copy any additional files (like schema.proto for rust-protobuf)
+ADD . benchmark-src
+WORKDIR /usr/src/benchmark-src/rust-benchmark
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 RUN cargo build --release --target wasm32-wasip1
 RUN mkdir /benchmark
