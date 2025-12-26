@@ -1,0 +1,9 @@
+# SpiderMonkey benchmarks - JavaScript benchmarks running on SpiderMonkey compiled to WebAssembly.
+#
+# These benchmarks use Mozilla's SpiderMonkey JavaScript engine embedded in
+# WebAssembly to execute JavaScript workloads, testing both the JS engine
+# performance and WASM execution characteristics.
+
+spidermonkey/spidermonkey-json.wasm
+spidermonkey/spidermonkey-markdown.wasm
+spidermonkey/spidermonkey-regex.wasm
