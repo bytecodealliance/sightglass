@@ -23,7 +23,8 @@ for dir in */; do
 
     cd "$dir"
 
-    # Build with TinyGo
+    # Build with TinyGo; gc is disabled (leaking gc) to reduce noise and match common usage
+    # in some serverless environments.
     "$TINYGO" build -o "$OUTPUT_DIR/tinygo-$benchmark.wasm" -target=wasi -opt=2 -gc=leaking .
 
     cd "$SCRIPT_DIR"
