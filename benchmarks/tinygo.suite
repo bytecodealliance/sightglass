@@ -1,0 +1,7 @@
+# TinyGo benchmarks - benchmarks compiled with TinyGo to WebAssembly.
+#
+# TinyGo is a Go compiler designed for small places, producing compact
+# WebAssembly binaries suitable for resource-constrained environments.
+
+tinygo/tinygo-json.wasm
+tinygo/tinygo-regex.wasm

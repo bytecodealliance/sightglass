@@ -1,0 +1,9 @@
+ARG TINYGO_VERSION=0.40.0
+FROM tinygo/tinygo:${TINYGO_VERSION}
+WORKDIR /home/tinygo
+ADD --chown=tinygo:tinygo go-benchmark go-benchmark
+WORKDIR /home/tinygo/go-benchmark
+RUN tinygo build -o benchmark.wasm -target=wasi .
+USER root
+RUN mkdir -p /benchmark && cp benchmark.wasm /benchmark/
+# We output the Wasm file to the `/benchmark` directory, where the client expects it.
