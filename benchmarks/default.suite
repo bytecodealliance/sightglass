@@ -5,4 +5,4 @@
 
 bz2/benchmark.wasm
 pulldown-cmark/benchmark.wasm
-spidermonkey/benchmark.wasm
+spidermonkey/spidermonkey-markdown.wasm
