@@ -1,4 +1,4 @@
-FROM rust:1.87
+FROM rust:1.88
 RUN rustup target add wasm32-wasip1
 WORKDIR /usr/src
 ADD rust-benchmark rust-benchmark
