@@ -75,7 +75,6 @@ jobs:
       run: |
         cargo run benchmark \
         --engine=artifacts/wasmtime-main/libengine.so \
-        --engine=artifacts/wasmtime-v38.0.3/libengine.so \
         --engine-flags "-Wgc -Wfunction-references" \
         --processes=4 \
         --iterations-per-process=1 \
