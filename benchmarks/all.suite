@@ -123,6 +123,7 @@ shootout/shootout-xchacha20.wasm
 spidermonkey/spidermonkey-markdown.wasm
 spidermonkey/spidermonkey-json.wasm
 spidermonkey/spidermonkey-regex.wasm
+splay/splay.wasm
 tinygo/tinygo-json.wasm
 tinygo/tinygo-regex.wasm
 tract-onnx-image-classification/benchmark.wasm

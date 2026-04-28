@@ -1,0 +1,15 @@
+FROM rust:1.95
+
+# Install `wasm-tools`
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+RUN cargo install wasm-tools --version 1.247.0
+
+WORKDIR /usr/src
+ADD . benchmark-src
+WORKDIR /usr/src/benchmark-src
+
+# Run `wasm-tools wat2wasm` on each `.wat` file.
+RUN for x in *.wat; do wasm-tools wat2wasm "$x" -o "${x%.wat}.wasm"; done
+
+RUN mkdir /benchmark
+RUN cp *.wasm /benchmark/
