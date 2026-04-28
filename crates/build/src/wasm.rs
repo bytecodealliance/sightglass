@@ -41,10 +41,7 @@ impl WasmBenchmark {
         };
 
         // Check that it contains valid Wasm.
-        let features = wasmparser::WasmFeatures {
-            simd: true,
-            ..Default::default()
-        };
+        let features = wasmparser::WasmFeatures::default();
         let mut validator = wasmparser::Validator::new_with_features(features);
         if validator.validate_all(&bytes).is_err() {
             return ValidationErrorKind::InvalidWasm.with(self);
@@ -137,15 +134,18 @@ fn has_import_function(bytes: &[u8], expected_module: &str, expected_field: &str
     let parser = wasmparser::Parser::new(0);
     for payload in parser.parse_all(bytes) {
         if let Payload::ImportSection(imports) = payload? {
-            for import in imports {
-                if let Import {
-                    module,
-                    name: field,
-                    ty: TypeRef::Func(_),
-                } = import?
-                {
-                    if module == expected_module && field == expected_field {
-                        return Ok(true);
+            for imps in imports {
+                let imps = imps?;
+                for imp in imps {
+                    if let Import {
+                        module,
+                        name: field,
+                        ty: TypeRef::Func(_),
+                    } = imp?.1
+                    {
+                        if module == expected_module && field == expected_field {
+                            return Ok(true);
+                        }
                     }
                 }
             }
