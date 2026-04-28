@@ -124,6 +124,7 @@ spidermonkey/spidermonkey-markdown.wasm
 spidermonkey/spidermonkey-json.wasm
 spidermonkey/spidermonkey-regex.wasm
 splay/splay.wasm
+sqlite3/sqlite3.wasm
 tinygo/tinygo-json.wasm
 tinygo/tinygo-regex.wasm
 tract-onnx-image-classification/benchmark.wasm
