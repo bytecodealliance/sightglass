@@ -28,8 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # for now, limit this a bit
-        revision: ["main", "v38.0.3"]
+        revision: ["main"]
     env:
       REVISION: ${{ matrix.revision }}
     steps:
