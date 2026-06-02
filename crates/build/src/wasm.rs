@@ -11,7 +11,9 @@ use std::{
     path::{Path, PathBuf},
 };
 use thiserror::Error;
-use wasmparser::{Import, Payload, TypeRef};
+use wasmparser::{
+    component_types::ComponentEntityType, types::Types, Encoding, Import, Payload, TypeRef,
+};
 
 pub struct WasmBenchmark(PathBuf);
 
@@ -40,18 +42,31 @@ impl WasmBenchmark {
             }
         };
 
-        // Check that it contains valid Wasm.
+        // Check that it contains valid Wasm, keeping the resolved type
+        // information so we can inspect a component's imports below.
         let features = wasmparser::WasmFeatures::default();
         let mut validator = wasmparser::Validator::new_with_features(features);
-        if validator.validate_all(&bytes).is_err() {
-            return ValidationErrorKind::InvalidWasm.with(self);
-        }
+        let types = match validator.validate_all(&bytes) {
+            Ok(types) => types,
+            Err(_) => return ValidationErrorKind::InvalidWasm.with(self),
+        };
 
-        // Check that it has the expected imports/exports.
-        if !has_import_function(&bytes, "bench", "start").unwrap() {
+        // Check that it imports the `bench.start` and `bench.end` timing hooks.
+        //
+        // In a core module these are plain function imports. In a component
+        // they are functions exported by an imported instance named `bench`.
+        let component = is_component(&bytes);
+        let has_hook = |field: &str| -> bool {
+            if component {
+                component_imports_bench_func(&types, field)
+            } else {
+                has_import_function(&bytes, "bench", field).unwrap()
+            }
+        };
+        if !has_hook("start") {
             return ValidationErrorKind::MissingImport("bench.start").with(self);
         }
-        if !has_import_function(&bytes, "bench", "end").unwrap() {
+        if !has_hook("end") {
             return ValidationErrorKind::MissingImport("bench.end").with(self);
         }
 
@@ -128,6 +143,39 @@ impl Display for WasmBenchmark {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0.display())
     }
+}
+
+/// Determine whether the given Wasm bytes encode a component rather than a core
+/// module by inspecting the encoding in their header, which is always the first
+/// payload.
+fn is_component(bytes: &[u8]) -> bool {
+    matches!(
+        wasmparser::Parser::new(0).parse(bytes, true),
+        Ok(wasmparser::Chunk::Parsed {
+            payload: Payload::Version {
+                encoding: Encoding::Component,
+                ..
+            },
+            ..
+        })
+    )
+}
+
+/// Check whether a (validated) component imports an instance named `bench` that
+/// exports a function named `field` (e.g. `start` or `end`).
+fn component_imports_bench_func(types: &Types, field: &str) -> bool {
+    let Some(ComponentEntityType::Instance(instance)) =
+        types.component_entity_type_of_import("bench")
+    else {
+        return false;
+    };
+    matches!(
+        types
+            .as_ref()
+            .get(instance)
+            .and_then(|instance| instance.exports.get(field)),
+        Some(ComponentEntityType::Func(_))
+    )
 }
 
 fn has_import_function(bytes: &[u8], expected_module: &str, expected_field: &str) -> Result<bool> {
