@@ -9,6 +9,7 @@ blake3-scalar/benchmark.wasm
 blake3-simd/benchmark.wasm
 blind-sig/benchmark.wasm
 bz2/benchmark.wasm
+cm-online-stats/cm-online-stats.wasm
 hex-simd/benchmark.wasm
 # image-classification/image-classification-benchmark.wasm
 intgemm-simd/benchmark.wasm
