@@ -11,10 +11,190 @@ use std::{
     fs,
     io::{self, BufWriter, Write},
     path::{Path, PathBuf},
-    process::Command,
-    process::Stdio,
+    process::{Command, Stdio},
 };
 use structopt::StructOpt;
+
+const DEFAULT_PROCESSES: usize = 10;
+const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
+
+#[cfg(all(target_os = "linux", feature = "callgrind"))]
+mod callgrind {
+    use super::*;
+    use sightglass_recorder::measure::callgrind::CALLGRIND_OUT_DIR_ENV_VAR;
+    use tempfile::TempDir;
+
+    const DEFAULT_CALLGRIND_PROCESSES: usize = 3;
+    const DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS: usize = 1;
+    const CACHE_MODEL_I1: &str = "32768,8,64";
+    const CACHE_MODEL_D1: &str = "32768,8,64";
+    const CACHE_MODEL_LL: &str = "8388608,16,64";
+
+    impl PreparedCommand {
+        #[cfg(all(target_os = "linux", feature = "callgrind"))]
+        fn with_tempdir(mut self, tempdir: tempfile::TempDir) -> Self {
+            self.tempdir = Some(tempdir);
+            self
+        }
+
+        #[cfg(all(target_os = "linux", feature = "callgrind"))]
+        fn tempdir(&self) -> Option<&tempfile::TempDir> {
+            self.tempdir.as_ref()
+        }
+    }
+
+    impl BenchmarkCommand {
+        pub(super) fn default_processes(&self) -> usize {
+            if self.uses_callgrind() {
+                DEFAULT_CALLGRIND_PROCESSES
+            } else {
+                DEFAULT_PROCESSES
+            }
+        }
+
+        pub(super) fn default_iterations_per_process(&self) -> usize {
+            if self.uses_callgrind() {
+                DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS
+            } else {
+                DEFAULT_ITERATIONS_PER_PROCESS
+            }
+        }
+
+        pub(super) fn validate(&self) -> Result<()> {
+            if self.uses_callgrind() && self.measures.len() > 1 {
+                anyhow::bail!(
+                    "callgrind must be used by itself and cannot be combined with other measures"
+                );
+            }
+
+            Ok(())
+        }
+
+        pub(super) fn should_wrap_subprocesses(&self) -> bool {
+            self.uses_callgrind() && std::env::var_os(CALLGRIND_OUT_DIR_ENV_VAR).is_none()
+        }
+
+        pub(super) fn prepare_command(
+            &self,
+            this_exe: &Path,
+            engine: &Path,
+            wasm: &Path,
+        ) -> Result<PreparedCommand> {
+            ensure_tools_available()?;
+
+            let callgrind_output = TempDir::new().context("failed to create callgrind tempdir")?;
+            let mut prepared = PreparedCommand::new(
+                Command::new("setarch"),
+                "callgrind benchmark subprocess",
+                "failed to run callgrind benchmark subprocess",
+                "failed to read callgrind benchmark subprocess's results",
+            )
+            .with_tempdir(callgrind_output);
+            let output_dir = prepared.tempdir().unwrap().path().to_path_buf();
+
+            prepared
+                .command
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .arg(this_arch())
+                .arg("-R")
+                .arg("valgrind")
+                .arg("--tool=callgrind")
+                .arg("--cache-sim=yes")
+                .arg("--branch-sim=yes")
+                .arg(format!("--I1={CACHE_MODEL_I1}"))
+                .arg(format!("--D1={CACHE_MODEL_D1}"))
+                .arg(format!("--LL={CACHE_MODEL_LL}"))
+                .arg("--instr-atstart=no")
+                .arg(format!(
+                    "--callgrind-out-file={}",
+                    output_dir.join("callgrind.out.%p").display()
+                ))
+                .arg(this_exe);
+            prepared.command.env("RAYON_NUM_THREADS", "1");
+            prepared.command.env(CALLGRIND_OUT_DIR_ENV_VAR, &output_dir);
+            self.add_benchmark_child_args(
+                &mut prepared.command,
+                engine,
+                wasm,
+                1,
+                self.iterations_per_process(),
+                Format::Json,
+            );
+
+            Ok(prepared)
+        }
+
+        fn uses_callgrind(&self) -> bool {
+            self.measures
+                .iter()
+                .any(|measure| matches!(measure, MeasureType::Callgrind))
+        }
+    }
+
+    fn ensure_tools_available() -> Result<()> {
+        ensure_command_succeeds(
+            "valgrind",
+            ["--version"],
+            "callgrind measurement requires `valgrind` on PATH",
+        )?;
+        ensure_command_succeeds(
+            "setarch",
+            [this_arch(), "-R", "true"],
+            "callgrind measurement requires `setarch -R` support to disable ASLR",
+        )?;
+        Ok(())
+    }
+
+    fn ensure_command_succeeds<I, S>(program: &str, args: I, error_message: &str) -> Result<()>
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<std::ffi::OsStr>,
+    {
+        let status = Command::new(program)
+            .args(args)
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .with_context(|| format!("{error_message}: failed to spawn `{program}`"))?;
+        anyhow::ensure!(status.success(), "{error_message}");
+        Ok(())
+    }
+}
+
+#[cfg(not(all(target_os = "linux", feature = "callgrind")))]
+mod callgrind {
+    use super::*;
+
+    impl BenchmarkCommand {
+        pub(super) fn default_processes(&self) -> usize {
+            DEFAULT_PROCESSES
+        }
+
+        pub(super) fn default_iterations_per_process(&self) -> usize {
+            DEFAULT_ITERATIONS_PER_PROCESS
+        }
+
+        pub(super) fn validate(&self) -> Result<()> {
+            Ok(())
+        }
+
+        pub(super) fn should_wrap_subprocesses(&self) -> bool {
+            false
+        }
+
+        pub(super) fn prepare_command(
+            &self,
+            _this_exe: &Path,
+            _engine: &Path,
+            _wasm: &Path,
+        ) -> Result<PreparedCommand> {
+            unreachable!()
+        }
+    }
+}
 
 /// Measure compilation, instantiation, and execution of a Wasm file.
 ///
@@ -58,8 +238,11 @@ pub struct BenchmarkCommand {
     engine_flags: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
-    #[structopt(long = "processes", default_value = "10", value_name = "PROCESSES")]
-    processes: usize,
+    ///
+    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
+    /// default is `3`.
+    #[structopt(long = "processes", value_name = "PROCESSES")]
+    processes: Option<usize>,
 
     /// Override the "engine" name; this is useful if running experiments that might
     /// not have a differentiating engine name (e.g. if customizing the flags).
@@ -70,12 +253,14 @@ pub struct BenchmarkCommand {
     names: Option<Vec<String>>,
 
     /// How many times should we run a benchmark in a single process?
+    ///
+    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
+    /// default is `1`.
     #[structopt(
         long = "iterations-per-process",
-        default_value = "10",
         value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
     )]
-    iterations_per_process: usize,
+    iterations_per_process: Option<usize>,
 
     /// Output raw data, rather than the summarized, human-readable analysis
     /// results.
@@ -92,10 +277,17 @@ pub struct BenchmarkCommand {
     #[structopt(short = "o", long = "output-file")]
     output_file: Option<String>,
 
-    /// The type of measurement to use (cycles, insts-retired, perf-counters, noop, vtune)
-    /// when recording the benchmark performance.  This option can be specified more than
-    /// once if to record multiple measurements.  If no measures are specified,
-    /// the "cycles" measure will be used.
+    /// The type of measurement to use (cycles, insts-retired, perf-counters,
+    /// noop, vtune, callgrind) when recording benchmark performance.
+    ///
+    /// This option can be specified more than once to record multiple measures,
+    /// except for `callgrind`, which must be used by itself.
+    ///
+    /// If no measures are specified, the "cycles" measure is used.
+    ///
+    /// `callgrind` defaults to fewer processes and iterations per process
+    /// because it runs the benchmarking processes under Valgrind, which is
+    /// slower but also more deterministic and less noisy.
     #[structopt(long = "measure", short = "m", multiple = true)]
     measures: Vec<MeasureType>,
 
@@ -146,21 +338,39 @@ pub struct BenchmarkCommand {
 
 impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
-        anyhow::ensure!(self.processes > 0, "processes must be greater than zero");
+        anyhow::ensure!(self.processes() > 0, "processes must be greater than zero");
         anyhow::ensure!(
-            self.iterations_per_process > 0,
+            self.iterations_per_process() > 0,
             "iterations-per-process must be greater than zero"
         );
         anyhow::ensure!(
             !self.engines.is_empty(),
             "must pass one or more engines to benchmark with -e/--engine"
         );
+        self.validate()?;
 
-        if self.processes == 1 {
+        if self.should_wrap_subprocesses() {
+            let this_exe =
+                std::env::current_exe().context("failed to get the current executable's path")?;
+            return self.execute_in_subprocesses("callgrind iterations", |engine, wasm| {
+                self.prepare_command(&this_exe, engine, wasm)
+            });
+        }
+
+        if self.processes() == 1 {
             self.execute_in_current_process()
         } else {
             self.execute_in_multiple_processes()
         }
+    }
+
+    fn processes(&self) -> usize {
+        self.processes.unwrap_or_else(|| self.default_processes())
+    }
+
+    fn iterations_per_process(&self) -> usize {
+        self.iterations_per_process
+            .unwrap_or_else(|| self.default_iterations_per_process())
     }
 
     /// Execute benchmark(s) in the provided engine(s) using the current process.
@@ -258,7 +468,7 @@ impl BenchmarkCommand {
 
                 // Run the benchmark (compilation, instantiation, and execution) several times in
                 // this process.
-                for _ in 0..self.iterations_per_process {
+                for _ in 0..self.iterations_per_process() {
                     match self.benchmark_phase {
                         None => {
                             let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
@@ -374,23 +584,58 @@ impl BenchmarkCommand {
     /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
     /// run the `execute_in_current_process` function above.
     fn execute_in_multiple_processes(&self) -> Result<()> {
+        let this_exe =
+            std::env::current_exe().context("failed to get the current executable's path")?;
+        self.execute_in_subprocesses("iterations", |engine, wasm| {
+            let mut prepared = PreparedCommand::new(
+                Command::new(&this_exe),
+                "benchmark subprocess",
+                "failed to run benchmark subprocess",
+                "failed to read benchmark subprocess's results",
+            );
+            prepared
+                .command
+                .stdin(Stdio::null())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit());
+            self.add_benchmark_child_args(
+                &mut prepared.command,
+                engine,
+                wasm,
+                1,
+                self.iterations_per_process(),
+                Format::Json,
+            );
+            Ok(prepared)
+        })
+    }
+
+    fn execute_in_subprocesses<F>(
+        &self,
+        iteration_label: &str,
+        mut prepare_command: F,
+    ) -> Result<()>
+    where
+        F: FnMut(&Path, &Path) -> Result<PreparedCommand>,
+    {
         let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
             Box::new(BufWriter::new(fs::File::create(file)?))
         } else {
             Box::new(io::stdout())
         };
 
-        let this_exe =
-            std::env::current_exe().context("failed to get the current executable's path")?;
-
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
-            "\nRunning {} total iterations ({} engines * {} benchmarks * {} processes * {} iterations per process)",
-            self.engines.len() * wasm_files.len() * self.processes * self.iterations_per_process,
+            "\nRunning {} total {} ({} engines * {} benchmarks * {} processes * {} iterations per process)",
+            self.engines.len()
+                * wasm_files.len()
+                * self.processes()
+                * self.iterations_per_process(),
+            iteration_label,
             self.engines.len(),
             wasm_files.len(),
-            self.processes,
-            self.iterations_per_process
+            self.processes(),
+            self.iterations_per_process()
         );
         eprint!("\n[Done] [Elapsed    ] [Est. Rem.  ]");
 
@@ -398,7 +643,6 @@ impl BenchmarkCommand {
         // us avoid some measurement bias from CPU state transitions that aren't
         // constrained within the duration of process execution, like dynamic
         // CPU throttling due to overheating.
-
         let mut rng = SmallRng::seed_from_u64(0x1337_4242);
 
         // Worklist that we randomly sample from.
@@ -411,7 +655,7 @@ impl BenchmarkCommand {
             let engine = check_engine_path(engine)?;
 
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), wasm, self.processes));
+                choices.push((engine.clone(), wasm, self.processes()));
             }
         }
 
@@ -419,65 +663,22 @@ impl BenchmarkCommand {
         let mut measurements = vec![];
 
         let mut i = 0;
-        let n = choices.len() * self.processes;
+        let n = choices.len() * self.processes();
         let start = std::time::Instant::now();
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
             let (engine, wasm, procs_left) = &mut choices[index];
-
-            let mut command = Command::new(&this_exe);
-            command
-                .stdin(Stdio::null())
-                .stdout(Stdio::piped())
-                .stderr(Stdio::inherit())
-                .arg("benchmark")
-                .arg("--processes")
-                .arg("1")
-                .arg("--iterations-per-process")
-                .arg(self.iterations_per_process.to_string())
-                .arg("--engine")
-                .arg(&engine)
-                .args(
-                    self.measures
-                        .iter()
-                        .flat_map(|m| ["--measure".to_string(), m.to_string()]),
-                )
-                .arg("--raw")
-                .arg("--output-format")
-                // Always use JSON when privately communicating with a
-                // subprocess.
-                .arg(Format::Json.to_string());
-
-            if self.pin {
-                command.arg("--pin");
-            }
-
-            if self.keep_logs {
-                command.arg("--keep-logs");
-            }
-
-            if self.small_workloads {
-                command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
-            }
-
-            if let Some(phase) = self.benchmark_phase {
-                command.arg("--benchmark-phase").arg(phase.to_string());
-            }
-
-            if let Some(flags) = &self.engine_flags {
-                command.arg(format!("--engine-flags={flags}"));
-            }
-
-            command.arg("--").arg(&wasm);
-
-            let output = command
+            let mut prepared = prepare_command(engine, wasm)?;
+            let output = prepared
+                .command
                 .output()
-                .context("failed to run benchmark subprocess")?;
+                .context(prepared.failure_context)?;
 
             anyhow::ensure!(
                 output.status.success(),
-                "benchmark subprocess did not exit successfully: {}\nstderr: {}\nstdout: {}",
+                "{} did not exit successfully: {}\nstderr: {}\nstdout: {}",
+                prepared.status_label,
                 output.status,
                 String::from_utf8_lossy(&output.stderr),
                 String::from_utf8_lossy(&output.stdout)
@@ -515,7 +716,7 @@ impl BenchmarkCommand {
             // accumulation.
             measurements.extend(
                 serde_json::from_slice::<Vec<Measurement<'_>>>(&output.stdout)
-                    .context("failed to read benchmark subprocess's results")?,
+                    .context(prepared.result_context)?,
             );
 
             *procs_left -= 1;
@@ -562,6 +763,82 @@ impl BenchmarkCommand {
             std::env::current_dir().context("failed to get the current working directory")?
         };
         Ok(working_dir)
+    }
+
+    fn add_benchmark_child_args(
+        &self,
+        command: &mut Command,
+        engine: &Path,
+        wasm: &Path,
+        processes: usize,
+        iterations_per_process: usize,
+        output_format: Format,
+    ) {
+        command
+            .arg("benchmark")
+            .arg("--processes")
+            .arg(processes.to_string())
+            .arg("--iterations-per-process")
+            .arg(iterations_per_process.to_string())
+            .arg("--engine")
+            .arg(engine)
+            .args(
+                self.measures
+                    .iter()
+                    .flat_map(|measure| ["--measure".to_string(), measure.to_string()]),
+            )
+            .arg("--raw")
+            .arg("--output-format")
+            .arg(output_format.to_string());
+
+        if self.pin {
+            command.arg("--pin");
+        }
+
+        if self.keep_logs {
+            command.arg("--keep-logs");
+        }
+
+        if self.small_workloads {
+            command.env("WASM_BENCH_USE_SMALL_WORKLOAD", "1");
+        }
+
+        if let Some(phase) = self.benchmark_phase {
+            command.arg("--benchmark-phase").arg(phase.to_string());
+        }
+
+        if let Some(flags) = self.engine_flags.as_deref() {
+            command.arg(format!("--engine-flags={flags}"));
+        }
+
+        command.arg("--").arg(wasm);
+    }
+}
+
+struct PreparedCommand {
+    command: Command,
+    #[cfg(all(target_os = "linux", feature = "callgrind"))]
+    tempdir: Option<tempfile::TempDir>,
+    status_label: &'static str,
+    failure_context: &'static str,
+    result_context: &'static str,
+}
+
+impl PreparedCommand {
+    fn new(
+        command: Command,
+        status_label: &'static str,
+        failure_context: &'static str,
+        result_context: &'static str,
+    ) -> Self {
+        Self {
+            command,
+            #[cfg(all(target_os = "linux", feature = "callgrind"))]
+            tempdir: None,
+            status_label,
+            failure_context,
+            result_context,
+        }
     }
 }
 
@@ -757,5 +1034,33 @@ instantiation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
 
         assert_eq!(actual.trim(), expected.trim());
         Ok(())
+    }
+
+    #[cfg(all(target_os = "linux", feature = "callgrind"))]
+    #[test]
+    fn callgrind_must_be_exclusive() {
+        let command = BenchmarkCommand {
+            benchmarks: vec![],
+            engines: vec!["/tmp/engine.so".into()],
+            engine_flags: None,
+            processes: None,
+            names: None,
+            iterations_per_process: None,
+            raw: false,
+            output_format: Format::Json,
+            output_file: None,
+            measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
+            small_workloads: false,
+            working_dir: None,
+            benchmark_phase: None,
+            significance_level: 0.01,
+            pin: false,
+            keep_logs: false,
+        };
+
+        assert_eq!(
+            command.validate().unwrap_err().to_string(),
+            "callgrind must be used by itself and cannot be combined with other measures"
+        );
     }
 }

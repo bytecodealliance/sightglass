@@ -1,0 +1,18 @@
+# callgrind format
+version: 1
+creator: callgrind-3.20.0.GIT
+pid: 773940
+cmd:  target/debug/cgprobe
+part: 1
+
+
+desc: I1 cache: 32768 B, 64 B, 8-way associative
+desc: D1 cache: 32768 B, 64 B, 8-way associative
+desc: LL cache: 8388608 B, 64 B, 16-way associative
+
+desc: Timerange: Basic block 0 - 140028
+desc: Trigger: Client Request: execution/7
+
+positions: line
+events: Ir Dr Dw I1mr D1mr D1mw ILmr DLmr DLmw Bc Bcm Bi Bim
+summary: 790139 230038 320058 17 0 8 17 0 8 30004 8 1 1
