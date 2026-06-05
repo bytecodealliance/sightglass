@@ -200,6 +200,12 @@ Several _measures_ can be configured using the `--measure` option:
   instructions retired, cache accesses, cache misses); only available on Linux
 - `vtune`: record each phase as a VTune task for analysis; see [this help
   documentation](docs/vtune.md) for more details
+- `callgrind`: (nearly)deterministic instruction count measurement using
+  Valgrind's Callgrind, which must be installed, including when building
+  `sightglass-cli` itself, since the Valgrind headers are needed to compile
+  the support in; `sightglass-cli` launches each benchmark process under
+  `valgrind` itself (wrapping `sightglass-cli` in `valgrind` manually also
+  works, with `--processes 1`); only available on Linux
 - `noop`: no measurement is performed
 
 For example, run:

@@ -1,0 +1,127 @@
+name: callgrind
+
+# Run benchmarks with the `callgrind` measure,
+# recording deterministic per-phase instruction counts against the latest
+# wasmtime commit. The JSON measurements and the raw per-phase Callgrind dump
+# files are uploaded as a workflow artifact, and a summary table is rendered on
+# the workflow run page.
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    # Run nightly at 04:23 UTC.
+    - cron: "23 4 * * *"
+  workflow_dispatch:
+    inputs:
+      benchmarks:
+        description: >-
+          Space-separated benchmark `.wasm` (or `.suite`) paths to run.
+          Defaults to the default suite -- minus spidermonkey, whose large
+          module takes too long to compile under Callgrind's (serialized)
+          simulation -- plus the component-model benchmark.
+        required: false
+        default: ""
+      iterations:
+        description: >-
+          Iterations per process. The instruction counts are deterministic so
+          `1` is usually enough; use `3` or more to also generate an HTML
+          report in the artifact.
+        required: false
+        default: "1"
+      wasmtime-ref:
+        description: >-
+          The wasmtime revision to benchmark: a branch, a tag, or a full
+          commit hash. Defaults to `main`.
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_LOG: info
+  DEFAULT_BENCHMARKS: >-
+    benchmarks/noop/benchmark.wasm
+    benchmarks/bz2/benchmark.wasm
+    benchmarks/pulldown-cmark/benchmark.wasm
+    benchmarks/cm-online-stats/cm-online-stats.wasm
+
+jobs:
+  callgrind:
+    # Don't run scheduled jobs on forks.
+    if: github.event_name != 'schedule' || github.repository == 'bytecodealliance/sightglass'
+    runs-on: ubuntu-latest
+    # The default benchmark set takes well under an hour, but leave headroom
+    # for `workflow_dispatch` runs over larger benchmark sets or with more
+    # iterations.
+    timeout-minutes: 120
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        persist-credentials: false
+    - run: rustup update
+
+    # Benchmark against the requested wasmtime revision (the latest commit on
+    # `main` by default), caching the built engine by commit hash so that
+    # back-to-back runs do not rebuild it.
+    - name: Resolve the wasmtime revision
+      id: wasmtime
+      env:
+        WASMTIME_REF: ${{ inputs.wasmtime-ref }}
+      run: node .github/scripts/resolve-wasmtime-ref.mjs
+    - name: Download cached wasmtime engine
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      id: wasmtime-cache
+      with:
+        path: engines/wasmtime/*
+        key: callgrind-wasmtime-${{ runner.os }}-${{ steps.wasmtime.outputs.sha }}
+    - name: Build wasmtime engine
+      if: steps.wasmtime-cache.outputs.cache-hit != 'true'
+      working-directory: ./engines/wasmtime
+      env:
+        REVISION: ${{ steps.wasmtime.outputs.sha }}
+      run: |
+        rustc build.rs
+        ./build
+
+    # Cache the cargo registry and build artifacts for the sightglass-cli
+    # build. `cargo build` still runs below to pick up any source changes; a
+    # warm cache makes it incremental.
+    - name: Cache sightglass-cli build
+      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: callgrind-sightglass-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+        restore-keys: |
+          callgrind-sightglass-${{ runner.os }}-
+
+    # Valgrind must be installed BEFORE building sightglass: the Valgrind
+    # client-request support in sightglass-recorder is only compiled in when
+    # the Valgrind headers are present at build time.
+    - name: Install valgrind
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y -q valgrind
+
+    - name: Build sightglass-cli
+      run: cargo build
+
+    - name: Benchmark with the callgrind measure
+      env:
+        BENCHMARKS: ${{ inputs.benchmarks }}
+        ITERATIONS: ${{ inputs.iterations }}
+        WASMTIME_SHA: ${{ steps.wasmtime.outputs.sha }}
+      run: node .github/scripts/callgrind.mjs
+
+    - name: Upload callgrind results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: callgrind-results
+        path: callgrind-results/
+        if-no-files-found: warn

@@ -21,6 +21,8 @@ ittapi = "0.3"
 perf-event = "0.4"
 # On supported platforms, we use libc's `sched_getcpu` to log the processor ID.
 libc = "0.2"
+# Used to delimit Sightglass phases when running under Valgrind's Callgrind.
+valgrind-requests = "1.1"
 
 # There are multiple implementations for pinning the benchmark to a single core.
 [target.'cfg(any(target_os="windows",target_os="macos",target_os="linux"))'.dependencies]

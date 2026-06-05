@@ -78,6 +78,8 @@ pub trait Measure: 'static {
 }
 
 #[cfg(target_os = "linux")]
+pub mod callgrind;
+#[cfg(target_os = "linux")]
 pub mod counters;
 #[cfg(target_os = "linux")]
 pub mod insts;
@@ -95,7 +97,7 @@ pub mod vtune;
 /// let ty: MeasureType = "noop".parse().unwrap();
 /// let measure = ty.build();
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MeasureType {
     /// No measurement.
     Noop,
@@ -116,6 +118,10 @@ pub enum MeasureType {
     /// Measure instructions retired.
     #[cfg(target_os = "linux")]
     InstsRetired,
+
+    /// Measure instruction totals with Callgrind.
+    #[cfg(target_os = "linux")]
+    Callgrind,
 }
 
 impl fmt::Display for MeasureType {
@@ -129,6 +135,8 @@ impl fmt::Display for MeasureType {
             MeasureType::PerfCounters => write!(f, "perf-counters"),
             #[cfg(target_os = "linux")]
             MeasureType::InstsRetired => write!(f, "insts-retired"),
+            #[cfg(target_os = "linux")]
+            MeasureType::Callgrind => write!(f, "callgrind"),
         }
     }
 }
@@ -145,12 +153,51 @@ impl FromStr for MeasureType {
             "perf-counters" => Ok(Self::PerfCounters),
             #[cfg(target_os = "linux")]
             "insts-retired" => Ok(Self::InstsRetired),
+            #[cfg(target_os = "linux")]
+            "callgrind" => Ok(Self::Callgrind),
             _ => Err("unknown measure type"),
         }
     }
 }
 
+/// A command prefix and the environment variables with which to launch a benchmark process under
+/// an external tool; see [MeasureType::process_wrapper].
+pub type ProcessWrapper = (
+    Vec<std::ffi::OsString>,
+    Vec<(&'static str, std::ffi::OsString)>,
+);
+
 impl MeasureType {
+    /// Does this measure require the benchmark process to be launched under an external tool (see
+    /// [Self::process_wrapper])?
+    pub fn needs_process_wrapper(&self) -> bool {
+        #[cfg(target_os = "linux")]
+        {
+            matches!(self, Self::Callgrind)
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            false
+        }
+    }
+
+    /// If this measure requires the benchmark process to run under an external tool, prepare to
+    /// launch the `spawn_index`th benchmark subprocess of this run. It will take
+    /// `expected_dumps` per-phase measurements and return the command prefix with which to
+    /// launch it and the environment variables to pass to it.
+    #[cfg_attr(not(target_os = "linux"), allow(unused_variables))]
+    pub fn process_wrapper(
+        &self,
+        spawn_index: usize,
+        expected_dumps: u32,
+    ) -> anyhow::Result<Option<ProcessWrapper>> {
+        match self {
+            #[cfg(target_os = "linux")]
+            Self::Callgrind => callgrind::process_wrapper(spawn_index, expected_dumps).map(Some),
+            _ => Ok(None),
+        }
+    }
+
     /// Build a dynamic instance of a [Measure]. The recording infrastructure does not need to know
     /// exactly what type of [Measure] we want to use, just that it can `start` and `end`
     /// measurements.
@@ -164,6 +211,8 @@ impl MeasureType {
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),
             #[cfg(target_os = "linux")]
             Self::InstsRetired => Box::new(insts::InstsRetiredMeasure::new()),
+            #[cfg(target_os = "linux")]
+            Self::Callgrind => Box::new(callgrind::CallgrindMeasure::new()),
         }
     }
 }

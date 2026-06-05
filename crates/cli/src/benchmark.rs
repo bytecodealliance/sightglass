@@ -92,7 +92,8 @@ pub struct BenchmarkCommand {
     #[structopt(short = "o", long = "output-file")]
     output_file: Option<String>,
 
-    /// The type of measurement to use (cycles, insts-retired, perf-counters, noop, vtune)
+    /// The type of measurement to use (cycles, insts-retired, perf-counters, noop, vtune,
+    /// callgrind)
     /// when recording the benchmark performance.  This option can be specified more than
     /// once if to record multiple measurements.  If no measures are specified,
     /// the "cycles" measure will be used.
@@ -155,11 +156,73 @@ impl BenchmarkCommand {
             !self.engines.is_empty(),
             "must pass one or more engines to benchmark with -e/--engine"
         );
+        for (i, measure) in self.measures.iter().enumerate() {
+            // E.g. two callgrind measures would each toggle Callgrind's collection state,
+            // cancelling each other out.
+            anyhow::ensure!(
+                !self.measures[..i].contains(measure),
+                "`--measure {measure}` may only be specified once"
+            );
+        }
+        if let Some(wrapper_measure) = self.measures.iter().find(|m| m.needs_process_wrapper()) {
+            // E.g. cycle counts taken inside Callgrind's Valgrind wrapper would reflect the
+            // simulation, not the hardware.
+            anyhow::ensure!(
+                self.measures.len() == 1,
+                "`--measure {wrapper_measure}` cannot be combined with other measures: running \
+                 them under its Valgrind wrapper would distort their results"
+            );
+            #[cfg(target_os = "linux")]
+            anyhow::ensure!(
+                sightglass_recorder::measure::callgrind::valgrind_support().is_some(),
+                "this `sightglass-cli` was built without Valgrind support (the Valgrind headers \
+                 were not found at build time); install Valgrind and rebuild to use `--measure \
+                 {wrapper_measure}`"
+            );
+        }
 
-        if self.processes == 1 {
+        // Some measures (e.g. callgrind) require the benchmark process to run under an external
+        // tool; in that case run benchmarks in wrapped subprocesses, even with `--processes 1`,
+        // unless the user already launched us under the tool themselves.
+        if self.is_manually_wrapped() {
+            anyhow::ensure!(
+                self.processes == 1,
+                "a manually Valgrind-wrapped `sightglass-cli` must use `--processes 1`: Valgrind \
+                 does not follow the benchmark child processes that more than one process \
+                 requires; alternatively, drop the manual wrapper and `sightglass-cli` will \
+                 launch Valgrind around each benchmark process itself"
+            );
+        }
+
+        if self.processes == 1 && !self.spawn_under_process_wrapper() {
             self.execute_in_current_process()
         } else {
             self.execute_in_multiple_processes()
+        }
+    }
+
+    /// Does some selected measure require the benchmark process to run under an external tool,
+    /// and the user already launched this process under it themselves?
+    fn is_manually_wrapped(&self) -> bool {
+        let needs = self.measures.iter().any(MeasureType::needs_process_wrapper);
+        needs && Self::already_under_valgrind()
+    }
+
+    /// Must benchmark subprocesses be spawned under an external tool (see
+    /// [MeasureType::process_wrapper])?
+    fn spawn_under_process_wrapper(&self) -> bool {
+        let needs = self.measures.iter().any(MeasureType::needs_process_wrapper);
+        needs && !Self::already_under_valgrind()
+    }
+
+    fn already_under_valgrind() -> bool {
+        #[cfg(target_os = "linux")]
+        {
+            sightglass_recorder::measure::callgrind::running_under_valgrind()
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            false
         }
     }
 
@@ -404,14 +467,21 @@ impl BenchmarkCommand {
         // Worklist that we randomly sample from.
         let mut choices = vec![];
 
-        for engine in &self.engines {
+        for (engine_index, engine) in self.engines.iter().enumerate() {
             // Ensure that each of our engines is built before we spawn any
             // child processes (potentially in a different working directory,
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
+            // The `--name` override for this engine, if any.
+            let name = self
+                .names
+                .as_ref()
+                .and_then(|names| names.get(engine_index))
+                .cloned();
+
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), wasm, self.processes));
+                choices.push((engine.clone(), name.clone(), wasm, self.processes));
             }
         }
 
@@ -422,11 +492,39 @@ impl BenchmarkCommand {
         let n = choices.len() * self.processes;
         let start = std::time::Instant::now();
 
+        // When a measure requires it (and the user did not already wrap us themselves), launch
+        // each benchmark subprocess under its external tool, telling the subprocess where the
+        // tool's output files will be written.
+        let process_wrapper = if self.spawn_under_process_wrapper() {
+            self.measures
+                .iter()
+                .find(|m| m.needs_process_wrapper())
+                .copied()
+        } else {
+            None
+        };
+
+        // An upper bound on how many per-phase measurements each subprocess will take (an
+        // external tool writes one output file per measurement): three phases per iteration,
+        // plus an eagerly compiled module when benchmarking a post-compilation phase.
+        let expected_dumps = u32::try_from(self.iterations_per_process)? * 3 + 1;
+
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, wasm, procs_left) = &mut choices[index];
+            let (engine, name, wasm, procs_left) = &mut choices[index];
 
-            let mut command = Command::new(&this_exe);
+            let wrapper = match process_wrapper {
+                Some(measure) => measure.process_wrapper(i, expected_dumps)?,
+                None => None,
+            };
+            let mut command = match wrapper {
+                Some((prefix, envs)) => {
+                    let mut command = Command::new(&prefix[0]);
+                    command.args(&prefix[1..]).arg(&this_exe).envs(envs);
+                    command
+                }
+                None => Command::new(&this_exe),
+            };
             command
                 .stdin(Stdio::null())
                 .stdout(Stdio::piped())
@@ -469,11 +567,23 @@ impl BenchmarkCommand {
                 command.arg(format!("--engine-flags={flags}"));
             }
 
+            if let Some(name) = name.as_ref() {
+                command.arg("--name").arg(name);
+            }
+
+            if let Some(working_dir) = &self.working_dir {
+                command.arg("--working-dir").arg(working_dir);
+            }
+
             command.arg("--").arg(&wasm);
 
-            let output = command
-                .output()
-                .context("failed to run benchmark subprocess")?;
+            let output = command.output().with_context(|| {
+                if process_wrapper.is_some() {
+                    "failed to run benchmark subprocess under valgrind (is valgrind installed?)"
+                } else {
+                    "failed to run benchmark subprocess"
+                }
+            })?;
 
             anyhow::ensure!(
                 output.status.success(),
@@ -513,10 +623,16 @@ impl BenchmarkCommand {
 
             // Parse the subprocess's output and add its measurements to our
             // accumulation.
-            measurements.extend(
+            let subprocess_measurements =
                 serde_json::from_slice::<Vec<Measurement<'_>>>(&output.stdout)
-                    .context("failed to read benchmark subprocess's results")?,
+                    .context("failed to read benchmark subprocess's results")?;
+            anyhow::ensure!(
+                !subprocess_measurements.is_empty()
+                    || !self.measures.iter().any(MeasureType::needs_process_wrapper),
+                "a benchmark subprocess recorded no measurements; if you wrapped `sightglass-cli` \
+                 in `valgrind` manually, note that Valgrind does not follow child processes."
             );
+            measurements.extend(subprocess_measurements);
 
             *procs_left -= 1;
             if *procs_left == 0 {

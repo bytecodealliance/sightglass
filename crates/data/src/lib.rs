@@ -499,6 +499,7 @@ impl<'a, 'de> Deserialize<'de> for EffectSize<'a> {
 /// - `./benchmarks/foo/benchmark.wasm` -> `foo`
 /// - `benchmarks/bar/benchmark.wasm` -> `bar`
 /// - `benchmarks/foo/bar.wasm` -> `foo/bar`
+/// - `benchmarks/foo/foo.wasm` -> `foo`
 /// - `simple.wasm` -> `simple`
 ///
 /// # Examples
@@ -509,6 +510,7 @@ impl<'a, 'de> Deserialize<'de> for EffectSize<'a> {
 /// assert_eq!(extract_benchmark_name("./benchmarks/foo/benchmark.wasm"), "foo");
 /// assert_eq!(extract_benchmark_name("benchmarks/bar/benchmark.wasm"), "bar");
 /// assert_eq!(extract_benchmark_name("benchmarks/foo/bar.wasm"), "foo/bar");
+/// assert_eq!(extract_benchmark_name("benchmarks/foo/foo.wasm"), "foo");
 /// assert_eq!(extract_benchmark_name("simple.wasm"), "simple");
 /// ```
 pub fn extract_benchmark_name(wasm_path: &str) -> String {
@@ -526,6 +528,14 @@ pub fn extract_benchmark_name(wasm_path: &str) -> String {
         path = stripped;
     } else if let Some(stripped) = path.strip_suffix(".wasm") {
         path = stripped;
+    }
+
+    // Collapse a benchmark file named after its directory (e.g.,
+    // `cm-online-stats/cm-online-stats.wasm`).
+    if let Some((dir, file)) = path.split_once('/') {
+        if dir == file {
+            path = dir;
+        }
     }
 
     path.to_string()

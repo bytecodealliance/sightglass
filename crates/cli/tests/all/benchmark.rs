@@ -151,6 +151,88 @@ fn benchmark_summary() {
         );
 }
 
+/// With the callgrind measure, `sightglass-cli` launches each benchmark process under Valgrind's
+/// Callgrind itself and records per-phase instruction counts. Without Valgrind installed, the run
+/// must fail loudly rather than silently record nothing.
+#[cfg(target_os = "linux")]
+#[test]
+fn benchmark_callgrind_measure_launches_valgrind() {
+    let have_valgrind = std::process::Command::new("valgrind")
+        .arg("--version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false);
+
+    // Run in a temporary directory so that the Callgrind dump files do not
+    // litter the source tree; this requires an absolute benchmark path.
+    let noop = PathBuf::from(benchmark("noop")).canonicalize().unwrap();
+    let assert = sightglass_cli_benchmark()
+        .current_dir(std::env::temp_dir())
+        .arg("--raw")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--measure")
+        .arg("callgrind")
+        .arg("--output-format")
+        .arg("csv")
+        .arg("--")
+        .arg(noop)
+        .assert();
+
+    if have_valgrind {
+        assert.success().stdout(
+            predicate::str::contains("Compilation,callgrind-ir")
+                .and(predicate::str::contains("Instantiation,callgrind-ir"))
+                .and(predicate::str::contains("Execution,callgrind-ir")),
+        );
+    } else {
+        // Either Valgrind's headers were missing when this binary was built ("built without
+        // Valgrind support") or the `valgrind` binary is missing now ("is valgrind installed?").
+        assert
+            .failure()
+            .stderr(predicate::str::is_match("(?i)valgrind").unwrap());
+    }
+}
+
+/// A wrapper-requiring measure cannot be combined with other measures: their results would be
+/// distorted by running under the Valgrind wrapper.
+#[cfg(target_os = "linux")]
+#[test]
+fn benchmark_rejects_callgrind_combined_with_other_measures() {
+    sightglass_cli_benchmark()
+        .arg("--measure")
+        .arg("callgrind")
+        .arg("--measure")
+        .arg("cycles")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "cannot be combined with other measures",
+        ));
+}
+
+/// A duplicated measure is rejected: e.g. two callgrind measures would toggle Callgrind's
+/// collection state on and off again around each phase.
+#[test]
+fn benchmark_rejects_duplicate_measures() {
+    sightglass_cli_benchmark()
+        .arg("--measure")
+        .arg("cycles")
+        .arg("--measure")
+        .arg("cycles")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(
+            "`--measure cycles` may only be specified once",
+        ));
+}
+
 #[test]
 #[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
 fn benchmark_effect_size() -> anyhow::Result<()> {
