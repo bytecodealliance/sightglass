@@ -238,6 +238,9 @@ pub struct BenchmarkCommand {
     engine_flags: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
+    ///
+    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
+    /// default is `3`.
     #[structopt(long = "processes", value_name = "PROCESSES")]
     processes: Option<usize>,
 
@@ -250,6 +253,9 @@ pub struct BenchmarkCommand {
     names: Option<Vec<String>>,
 
     /// How many times should we run a benchmark in a single process?
+    ///
+    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
+    /// default is `1`.
     #[structopt(
         long = "iterations-per-process",
         value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
