@@ -195,18 +195,32 @@ note that measuring using CPU cycles alone can be problematic (e.g., CPU
 frequency changes, context switches, etc.).
 
 Several _measures_ can be configured using the `--measure` option:
-- `cycles`: the number of CPU cycles elapsed
-- `perf-counters`: a selection of common `perf` counters (CPU cycles,
-  instructions retired, cache accesses, cache misses); only available on Linux
-- `vtune`: record each phase as a VTune task for analysis; see [this help
-  documentation](docs/vtune.md) for more details
-- `noop`: no measurement is performed
+
+- `cycles`: The number of CPU cycles elapsed.
+
+- `perf-counters`: A selection of common `perf` counters (CPU cycles,
+  instructions retired, cache accesses, cache misses); only available on Linux.
+
+- `callgrind`: Uses Valgrind's Callgrind to count instructions retired and
+  simulate caches and branch prediction. Mostly deterministic and very low
+  noise. Only available on Linux and when built with `--features callgrind`.
+
+- `vtune`: Record each phase as a VTune task for analysis; see [this help
+  documentation](docs/vtune.md) for more details.
+
+- `noop`: No measurement is performed.
 
 For example, run:
 
 ```
 $ cargo run -- benchmark --measure perf-counters ...
 ```
+
+For `callgrind`, Sightglass runs benchmark children under `setarch -R valgrind`
+with a fixed cache model and forces single-threaded Wasmtime compilation with
+`RAYON_NUM_THREADS=1` so results stay stable across machines. Use the same
+Valgrind version when comparing data recorded on different machines for best
+results.
 
 ### Getting Raw JSON or CSV Results
 

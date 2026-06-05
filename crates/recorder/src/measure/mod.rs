@@ -38,6 +38,11 @@ impl<'a> Measurements<'a> {
         self.measurements.reserve(capacity);
     }
 
+    /// Get the current iteration index.
+    pub fn iteration(&self) -> u32 {
+        self.iteration
+    }
+
     /// Add a measurement of the given event for the given phase to this
     /// `Measurements` collection.
     pub fn add(&mut self, phase: Phase, event: Cow<'a, str>, count: u64) {
@@ -77,6 +82,8 @@ pub trait Measure: 'static {
     fn end(&mut self, phase: Phase, measurements: &mut Measurements);
 }
 
+#[cfg(all(target_os = "linux", feature = "callgrind"))]
+pub mod callgrind;
 #[cfg(target_os = "linux")]
 pub mod counters;
 #[cfg(target_os = "linux")]
@@ -116,6 +123,11 @@ pub enum MeasureType {
     /// Measure instructions retired.
     #[cfg(target_os = "linux")]
     InstsRetired,
+
+    /// Measure deterministic instruction, cache, and branch simulation events
+    /// under Valgrind Callgrind.
+    #[cfg(all(target_os = "linux", feature = "callgrind"))]
+    Callgrind,
 }
 
 impl fmt::Display for MeasureType {
@@ -129,6 +141,8 @@ impl fmt::Display for MeasureType {
             MeasureType::PerfCounters => write!(f, "perf-counters"),
             #[cfg(target_os = "linux")]
             MeasureType::InstsRetired => write!(f, "insts-retired"),
+            #[cfg(all(target_os = "linux", feature = "callgrind"))]
+            MeasureType::Callgrind => write!(f, "callgrind"),
         }
     }
 }
@@ -141,10 +155,25 @@ impl FromStr for MeasureType {
             "time" => Ok(Self::Time),
             "cycles" => Ok(Self::Cycles),
             "vtune" => Ok(Self::VTune),
+
             #[cfg(target_os = "linux")]
             "perf-counters" => Ok(Self::PerfCounters),
+            #[cfg(not(target_os = "linux"))]
+            "perf-counters" => Err("`perf-counters` measure is only available on Linux"),
+
             #[cfg(target_os = "linux")]
             "insts-retired" => Ok(Self::InstsRetired),
+            #[cfg(not(target_os = "linux"))]
+            "insts-retired" => Err("`insts-retired` measure is only available on Linux"),
+
+            #[cfg(all(target_os = "linux", feature = "callgrind"))]
+            "callgrind" => Ok(Self::Callgrind),
+            #[cfg(not(all(target_os = "linux", feature = "callgrind")))]
+            "callgrind" => Err(
+                "`insts-retired` measure is only available on Linux and when the `callgrind` cargo \
+                 feature is enabled",
+            ),
+
             _ => Err("unknown measure type"),
         }
     }
@@ -164,6 +193,8 @@ impl MeasureType {
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),
             #[cfg(target_os = "linux")]
             Self::InstsRetired => Box::new(insts::InstsRetiredMeasure::new()),
+            #[cfg(all(target_os = "linux", feature = "callgrind"))]
+            Self::Callgrind => Box::new(callgrind::CallgrindMeasure::new()),
         }
     }
 }
