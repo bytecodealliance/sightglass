@@ -139,7 +139,8 @@ impl Measure for CallgrindMeasure {
             .unwrap_or_else(|error| panic!("failed to read callgrind dump: {error:#}"));
         self.next_dump_part += 1;
 
-        measurements.reserve(dump.counts.len());
+        measurements.reserve(dump.counts.len() + 1);
+        measurements.add(phase, "virtual-cycles".into(), dump.virtual_cycles());
         for event in dump.counts {
             measurements.add(phase, event.name.into(), event.count);
         }
@@ -154,7 +155,29 @@ struct ParsedCallgrindDump {
     counts: Vec<CallgrindEventCount>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+impl ParsedCallgrindDump {
+    /// Compute "virtual cycles" based on the number of instructions retired,
+    /// cache misses, and branch mispredicts.
+    ///
+    /// This metric should roughly correspond with real cycles, but should be
+    /// independent of our machine's exact microarchitectural details.
+    fn virtual_cycles(&self) -> u64 {
+        let count = |name| self.counts.iter().find(|e| e.name == name).unwrap().count;
+        let cost = |factor, event| factor * count(event);
+
+        cost(1, "instructions-retired")
+            + cost(10, "l1-icache-misses")
+            + cost(10, "l1-dcache-read-misses")
+            + cost(10, "l1-dcache-write-misses")
+            + cost(300, "ll-icache-misses")
+            + cost(300, "ll-dcache-read-misses")
+            + cost(300, "ll-dcache-write-misses")
+            + cost(15, "conditional-branch-misses")
+            + cost(15, "indirect-branch-misses")
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct CallgrindEventCount {
     name: &'static str,
     count: u64,
