@@ -169,11 +169,11 @@ impl ParsedCallgrindDump {
             + cost(10, "l1-icache-misses")
             + cost(10, "l1-dcache-read-misses")
             + cost(10, "l1-dcache-write-misses")
-            + cost(100, "ll-icache-misses")
-            + cost(100, "ll-dcache-read-misses")
-            + cost(100, "ll-dcache-write-misses")
-            + cost(10, "conditional-branch-misses")
-            + cost(10, "indirect-branch-misses")
+            + cost(300, "ll-icache-misses")
+            + cost(300, "ll-dcache-read-misses")
+            + cost(300, "ll-dcache-write-misses")
+            + cost(15, "conditional-branch-misses")
+            + cost(15, "indirect-branch-misses")
     }
 }
 
