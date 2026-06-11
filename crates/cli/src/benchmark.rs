@@ -26,8 +26,12 @@ mod callgrind {
 
     const DEFAULT_CALLGRIND_PROCESSES: usize = 3;
     const DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS: usize = 1;
-    const CACHE_MODEL_I1: &str = "32768,8,64";
-    const CACHE_MODEL_D1: &str = "32768,8,64";
+
+    // 64KiB, 8-way associative, 64B line size.
+    const CACHE_MODEL_I1: &str = "65536,8,64";
+    // 64KiB, 8-way associative, 64B line size.
+    const CACHE_MODEL_D1: &str = "65536,8,64";
+    // 8MiB, 16-way associative, 64B line size.
     const CACHE_MODEL_LL: &str = "8388608,16,64";
 
     impl PreparedCommand {
