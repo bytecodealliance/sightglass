@@ -2,6 +2,7 @@ mod benchmark;
 mod clean;
 mod effect_size;
 mod fingerprint;
+mod pca_metrics;
 mod report;
 mod suite;
 mod summarize;
@@ -14,6 +15,7 @@ use clean::CleanCommand;
 use effect_size::EffectSizeCommand;
 use fingerprint::FingerprintCommand;
 use log::trace;
+use pca_metrics::PcaMetricsCommand;
 use report::ReportCommand;
 use structopt::{clap::AppSettings, StructOpt};
 use summarize::SummarizeCommand;
@@ -42,6 +44,7 @@ enum SightglassCommand {
     Clean(CleanCommand),
     EffectSize(EffectSizeCommand),
     Fingerprint(FingerprintCommand),
+    PcaMetrics(PcaMetricsCommand),
     Report(ReportCommand),
     Summarize(SummarizeCommand),
     UploadElastic(UploadCommand),
@@ -56,6 +59,7 @@ impl SightglassCommand {
             SightglassCommand::Clean(clean) => clean.execute(),
             SightglassCommand::EffectSize(effect_size) => effect_size.execute(),
             SightglassCommand::Fingerprint(fingerprint) => fingerprint.execute(),
+            SightglassCommand::PcaMetrics(metrics) => metrics.execute(),
             SightglassCommand::Report(report) => report.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),
             SightglassCommand::UploadElastic(upload) => upload.execute(),
