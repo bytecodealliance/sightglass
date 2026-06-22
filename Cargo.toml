@@ -36,3 +36,10 @@ exclude = [
     "benchmarks/tract-onnx-image-classification",
     "engines/native/libengine",
 ]
+
+# Always build Wasmtime and Cranelift in release mode to avoid slow Wasm
+# compilation when running tests.
+[profile.dev.package.cranelift-codegen]
+opt-level = 3
+[profile.dev.package.wasmtime]
+opt-level = 3
