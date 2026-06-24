@@ -1,14 +1,74 @@
 diff --git a/tools/codecbench.cpp b/tools/codecbench.cpp
-index 350cb9c..5ca39a0 100644
+index 350cb9c0..04a8dc45 100644
 --- a/tools/codecbench.cpp
 +++ b/tools/codecbench.cpp
-@@ -1,4 +1,5 @@
+@@ -1,16 +1,41 @@
  #include "../src/meshoptimizer.h"
 +#include "../sightglass.h"
  
  #include <vector>
  
-@@ -212,13 +213,18 @@ int main(int argc, char** argv)
++#include <assert.h>
++#include <fcntl.h>
+ #include <stdint.h>
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <time.h>
++#include <unistd.h>
++
++// The grid size N (which drives the mesh size, and thus the workload) is read
++// from disk so it can be tuned without recompiling.
++static int read_int_from_file(const char* path)
++{
++	char buf[64] = {0};
++	int fd = open(path, O_RDONLY);
++	assert(fd != -1);
++
++	size_t m = 0, n = 0;
++	do {
++		m = read(fd, buf + n, sizeof(buf) - n - 1);
++		assert((long)m >= 0);
++		n += m;
++	} while (m > 0 && n < sizeof(buf) - 1);
++	assert(close(fd) == 0);
++
++	buf[n] = '\0';
++	return atoi(buf);
++}
+ 
+ #ifdef __EMSCRIPTEN__
+ #include <emscripten.h>
+ 
+ double timestamp()
+ {
+ 	return emscripten_get_now() * 1e-3;
+ }
+@@ -166,17 +191,17 @@ int main(int argc, char** argv)
+ 	meshopt_encodeIndexVersion(1);
+ 
+ 	bool verbose = false;
+ 
+ 	for (int i = 1; i < argc; ++i)
+ 		if (strcmp(argv[i], "-v") == 0)
+ 			verbose = true;
+ 
+-	const int N = 1000;
++	const int N = read_int_from_file("./default.input");
+ 
+ 	std::vector<Vertex> vertices;
+ 	vertices.reserve((N + 1) * (N + 1));
+ 
+ 	for (int x = 0; x <= N; ++x)
+ 	{
+ 		for (int y = 0; y <= N; ++y)
+ 		{
+@@ -207,18 +232,23 @@ int main(int argc, char** argv)
+ 			indices.push_back((x + 0) * N + (y + 1));
+ 
+ 			indices.push_back((x + 0) * N + (y + 1));
+ 			indices.push_back((x + 1) * N + (y + 0));
+ 			indices.push_back((x + 1) * N + (y + 1));
  		}
  	}
  
