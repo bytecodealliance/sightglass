@@ -162,8 +162,7 @@ int main(int, char ** argv) {
   bench_start();
 
   BackendStats stats;
-  // One sample is enough: Sightglass counts executed instructions
-  // deterministically, so repeated timing samples would only inflate the count.
+  // One sample is enough: Sightglass has its own sampling loop.
   const int kSamples = 1;
   std::cerr << "SSSE3 8bit, " << kSamples << " samples..." << std::endl;
   for (int samples = 0; samples < kSamples; ++samples) {
