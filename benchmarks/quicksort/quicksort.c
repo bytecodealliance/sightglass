@@ -1,5 +1,8 @@
+#include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sightglass.h>
 
@@ -167,12 +170,33 @@ void Quick (int run) {
 	  printf("%d\n", sortlist[run + 1]);
 }
 
+int read_int_from_file(const char *path)
+{
+	char buf[64] = {0};
+	int fd = open(path, O_RDONLY);
+	assert(fd != -1);
+
+	size_t m = 0, n = 0;
+	do {
+		m = read(fd, buf + n, sizeof(buf) - n - 1);
+		assert((long)m >= 0);
+		n += m;
+	} while (m > 0 && n < sizeof(buf) - 1);
+	assert(close(fd) == 0);
+
+	buf[n] = '\0';
+	return atoi(buf);
+}
+
 int main()
 {
 	int i;
-    bench_start();
-	for (i = 0; i < 100; i++) Quick(i);
-    bench_end();
+	/* The number of sort runs is read from disk so it can be tuned without
+	   recompiling. */
+	int runs = read_int_from_file("./default.input");
+	bench_start();
+	for (i = 0; i < runs; i++) Quick(i);
+	bench_end();
 	return 0;
 }
 
