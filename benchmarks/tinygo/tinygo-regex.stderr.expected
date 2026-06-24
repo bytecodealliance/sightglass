@@ -1,4 +1,4 @@
 [regex] matching tinygo-regex.input
-[regex] found 92 emails
-[regex] found 5301 URIs
-[regex] found 5 IPs
+[regex] found 0 emails
+[regex] found 31 URIs
+[regex] found 0 IPs
