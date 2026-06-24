@@ -9,8 +9,11 @@
 **    by David Levine)
 */
 
+#include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <sightglass.h>
 
@@ -373,15 +376,33 @@ int getHoldcount()
     return holdcount;
 }
 
+int read_int_from_file(const char *path)
+{
+    char buf[64] = {0};
+    int fd = open(path, O_RDONLY);
+    assert(fd != -1);
+
+    size_t m = 0, n = 0;
+    do {
+        m = read(fd, buf + n, sizeof(buf) - n - 1);
+        assert((long)m >= 0);
+        n += m;
+    } while (m > 0 && n < sizeof(buf) - 1);
+    assert(close(fd) == 0);
+
+    buf[n] = '\0';
+    return atoi(buf);
+}
+
 int main()
 {
-    int i = 0;
+    /* The workload size (the idle task's countdown) is read from disk so it
+       can be tuned without recompiling. */
+    int count = read_int_from_file("./default.input");
+
     bench_start();
-    for (; i < 100; i++)
-    {
-        setup(200000);
-        while (scheduleIter()) {}
-    }
+    setup(count);
+    while (scheduleIter()) {}
     bench_end();
 }
 

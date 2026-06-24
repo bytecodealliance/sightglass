@@ -1,2 +1,3 @@
-[blake3] hashing a zero-filled buffer of 65536 bytes
-[blake3] returned 3bdeaf8f8e98780b318106aafdc3ca257f73df123d97b69112b26044c91a7d56
+[blake3] hashing ./default.input
+[blake3] input size = 3100000
+[blake3] returned 059bb0ac5450537c4d30544423687821a498c9af13c23782eed5e69fde7730ea
