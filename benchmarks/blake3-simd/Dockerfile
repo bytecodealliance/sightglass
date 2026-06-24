@@ -10,9 +10,12 @@ RUN mkdir /benchmark
 # I am not sure that all of the parameters passed below are needed; this is what I received. It
 # would be preferable if the blake3 would tell us what SIMD parameters they plan to use for their
 # NPM package (https://www.npmjs.com/package/blake3), which currently uses only scalar instructions.
+# The benchmark reads its workload from disk into the heap, and runs under a
+# plain WASI runtime (no JS), so we use a fixed linear memory large enough for
+# the workload and disable memory growth (growth would import an Emscripten JS
+# function the runtime does not provide).
 RUN emcc -O3 -s STANDALONE_WASM=1 \
-    -s INITIAL_MEMORY=1048576 -s MAXIMUM_MEMORY=16777216 \
-    -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_STACK=131072 \
+    -s INITIAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=0 -s TOTAL_STACK=131072 \
     -s "EXPORTED_FUNCTIONS=['_main']" \
     -msimd128 -msse4.1 -msse4.2 \
     -DBLAKE3_NO_SSE41 -DBLAKE3_NO_AVX2 -DBLAKE3_NO_AVX512 \
