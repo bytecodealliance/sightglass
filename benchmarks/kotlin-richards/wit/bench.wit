@@ -1,0 +1,12 @@
+package sightglass:richards;
+
+// The world the Kotlin core module targets. We only need to describe the custom
+// `bench` timing-hook import here; `wasm-tools component new` discovers the WASI
+// imports (filesystem, stdout, ...) and the `wasi:cli/run` export from the
+// preview1 command adapter automatically.
+world richards {
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}
