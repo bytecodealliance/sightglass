@@ -1,5 +1,6 @@
 use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
+use clap::Parser;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
@@ -13,7 +14,6 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
-use structopt::StructOpt;
 
 const DEFAULT_PROCESSES: usize = 10;
 const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
@@ -204,7 +204,7 @@ mod callgrind {
 ///
 /// The total number of samples taken for each Wasm benchmark is `PROCESSES *
 /// NUMBER_OF_ITERATIONS_PER_PROCESS`.
-#[derive(StructOpt, Debug)]
+#[derive(Parser, Debug)]
 pub struct BenchmarkCommand {
     /// The path to the file(s) to benchmark. This accepts one or more:
     ///
@@ -217,11 +217,7 @@ pub struct BenchmarkCommand {
     ///   the `*.suite` file.
     ///
     /// By default, this will use `benchmarks/default.suite`.
-    #[structopt(
-        index = 1,
-        default_value = "benchmarks/default.suite",
-        value_name = "FILE"
-    )]
+    #[arg(default_value = "benchmarks/default.suite", value_name = "FILE")]
     benchmarks: Vec<BenchmarkOrSuite>,
 
     /// The benchmark engine(s) with which to run the benchmark.
@@ -229,13 +225,13 @@ pub struct BenchmarkCommand {
     /// This is one or more paths to a shared library implementing the
     /// benchmarking engine specification. See `engines/wasmtime` for an example
     /// script to build an engine.
-    #[structopt(long("engine"), short("e"), value_name = "PATH", empty_values = false)]
+    #[arg(long = "engine", short = 'e', value_name = "PATH")]
     engines: Vec<String>,
 
     /// Configure an engine using engine-specific flags. (For the Wasmtime
     /// engine, these can be a subset of flags from `wasmtime run --help`).
-    #[structopt(
-        long("engine-flags"),
+    #[arg(
+        long = "engine-flags",
         value_name = "ENGINE_FLAGS",
         allow_hyphen_values = true
     )]
@@ -245,7 +241,7 @@ pub struct BenchmarkCommand {
     ///
     /// Defaults to `10`, unless using the `callgrind` measure, in which case the
     /// default is `3`.
-    #[structopt(long = "processes", value_name = "PROCESSES")]
+    #[arg(long = "processes", value_name = "PROCESSES")]
     processes: Option<usize>,
 
     /// Override the "engine" name; this is useful if running experiments that might
@@ -253,14 +249,14 @@ pub struct BenchmarkCommand {
     ///
     /// If multiple engines are provided, the order of names provided here should
     /// match the order of the engines specified.
-    #[structopt(long = "name", short = "n")]
+    #[arg(long = "name", short = 'n')]
     names: Option<Vec<String>>,
 
     /// How many times should we run a benchmark in a single process?
     ///
     /// Defaults to `10`, unless using the `callgrind` measure, in which case the
     /// default is `1`.
-    #[structopt(
+    #[arg(
         long = "iterations-per-process",
         value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
     )]
@@ -268,17 +264,17 @@ pub struct BenchmarkCommand {
 
     /// Output raw data, rather than the summarized, human-readable analysis
     /// results.
-    #[structopt(long)]
+    #[arg(long)]
     raw: bool,
 
     /// The format of the raw output data when `--raw` is used. Either 'json' or
     /// 'csv'.
-    #[structopt(short = "f", long = "output-format", default_value = "json")]
+    #[arg(short = 'f', long = "output-format", default_value = "json")]
     output_format: Format,
 
     /// Path to a file which will contain the output data, or nothing to print
     /// to stdout (default).
-    #[structopt(short = "o", long = "output-file")]
+    #[arg(short = 'o', long = "output-file")]
     output_file: Option<String>,
 
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
@@ -292,7 +288,7 @@ pub struct BenchmarkCommand {
     /// `callgrind` defaults to fewer processes and iterations per process
     /// because it runs the benchmarking processes under Valgrind, which is
     /// slower but also more deterministic and less noisy.
-    #[structopt(long = "measure", short = "m", multiple = true)]
+    #[arg(long = "measure", short = 'm', action = clap::ArgAction::Append)]
     measures: Vec<MeasureType>,
 
     /// Pass this flag to only run benchmarks over "small" workloads (rather
@@ -307,36 +303,36 @@ pub struct BenchmarkCommand {
     /// of truth, and any cases where results differ between the small and
     /// default workloads, the results from the small workloads should be
     /// ignored.
-    #[structopt(long, alias = "small-workload")]
+    #[arg(long, alias = "small-workload")]
     small_workloads: bool,
 
     /// The directory to preopen as the benchmark working directory. If the
     /// benchmark accesses files using WASI, it will see this directory as its
     /// current working directory (i.e. `.`). If the working directory is not
     /// specified, the Wasm file's parent directory is used instead.
-    #[structopt(short("d"), long("working-dir"), parse(from_os_str))]
+    #[arg(short = 'd', long = "working-dir")]
     working_dir: Option<PathBuf>,
 
     /// Benchmark only the given phase (compilation, instantiation, or
     /// execution). Benchmarks all phases if omitted.
-    #[structopt(long("benchmark-phase"))]
+    #[arg(long = "benchmark-phase")]
     benchmark_phase: Option<Phase>,
 
     /// The significance level for confidence intervals. Typical values are 0.01
     /// and 0.05, which correspond to 99% and 95% confidence respectively. This
     /// is ignored when using `--raw` or when there aren't exactly two engines
     /// supplied.
-    #[structopt(short, long, default_value = "0.01")]
+    #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 
     /// Pin all benchmark iterations in a process to a single core. See
     /// `cpu_affinity` in the `sightglass-recorder` crate for more information.
-    #[structopt(long)]
+    #[arg(long)]
     pin: bool,
 
     /// Keep log files after successful benchmark runs. By default, logs are
     /// only kept on failures.
-    #[structopt(short = "k", long = "keep-logs")]
+    #[arg(short = 'k', long = "keep-logs")]
     keep_logs: bool,
 }
 

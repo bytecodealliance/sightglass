@@ -1,47 +1,47 @@
 use anyhow::{Context, Result};
+use clap::Parser;
 use sightglass_data::{Format, Measurement};
 use sightglass_upload::{upload, upload_package, MeasurementPackage};
 use std::{
     fs::File,
     io::{self, BufReader, Read},
 };
-use structopt::StructOpt;
 
 /// Upload benchmark output to an ElasticSearch server; accepts raw benchmark
 /// results in `stdin` (i.e., from `sightglass-cli benchmark ...`).
-#[derive(Debug, StructOpt)]
-#[structopt(name = "upload-elastic")]
+#[derive(Debug, Parser)]
+#[command(name = "upload-elastic")]
 pub struct UploadCommand {
     /// The format of the input data. Either 'json' or 'csv'.
-    #[structopt(short = "i", long = "input-format", default_value = "json")]
+    #[arg(short = 'i', long = "input-format", default_value = "json")]
     input_format: Format,
 
     /// Path to the file that will be read from, or none to indicate stdin
     /// (default).
-    #[structopt(short = "f", long = "input-file")]
+    #[arg(short = 'f', long = "input-file")]
     input_file: Option<String>,
 
     /// The URL of a server receiving results; this command only understands how
     /// to upload results to an ElasticSearch server; e.g.,
     /// `http://localhost:9200`.
-    #[structopt(index = 1, default_value = "http://localhost:9200", value_name = "URL")]
+    #[arg(default_value = "http://localhost:9200", value_name = "URL")]
     server: String,
 
     /// Setting this flag will prevent any uploading to the server. Instead,
     /// the command will emit a JSON "package" to stdout that can be used to
     /// upload at a later time, see `--from-package`.
-    #[structopt(short = "d", long = "dry-run")]
+    #[arg(short = 'd', long = "dry-run")]
     dry_run: bool,
 
     /// Path to a file containing a package of measurements and fingerprint data
     /// to be uploaded. If this is set, `--input-file` and `--input-format` are
     /// ignored.
-    #[structopt(short = "p", long = "from-package")]
+    #[arg(short = 'p', long = "from-package")]
     from_package: Option<String>,
 
     /// The number of measurements to upload together; this can speed up the
     /// upload. Defaults to `2000`.
-    #[structopt(short = "b", long = "batch-size", default_value = "2000")]
+    #[arg(short = 'b', long = "batch-size", default_value = "2000")]
     batch_size: usize,
 }
 

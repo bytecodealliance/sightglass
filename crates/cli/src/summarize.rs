@@ -1,29 +1,29 @@
 use anyhow::Result;
+use clap::Parser;
 use sightglass_analysis::summarize;
 use sightglass_data::Format;
 use std::{
     fs::File,
     io::{self, BufReader},
 };
-use structopt::StructOpt;
 
 /// Summarize benchmark output; accepts raw benchmark results in `stdin` (i.e.,
 /// from `sightglass-cli benchmark ...`) and prints the summarized results to
 /// `stdout`.
-#[derive(Debug, StructOpt)]
-#[structopt(name = "summarize")]
+#[derive(Debug, Parser)]
+#[command(name = "summarize")]
 pub struct SummarizeCommand {
     /// Path to the file(s) that will be read from, or none to indicate stdin (default).
-    #[structopt(short = "f")]
+    #[arg(short = 'f')]
     input_file: Option<Vec<String>>,
 
     /// The format of the input data. Either 'json' or 'csv'.
-    #[structopt(short = "i", long = "input-format", default_value = "json")]
+    #[arg(short = 'i', long = "input-format", default_value = "json")]
     input_format: Format,
 
     /// The format of the output data. Either 'json' or 'csv'; if unspecified, print the output in
     /// human-readable form.
-    #[structopt(short = "o", long = "output-format")]
+    #[arg(short = 'o', long = "output-format")]
     output_format: Option<Format>,
 }
 

@@ -21,7 +21,7 @@ sightglass-data = { path = "../data" }
 sightglass-fingerprint = { path = "../fingerprint" }
 sightglass-recorder = { path = "../recorder" }
 sightglass-upload = { path = "../upload" }
-structopt = { version = "0.3", features = ["color", "suggestions"] }
+clap = { version = "4", features = ["derive"] }
 thiserror = "1.0"
 rand = { version = "0.7.3", features = ["small_rng"] }
 csv = "1.1.6"
