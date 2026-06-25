@@ -11,13 +11,13 @@ mod validate;
 
 use anyhow::Result;
 use benchmark::BenchmarkCommand;
+use clap::Parser;
 use clean::CleanCommand;
 use effect_size::EffectSizeCommand;
 use fingerprint::FingerprintCommand;
 use log::trace;
 use pca_metrics::PcaMetricsCommand;
 use report::ReportCommand;
-use structopt::{clap::AppSettings, StructOpt};
 use summarize::SummarizeCommand;
 use upload::UploadCommand;
 use validate::ValidateCommand;
@@ -25,20 +25,14 @@ use validate::ValidateCommand;
 /// Main entry point for CLI.
 fn main() -> Result<()> {
     pretty_env_logger::init();
-    let command = SightglassCommand::from_args();
+    let command = SightglassCommand::parse();
     command.execute()?;
     Ok(())
 }
 
 /// The sightglass benchmark runner.
-#[derive(StructOpt, Debug)]
-#[structopt(
-    version = env!("CARGO_PKG_VERSION"),
-    global_settings = &[
-        AppSettings::VersionlessSubcommands,
-        AppSettings::ColoredHelp
-    ],
-)]
+#[derive(Parser, Debug)]
+#[command(version, propagate_version = true)]
 enum SightglassCommand {
     Benchmark(BenchmarkCommand),
     Clean(CleanCommand),

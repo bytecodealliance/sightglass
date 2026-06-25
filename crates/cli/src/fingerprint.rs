@@ -1,25 +1,25 @@
 use anyhow::Result;
+use clap::Parser;
 use sightglass_data::Format;
 use sightglass_fingerprint::{Benchmark, Engine, Machine};
 use std::{io, path::PathBuf};
-use structopt::StructOpt;
 
 /// Gather information about the current machine, a Wasm benchmark, or a Wasm
 /// engine and print the results to `stdout`.
-#[derive(Debug, StructOpt)]
-#[structopt(name = "fingerprint")]
+#[derive(Debug, Parser)]
+#[command(name = "fingerprint")]
 pub struct FingerprintCommand {
     /// The kind of item to fingerprint. One of: 'benchmark', 'engine', 'machine'.
-    #[structopt(short = "k", long = "kind")]
+    #[arg(short = 'k', long = "kind")]
     kind: Kind,
 
     /// The format of the output data. Either 'json' or 'csv'.
-    #[structopt(short = "o", long = "output-format", default_value = "json")]
+    #[arg(short = 'o', long = "output-format", default_value = "json")]
     output_format: Format,
 
     /// The optional path to the file to fingerprint; not all kinds
     /// fingerprinting require a file (e.g., `--kind machine`).
-    #[structopt(index = 1, value_name = "FILE", parse(from_os_str))]
+    #[arg(value_name = "FILE")]
     file: Option<PathBuf>,
 }
 

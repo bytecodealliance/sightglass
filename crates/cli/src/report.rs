@@ -1,5 +1,5 @@
+use clap::Parser;
 use std::{
-    cell::Cell,
     collections::HashMap,
     fs::File,
     hash::{Hash, Hasher},
@@ -10,7 +10,6 @@ use std::{
 use serde::Serialize;
 use sightglass_analysis::report_stats::{calculate_benchmark_stats, BenchmarkStats, ReportConfig};
 use sightglass_data::{extract_benchmark_name, Engine, Format, Measurement, Phase};
-use structopt::StructOpt;
 use vega_lite_4::{
     AxisBuilder, ColorClassBuilder, EdEncodingBuilder, LegendBuilder, Mark, NormalizedSpecBuilder,
     XClassBuilder, YClassBuilder,
@@ -19,37 +18,37 @@ use vega_lite_4::{
 const TEMPLATE: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/report.jinja"));
 
 /// Generate an HTML report for a given set of raw inputs
-#[derive(Debug, StructOpt)]
-#[structopt(name = "report")]
+#[derive(Debug, Parser)]
+#[command(name = "report")]
 pub struct ReportCommand {
     /// The format of the input data. Either 'json' or 'csv'; if not provided
     /// then we will attempt to infer it from provided filenames, falling back to json.
-    #[structopt(short = "i", long = "input-format")]
+    #[arg(short = 'i', long = "input-format")]
     input_format: Option<Format>,
 
     /// Output HTML file path
-    #[structopt(short = "o", long = "output-file", default_value = "report.html")]
+    #[arg(short = 'o', long = "output-file", default_value = "report.html")]
     output_path: PathBuf,
 
     /// Name of the baseline to use; if not provided, the first engine encountered
     /// in the ordered input files will be used.
-    #[structopt(short = "b", long = "baseline-engine")]
+    #[arg(short = 'b', long = "baseline-engine")]
     baseline_engine: Option<String>,
 
     /// Significance level for statistical tests (default: 0.05 for 95% confidence)
-    #[structopt(long = "significance-level", default_value = "0.05")]
+    #[arg(long = "significance-level", default_value = "0.05")]
     significance_level: f64,
 
     /// Primary event to analyze (default: cycles)
-    #[structopt(long = "event", default_value = "cycles")]
+    #[arg(long = "event", default_value = "cycles")]
     primary_event: String,
 
     /// Target phase to analyze (default: execution)
-    #[structopt(long = "phase", default_value = "execution")]
+    #[arg(long = "phase", default_value = "execution")]
     target_phase: Phase,
 
     /// Path to the file(s) that will be read from, or none to indicate stdin (default).
-    #[structopt(min_values = 1)]
+    #[arg(num_args = 1..)]
     input_files: Vec<PathBuf>,
 }
 
@@ -119,9 +118,7 @@ fn parse_input(
     let format = format
         .or_else(|| match path.as_ref().extension()?.to_str()? {
             "json" => Some(Format::Json),
-            "csv" => Some(Format::Csv {
-                headers: Cell::new(true),
-            }),
+            "csv" => Some(Format::Csv { headers: true }),
             _ => None,
         })
         .unwrap_or(Format::Json);
@@ -360,7 +357,7 @@ impl ReportCommand {
         let mut all_measurements = Vec::new();
 
         for input_file in &self.input_files {
-            let measurements = parse_input(self.input_format.clone(), input_file)?;
+            let measurements = parse_input(self.input_format, input_file)?;
             all_measurements.extend(measurements);
         }
 

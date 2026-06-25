@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
+use clap::Parser;
 use regex::Regex;
-use structopt::StructOpt;
 
 /// Remove the log files emitted in Sightglass runs.
-#[derive(StructOpt, Debug)]
-#[structopt(name = "clean")]
+#[derive(Parser, Debug)]
+#[command(name = "clean")]
 pub struct CleanCommand {}
 
 impl CleanCommand {

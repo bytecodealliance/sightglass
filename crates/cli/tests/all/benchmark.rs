@@ -3,7 +3,8 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use sightglass_data::Measurement;
 use std::path::PathBuf;
-use tempfile::TempDir;#[test]
+use tempfile::TempDir;
+#[test]
 fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
         .arg("--raw")

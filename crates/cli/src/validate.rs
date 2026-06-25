@@ -1,20 +1,15 @@
 use anyhow::Result;
+use clap::Parser;
 use sightglass_build::WasmBenchmark;
 use std::path::PathBuf;
-use structopt::StructOpt;
 
 /// Check that a Wasm benchmark is runnable in this tool.
-#[derive(StructOpt, Debug)]
-#[structopt(name = "validate")]
+#[derive(Parser, Debug)]
+#[command(name = "validate")]
 pub struct ValidateCommand {
     /// The path to the WebAssembly benchmark module; this file should import `bench.start` and
     /// `bench.end`.
-    #[structopt(
-        index = 1,
-        required = true,
-        value_name = "WASMFILE",
-        parse(from_os_str)
-    )]
+    #[arg(required = true, value_name = "WASMFILE")]
     benchmark: PathBuf,
 }
 

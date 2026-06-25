@@ -1,33 +1,33 @@
 use anyhow::Result;
+use clap::Parser;
 use sightglass_analysis::{effect_size, summarize};
 use sightglass_data::Format;
 use std::{
     fs::File,
     io::{self, BufReader},
 };
-use structopt::StructOpt;
 
 /// Calculate the effect size (and associated confidence interval) between the
 /// results for two different engines.
-#[derive(Debug, StructOpt)]
-#[structopt(name = "effect-size")]
+#[derive(Debug, Parser)]
+#[command(name = "effect-size")]
 pub struct EffectSizeCommand {
     /// Path to the file(s) that will be read from, or none to indicate stdin (default).
-    #[structopt(short = "f")]
+    #[arg(short = 'f')]
     input_file: Option<Vec<String>>,
 
     /// The format of the input data. Either 'json' or 'csv'.
-    #[structopt(short = "i", long = "input-format", default_value = "json")]
+    #[arg(short = 'i', long = "input-format", default_value = "json")]
     input_format: Format,
 
     /// The format of the output data. Either 'json' or 'csv'; if unspecified, print the output in
     /// human-readable form.
-    #[structopt(short = "o", long = "output-format")]
+    #[arg(short = 'o', long = "output-format")]
     output_format: Option<Format>,
 
     /// The significance level for the confidence interval. Typical values are
     /// 0.01 and 0.05, which correspond to 99% and 95% confidence respectively.
-    #[structopt(short, long, default_value = "0.01")]
+    #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 }
 

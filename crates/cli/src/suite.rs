@@ -14,7 +14,7 @@ use std::{
 };
 
 /// Decide between a suite of benchmarks or an individual benchmark file.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum BenchmarkOrSuite {
     Suite(Suite),
     Benchmark(PathBuf),
@@ -53,7 +53,7 @@ impl FromStr for BenchmarkOrSuite {
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Suite {
     path: PathBuf,
     benchmarks: Vec<PathBuf>,

@@ -7,20 +7,20 @@ mod static_metrics;
 use crate::suite::BenchmarkOrSuite;
 use anyhow::{Context, Result};
 use category::{Category, NUM_CATEGORIES};
+use clap::Parser;
 use dynamic_metrics::{dynamic_metrics, make_engine};
 use serde::Serialize;
 use sightglass_build::get_engine_filename;
 use static_metrics::static_metrics;
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 
 /// Capture benchmark metrics for principal component analysis (PCA).
-#[derive(Debug, StructOpt)]
-#[structopt(name = "pca-metrics")]
+#[derive(Debug, Parser)]
+#[command(name = "pca-metrics")]
 pub struct PcaMetricsCommand {
     /// The optional file path to write output to. Writes output to stdout if
     /// omitted.
-    #[structopt(long, short, parse(from_os_str))]
+    #[arg(long, short)]
     output: Option<PathBuf>,
 
     /// Optionally bound each benchmark's execution to this many units of fuel.
@@ -31,13 +31,13 @@ pub struct PcaMetricsCommand {
     ///
     /// This primarily exists to make testing this command easier, and shouldn't
     /// be used when doing full PCA.
-    #[structopt(long)]
+    #[arg(long)]
     fuel: Option<u64>,
 
     /// The benchmark engine with which to run Callgrind measurements.
     ///
     /// Defaults to the Wasmtime engine library in this repository.
-    #[structopt(long, short, parse(from_os_str))]
+    #[arg(long, short)]
     engine: Option<PathBuf>,
 
     /// The Wasm benchmarks whose PCA metrics should be taken.
