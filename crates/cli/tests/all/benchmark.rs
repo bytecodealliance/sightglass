@@ -3,8 +3,7 @@ use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use sightglass_data::Measurement;
 use std::path::PathBuf;
-
-#[test]
+use tempfile::TempDir;#[test]
 fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
         .arg("--raw")
@@ -193,4 +192,65 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         );
 
     Ok(())
+}
+
+/// --output-file writes raw JSON to a file rather than stdout.
+#[test]
+fn benchmark_output_file() -> anyhow::Result<()> {
+    let dir = TempDir::new()?;
+    let out = dir.path().join("out.json");
+    sightglass_cli_benchmark()
+        .arg("--raw")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--output-file")
+        .arg(&out)
+        .arg(benchmark("noop"))
+        .assert()
+        .success();
+    assert!(out.exists(), "output file was not created");
+    let content = std::fs::read_to_string(&out)?;
+    assert!(
+        serde_json::from_str::<serde_json::Value>(&content).is_ok(),
+        "output file is not valid JSON"
+    );
+    Ok(())
+}
+
+/// --name overrides the engine name in the output.
+#[test]
+fn benchmark_name_override() {
+    sightglass_cli_benchmark()
+        .arg("--raw")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--name")
+        .arg("my-custom-engine")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("my-custom-engine"));
+}
+
+/// --measure time produces output with nanosecond events.
+#[test]
+fn benchmark_measure_noop() {
+    sightglass_cli_benchmark()
+        .arg("--raw")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--measure")
+        .arg("time")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("nanoseconds"));
 }

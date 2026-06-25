@@ -51,9 +51,16 @@ impl CleanCommand {
 
                 // Okay! It's one of our log files!
                 log::info!("Removing log file: {}", path.display());
-                std::fs::remove_file(&path)
-                    .with_context(|| format!("failed to remove {}", path.display()))?;
-                removed_count += 1;
+                match std::fs::remove_file(&path) {
+                    Ok(()) => removed_count += 1,
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+                        // File was already removed (e.g. by a parallel process); that's fine.
+                    }
+                    Err(e) => {
+                        return Err(e)
+                            .with_context(|| format!("failed to remove {}", path.display()));
+                    }
+                }
             }
         }
 
