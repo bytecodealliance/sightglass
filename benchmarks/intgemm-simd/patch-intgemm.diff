@@ -2,7 +2,12 @@ diff --git a/intgemm/intgemm.cc b/intgemm/intgemm.cc
 index 58e4bc5..70679ee 100644
 --- a/intgemm/intgemm.cc
 +++ b/intgemm/intgemm.cc
-@@ -120,7 +120,11 @@ CPUType GetCPUID() {
+@@ -115,17 +115,21 @@ CPUType GetCPUID() {
+ #ifdef INTGEMM_CPUID_ENVIRONMENT
+     std::min(RealCPUID(), EnvironmentCPUID());
+ #else
+     RealCPUID();
+ #endif
    return kLocalCPU;
  }
  
@@ -14,11 +19,21 @@ index 58e4bc5..70679ee 100644
  
  void UnsupportedCPUError() {
  #if (defined(_MSC_VER) && !defined(__clang__)) ? (_HAS_EXCEPTIONS) : (__EXCEPTIONS)
+   throw UnsupportedCPU();
+ #else
+   fprintf(stderr, "intgemm does not support this CPU.\n");
+   abort();
+ #endif
 diff --git a/intgemm/intgemm.h b/intgemm/intgemm.h
 index 26febb5..616fe0a 100644
 --- a/intgemm/intgemm.h
 +++ b/intgemm/intgemm.h
-@@ -150,8 +150,13 @@ CPUType GetCPUID();
+@@ -145,18 +145,23 @@ CPUType GetCPUID();
+  *
+  * ssse3 if the CPU supports SSSE3 (this distinction from SSE2 matters for 8-bit)
+  *
+  * sse2 if the CPU supports SSE2
+  *
   * unsupported otherwise
   */
  template <class T> T ChooseCPU(T avx512vnni, T avx512bw, T avx2, T ssse3, T sse2, T unsupported) {
@@ -32,3 +47,37 @@ index 26febb5..616fe0a 100644
  }
  
  struct TileInfo {
+   const Index a_rows;
+   const Index a_cols;
+   const Index b_rows;
+   const Index b_cols;
+ };
+diff --git a/intgemm/types.h b/intgemm/types.h
+index 44fb4e2..048339e 100644
+--- a/intgemm/types.h
++++ b/intgemm/types.h
+@@ -14,18 +14,23 @@
+ #include <avx2intrin.h>
+ #include <smmintrin.h>
+ #include <avx512fintrin.h>
+ #include <avx512dqintrin.h>
+ #include <avx512bwintrin.h>
+ #include <avx512vnniintrin.h>
+ #endif
+ 
+-#if (defined(_MSC_VER) && !defined(__clang__)) || defined(__INTEL_COMPILER)
++#if (defined(_MSC_VER) && !defined(__clang__)) || defined(__INTEL_COMPILER) || defined(__wasm__)
+ /* Real MSVC does not appear to have target attributes but is also fine with
++ * just using intrinsics anywhere.  The same is true for our wasm build, which
++ * compiles the SSE intrinsics through wasm_sse_compat.h and has no notion of
++ * x86 target attributes.
++ * Original comment follows:
++ * Real MSVC does not appear to have target attributes but is also fine with
+  * just using intrinsics anywhere.  clang-cl pretending to be MSVC requires
+  * target attributes, so it's excluded from the above.
+  *
+  * The Intel compiler has a bug whereby constructors with target attributes do
+  * not link.  Like this program doesn't compile with icpc:
+  * class Foo {
+  *   public:
+  *     __attribute__ ((target ("avx2"))) Foo() {}

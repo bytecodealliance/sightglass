@@ -29,7 +29,7 @@
 #include <sightglass.h>
 
 // Compile with: xcrun clang++ -o HashSet HashSet.cpp -O2 -W -framework Foundation -licucore -std=c++11 -fvisibility=hidden -DNDEBUG=1
-// Or for wasm: em++ -o HashSet.js -o HashSet.html HashSet.cpp -O2 -W -std=c++11 -DNDEBUG=1 -g1 -s WASM=1 -s TOTAL_MEMORY=52428800
+// The Wasm build is defined by this benchmark's Dockerfile (wasi-sdk clang++).
 
 #define ALWAYS_INLINE inline __attribute__((__always_inline__))
 
