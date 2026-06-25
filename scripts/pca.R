@@ -24,11 +24,12 @@
 # Euclidean distance between their principal-component scores, as in the paper.
 #
 # Finally, we recommend a subset of the suite. Each cluster is represented by
-# its cheapest member (the benchmark that executes the fewest dynamic wasm
-# instructions). Sweeping the number of clusters traces a Pareto trade-off
-# between clustering error (SSE) and the cost of running the subset (its total
-# dynamic instructions); the knee of that curve is the Pareto-optimal cluster
-# size.
+# the member whose dynamic wasm instruction count is closest to
+# `TARGET_INST_COUNT`, so the subset runs benchmarks of a representative,
+# substantial size rather than each cluster's briefest (and noisiest) member.
+# Sweeping the number of clusters traces a Pareto trade-off between clustering
+# error (SSE) and the cost of running the subset (its total dynamic
+# instructions); the knee of that curve is the Pareto-optimal cluster size.
 #
 # Outputs (written to the current working directory):
 #
@@ -70,10 +71,17 @@ CLUSTER_VAR_THRESHOLD <- 0.9
 # characteristic, so it is excluded from the PCA itself.
 COST_COLUMN <- "dynamic_total_inst_count"
 
+# Each cluster is represented by the benchmark whose dynamic instruction count
+# is closest to this target, rather than by its cheapest member. Choosing a
+# representative near this size keeps the subset's benchmarks long enough to be
+# meaningful while steering away from each cluster's most expensive members.
+TARGET_INST_COUNT <- 100000000
+
 # Benchmarks executing fewer than this many dynamic instructions run too briefly
-# to characterize reliably -- their instruction-mix ratios are dominated by
-# noise -- so they are filtered out before the analysis.
-MIN_DYNAMIC_INST_COUNT <- 1000000
+# to characterize reliably so they are filtered out before the analysis. The
+# floor is half the representative target: a benchmark smaller than that is too
+# far below the target size to stand in for its cluster anyway.
+MIN_DYNAMIC_INST_COUNT <- TARGET_INST_COUNT / 2
 
 # Turn a benchmark path into a short, unique label.
 #
@@ -236,21 +244,29 @@ within_cluster_sse <- function(scores, assignment) {
     }, numeric(1)))
 }
 
-# Cost of representing every cluster by its cheapest member.
+# Index, within a vector of dynamic instruction counts, of a cluster's
+# representative: the member whose count is closest to `TARGET_INST_COUNT`.
+representative_index <- function(cost) {
+    which.min(abs(cost - TARGET_INST_COUNT))
+}
+
+# Cost of representing every cluster by its representative member.
 #
-# The benchmark executing the fewest dynamic instructions stands in for its
-# whole cluster. This total rises as the number of clusters grows (more
-# representatives to run).
+# Each cluster's representative -- the benchmark whose dynamic instruction count
+# is closest to `TARGET_INST_COUNT` -- stands in for the whole cluster, so this
+# total is the sum of the representatives' instruction counts.
 subset_cost <- function(cost, assignment) {
     clusters <- split(seq_along(assignment), assignment)
-    sum(vapply(clusters, function(idx) min(cost[idx]), numeric(1)))
+    sum(vapply(clusters, function(idx) {
+        cluster_cost <- cost[idx]
+        cluster_cost[representative_index(cluster_cost)]
+    }, numeric(1)))
 }
 
 # Group benchmarks by cluster at size k.
 #
 # Returns a list with one data frame per cluster: member full paths and dynamic
-# instruction counts, sorted ascending by count so each cluster's cheapest
-# member (its representative) comes first.
+# instruction counts, sorted ascending by count for a readable cost breakdown.
 cluster_members <- function(clustering, cost, paths, k) {
     assignment <- cutree(clustering, k = k)
     lapply(split(seq_along(assignment), assignment), function(idx) {
@@ -420,7 +436,9 @@ main <- function() {
     # With the graphs written, report the suggested subset per cluster.
     clusters <- cluster_members(clustering, cost, paths, analysis$best_k)
     cat(sprintf(
-        paste0("\nSuggested subset: cheapest benchmark in each of the %d clusters:\n\n"),
+        paste0("\nSuggested subset: the benchmark closest to %s dynamic ",
+               "instructions in each of the %d clusters:\n\n"),
+        format(TARGET_INST_COUNT, big.mark = ",", scientific = FALSE),
         analysis$best_k
     ))
     cat("```\n")
@@ -441,8 +459,10 @@ main <- function() {
                 "    ", members$benchmark[j], "\n"
             ))
         }
-        # The representative: the cheapest member, listed first after sorting.
-        cat(members$benchmark[1], "\n", sep = "")
+        # The representative: the member whose instruction count is closest to
+        # `TARGET_INST_COUNT`.
+        rep_idx <- representative_index(members$dynamic_insts)
+        cat(members$benchmark[rep_idx], "\n", sep = "")
     }
     cat("```\n")
 }

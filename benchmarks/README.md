@@ -64,6 +64,11 @@ record its execution, it must:
   sibling file located next to the `benchmark.wasm` file. The runner will assert
   that the actual execution's output matches the expectation.
 
+* The benchmark should dynamically execute ~100,000,000 wasm instructions per
+  execution. You can check this via `cargo run -- pca-metrics path/to/benchmark`
+  and looking at the `dynamic_total_inst_count` column of the resulting CSV
+  output.
+
 Many of the above requirements can be checked by running the `.wasm` file
 through the `validate` command:
 
@@ -118,21 +123,6 @@ following requirements:
   one large. The small workload may be used by developers locally to get quick,
   ballpark numbers for whether further investment in an optimization is worth
   it, without waiting for the full, thorough benchmark suite to complete.
-
-* Each workload must have an expected result, so that we can validate executions
-  and avoid accepting "fast" but incorrect results.
-
-* Compiling and instantiating the candidate program and then executing its
-  workload should take *roughly* one to six seconds total.
-
-  > Napkin math: We want the full benchmark to run in a reasonable amount of
-  > time, say twenty to thirty minutes, and we want somewhere around ten to
-  > twenty programs altogether in the benchmark suite to balance diversity,
-  > simplicity, and time spent in execution versus compilation and
-  > instantiation. Additionally, for good statistical analyses, we need *at
-  > least* 30 samples (ideally more like 100) from each benchmark program. That
-  > leaves an average of about one to six seconds for each benchmark program to
-  > compile, instantiate, and execute the workload.
 
 * Inputs should be given through I/O and results reported through I/O. This
   ensures that the compiler cannot optimize the benchmark program away.
