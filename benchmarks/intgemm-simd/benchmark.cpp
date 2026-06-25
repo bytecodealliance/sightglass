@@ -20,44 +20,29 @@
 #include <iostream>
 #include <random>
 
-// This benchmark is built with Emscripten, whose libc filesystem does not reach
-// WASI preopened directories. So, like the splay and blake3-simd benchmarks, we
-// read the workload size from disk by calling the WASI `path_open`/`fd_read`
-// syscalls directly. This lets the workload be resized without recompiling.
-#define WASI_IMPORT(name) \
-    __attribute__((import_module("wasi_snapshot_preview1"), import_name(name)))
+#include <fcntl.h>
+#include <unistd.h>
 
-typedef struct {
-    const void *buf;
-    size_t len;
-} wasi_iovec_t;
-
-WASI_IMPORT("path_open")
-int wasi_path_open(int fd, int dirflags, const char *path, size_t path_len,
-                   int oflags, uint64_t rights_base, uint64_t rights_inheriting,
-                   int fdflags, int *opened_fd);
-
-WASI_IMPORT("fd_read")
-int wasi_fd_read(int fd, const wasi_iovec_t *iovs, size_t iovs_len, size_t *nread);
-
+// The dominant matrix's row count is read from `default.input` at runtime so the
+// workload can be resized without recompiling (like the quicksort and
+// blake3-simd benchmarks).
 static int read_int_from_file()
 {
-    const char *path = "default.input"; // preopen fd 3 is the benchmark dir
-    int fd = -1;
-    if (wasi_path_open(3, 0, path, strlen(path), 0, (1ULL << 1) | (1ULL << 2),
-                       (1ULL << 1) | (1ULL << 2), 0, &fd) != 0 || fd < 0) {
+    const char *path = "default.input";
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) {
         std::cerr << "failed to open default.input" << std::endl;
         abort();
     }
     char buf[64] = {0};
     size_t total = 0;
     for (;;) {
-        wasi_iovec_t iov = {buf + total, sizeof(buf) - 1 - total};
-        size_t nread = 0;
-        if (wasi_fd_read(fd, &iov, 1, &nread) != 0) { abort(); }
+        ssize_t nread = read(fd, buf + total, sizeof(buf) - 1 - total);
+        if (nread < 0) { abort(); }
         if (nread == 0 || total >= sizeof(buf) - 1) break;
-        total += nread;
+        total += (size_t)nread;
     }
+    close(fd);
     buf[total] = '\0';
     return atoi(buf);
 }

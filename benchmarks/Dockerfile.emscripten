@@ -1,9 +1,0 @@
-FROM emscripten/emsdk:4.0.10
-
-WORKDIR /
-COPY benchmark.c .
-COPY sightglass.h .
-WORKDIR /benchmark
-RUN emcc ../benchmark.c -O3 -g -DNDEBUG -I.. -o benchmark.wasm
-# We output the Wasm file to the `/benchmark` directory, where the client
-# expects it.
