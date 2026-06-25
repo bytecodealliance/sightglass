@@ -4,9 +4,9 @@
 
 mod component;
 
-use super::category::{Category, NUM_CATEGORIES};
 use super::Counts;
-use anyhow::{bail, Context, Result};
+use super::category::{Category, NUM_CATEGORIES};
+use anyhow::{Context, Result, bail};
 use sightglass_data::{Measurement, Phase};
 use std::path::Path;
 #[cfg(all(target_os = "linux", feature = "callgrind"))]
@@ -23,12 +23,16 @@ const COUNTER_PREFIX: &str = "__pca_count_";
 const PCA_INSTANCE: &str = "sightglass-pca";
 const INCREMENT_FN: &str = "increment-instruction-count";
 
-/// Functions exported under these conventional names are the canonical ABI
-/// `realloc`, which runs with the component's "may leave" flag cleared and so
-/// cannot call the host `increment-instruction-count`. When flushing, we still
-/// count their instructions into the per-category globals but never flush from
-/// inside them; a later, ordinary function flushes the accumulated counts.
-const NO_FLUSH_EXPORTS: &[&str] = &["realloc", "cabi_realloc"];
+/// Functions exported under these conventional names are canonical ABI
+/// `realloc`s, which (along with everything they call) run with the component's
+/// "may leave" flag cleared and so cannot call the host
+/// `increment-instruction-count`. When flushing, we raise an in-realloc guard on
+/// entry to these functions and gate every flush on it (see
+/// `instrument_core_module`): their instructions still accumulate into the
+/// per-category globals, but the host call is deferred to the next flush point
+/// outside the realloc. `cabi_import_realloc` is the realloc the WASI preview1
+/// component adapter exports.
+const NO_FLUSH_EXPORTS: &[&str] = &["realloc", "cabi_realloc", "cabi_import_realloc"];
 
 /// Compute the dynamic instruction mix for `wasm`, accumulating it into
 /// `counts`, by instrumenting and running the benchmark once.
@@ -96,7 +100,7 @@ fn callgrind_metrics(
         .arg("--working-dir")
         .arg(working_dir)
         .arg("--engine-flags")
-        .arg("-Wgc,function-references")
+        .arg("-Wgc,function-references,exceptions")
         .arg("--")
         .arg(benchmark)
         .output()
@@ -289,6 +293,7 @@ pub(crate) fn make_engine(consume_fuel: bool) -> Result<wasmtime::Engine> {
     // Required for running some of our benchmarks.
     config.wasm_gc(true);
     config.wasm_function_references(true);
+    config.wasm_exceptions(true);
 
     // Enable Wasmtime's compilation cache.
     if let Ok(cache) = wasmtime::Cache::new(wasmtime::CacheConfig::default()) {
@@ -406,10 +411,10 @@ fn basic_blocks(body: &wasmparser::FunctionBody<'_>) -> Result<Vec<BasicBlock>> 
 fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Module> {
     use wasm_encoder::reencode::{Error as ReencodeError, Reencode};
     use wasm_encoder::{
-        CodeSection, ConstExpr, DataCountSection, DataSection, ElementSection, EntityType,
-        ExportKind, ExportSection, Function, FunctionSection, GlobalSection, GlobalType,
-        ImportSection, Instruction, MemorySection, Module, StartSection, TableSection, TagSection,
-        TypeSection, ValType,
+        BlockType, CodeSection, ConstExpr, DataCountSection, DataSection, ElementSection,
+        EntityType, ExportKind, ExportSection, Function, FunctionSection, GlobalSection,
+        GlobalType, ImportSection, Instruction, MemorySection, Module, StartSection, TableSection,
+        TagSection, TypeSection, ValType,
     };
 
     // Shift function references by one only when flushing prepends its import.
@@ -467,7 +472,9 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
     for payload in wasmparser::Parser::new(0).parse_all(wasm) {
         match payload.context("failed to parse Wasm")? {
             Payload::TypeSection(s) => {
-                num_types += s.count();
+                for rec_group in s.clone() {
+                    num_types += rec_group?.types().count() as u32;
+                }
                 let sec = types.get_or_insert_with(TypeSection::new);
                 reencoder.parse_type_section(sec, s)?;
             }
@@ -543,8 +550,14 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
             }
             Payload::CodeSectionEntry(body) => {
                 let base_global = imported_globals + defined_globals;
-                let active_global = base_global + NUM_CATEGORIES as u32;
-                // `realloc`-style functions accumulate counts but never flush.
+                // The global just past the per-category counters. When flushing
+                // (components) it is the in-realloc guard: non-zero while a
+                // canonical ABI `realloc` (and anything it calls) is on the
+                // stack. When not flushing (standalone core modules) it is the
+                // `is-benchmarking-active` flag instead.
+                let extra_global = base_global + NUM_CATEGORIES as u32;
+                // `realloc`-style functions (and their callees) run with the
+                // component's "may leave" flag cleared, so they must not flush.
                 let no_flush = flush && no_flush_funcs.contains(&(imported_funcs + code_entry));
                 code_entry += 1;
 
@@ -557,6 +570,17 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                 let mut idx = 0u32;
 
                 let mut func = reencoder.new_function_with_parsed_locals(&body)?;
+                // Increment the in-realloc guard on entry to a realloc function
+                // so that it, and everything it transitively calls, skips
+                // flushing counts to the host (which would trap). It is a
+                // counter rather than a flag so that nested reallocs compose;
+                // it is decremented before exits below.
+                if no_flush {
+                    func.instruction(&Instruction::GlobalGet(extra_global));
+                    func.instruction(&Instruction::I32Const(1));
+                    func.instruction(&Instruction::I32Add);
+                    func.instruction(&Instruction::GlobalSet(extra_global));
+                }
                 let mut reader = body.get_operators_reader()?;
                 while !reader.eof() {
                     let op = reader.read()?;
@@ -565,10 +589,17 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                         let block = &blocks[next_block];
                         next_block += 1;
 
-                        // When flushing, push every counter to the host and reset
-                        // it at function entries and loop tops (but not in the
-                        // functions that can't leave the component).
-                        if flush && block.is_flush_point && !no_flush {
+                        // When flushing, push every counter to the host and
+                        // reset it at function entries and loop heads, but only
+                        // when the in-realloc guard is clear. Inside a
+                        // canonical ABI realloc the host call would trap, so we
+                        // skip it; the counts keep accumulating in the globals
+                        // and reach the host at the next flush point outside
+                        // the realloc.
+                        if flush && block.is_flush_point {
+                            func.instruction(&Instruction::GlobalGet(extra_global));
+                            func.instruction(&Instruction::I32Eqz);
+                            func.instruction(&Instruction::If(BlockType::Empty));
                             for (cat, is_used) in used.iter().copied().enumerate() {
                                 if is_used {
                                     let counter = base_global + cat as u32;
@@ -579,6 +610,7 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                                     func.instruction(&Instruction::GlobalSet(counter));
                                 }
                             }
+                            func.instruction(&Instruction::End);
                         }
 
                         // Tally this block's operators into the counters in batch.
@@ -593,7 +625,7 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                                     func.instruction(&Instruction::I32Const(count as i32));
                                     func.instruction(&Instruction::I32Add);
                                 } else {
-                                    func.instruction(&Instruction::GlobalGet(active_global));
+                                    func.instruction(&Instruction::GlobalGet(extra_global));
                                     func.instruction(&Instruction::I64Const(i64::from(count)));
                                     func.instruction(&Instruction::I64Mul);
                                     func.instruction(&Instruction::I64Add);
@@ -606,6 +638,25 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                     // Standalone mode gates locally: toggle the active flag around
                     // the benchmarking hooks.
                     if flush {
+                        // Decrement the in-realloc guard just before a realloc
+                        // function exits via an explicit `return`, a tail call,
+                        // or falling through to its final `end`.
+                        if no_flush {
+                            let exits = matches!(
+                                op,
+                                wasmparser::Operator::Return
+                                    | wasmparser::Operator::ReturnCall { .. }
+                                    | wasmparser::Operator::ReturnCallIndirect { .. }
+                                    | wasmparser::Operator::ReturnCallRef { .. }
+                            ) || (matches!(op, wasmparser::Operator::End)
+                                && reader.eof());
+                            if exits {
+                                func.instruction(&Instruction::GlobalGet(extra_global));
+                                func.instruction(&Instruction::I32Const(1));
+                                func.instruction(&Instruction::I32Sub);
+                                func.instruction(&Instruction::GlobalSet(extra_global));
+                            }
+                        }
                         func.instruction(&reencoder.instruction(op)?);
                     } else {
                         let call_target = match &op {
@@ -614,12 +665,12 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
                         };
                         if bench_end_func.is_some() && call_target == bench_end_func {
                             func.instruction(&Instruction::I64Const(0));
-                            func.instruction(&Instruction::GlobalSet(active_global));
+                            func.instruction(&Instruction::GlobalSet(extra_global));
                         }
                         func.instruction(&reencoder.instruction(op)?);
                         if bench_start_func.is_some() && call_target == bench_start_func {
                             func.instruction(&Instruction::I64Const(1));
-                            func.instruction(&Instruction::GlobalSet(active_global));
+                            func.instruction(&Instruction::GlobalSet(extra_global));
                         }
                     }
                     idx += 1;
@@ -676,6 +727,8 @@ fn instrument_core_module(wasm: &[u8], flush: bool) -> Result<wasm_encoder::Modu
         for _ in 0..NUM_CATEGORIES {
             globals.global(i32_global, &ConstExpr::i32_const(0));
         }
+        // The in-realloc guard global (index base_global + NUM_CATEGORIES).
+        globals.global(i32_global, &ConstExpr::i32_const(0));
     } else {
         let i64_global = GlobalType {
             val_type: ValType::I64,

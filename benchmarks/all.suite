@@ -13,6 +13,7 @@ cm-online-stats/cm-online-stats.wasm
 hex-simd/benchmark.wasm
 # image-classification/image-classification-benchmark.wasm
 intgemm-simd/benchmark.wasm
+kotlin-richards/kotlin-richards.wasm
 libsodium/libsodium-aead_aegis128l.wasm
 libsodium/libsodium-aead_aegis256.wasm
 libsodium/libsodium-aead_aes256gcm.wasm

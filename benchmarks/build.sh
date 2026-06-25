@@ -31,7 +31,15 @@ print_header() {
 # directory and `--dereference` (i.e., follow) all symlinks provided.
 print_header "Create build context"
 TMP_TAR=$(mktemp /tmp/sightglass-benchmark-dir-XXXXXX.tar)
-(set -x; cd $BENCHMARK_DIR && tar --create --file $TMP_TAR --dereference --verbose .)
+# macOS's bsdtar bundles extended attributes (notably `com.apple.provenance`) that a Linux Docker
+# daemon rejects when unpacking the build context (`lsetxattr ... operation not supported`); exclude
+# them. GNU tar (used on CI) omits xattrs by default and lacks `--no-mac-metadata`, so only pass
+# these flags when the local `tar` is bsdtar.
+TAR_XATTR_FLAGS=()
+if tar --version 2>&1 | grep -qi bsdtar; then
+    TAR_XATTR_FLAGS=(--no-xattrs --no-mac-metadata)
+fi
+(set -x; cd $BENCHMARK_DIR && tar "${TAR_XATTR_FLAGS[@]}" --create --file $TMP_TAR --dereference --verbose .)
 
 # Build the benchmark image and extract the generated `benchmark.wasm` file from its container.
 print_header "Build benchmarks"
