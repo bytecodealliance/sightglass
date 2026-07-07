@@ -191,7 +191,8 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .stdout(
             // The benchmark is displayed by its short label ("noop"), not its path.
             predicate::str::contains("compilation :: cycles :: noop")
-                .and(predicate::str::contains("instantiation :: cycles :: noop"))
+                // Instantiation is filtered out of effect-size output by default.
+                .and(predicate::str::contains("instantiation").not())
                 .and(predicate::str::contains("execution :: cycles :: noop"))
                 // Statistics are rendered as a box-drawing table.
                 .and(predicate::str::contains("Median"))

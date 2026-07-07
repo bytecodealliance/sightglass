@@ -292,6 +292,17 @@ pub struct BenchmarkCommand {
     )]
     color: Option<ColorChoice>,
 
+    /// Include instantiation measurements in the effect-size comparison.
+    ///
+    /// Instantiation is usually fast and noisy, so by default it is filtered
+    /// out of effect-size comparisons.
+    ///
+    /// Additionally, instantiation is often better benchmarked via Wasmtime's
+    /// dedicated instantiation microbenchmarks: `cargo bench --bench
+    /// instantiation`.
+    #[arg(long)]
+    show_instantiation: bool,
+
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
     /// noop, vtune, callgrind) when recording benchmark performance.
     ///
@@ -778,12 +789,37 @@ impl BenchmarkCommand {
             measurements.extend(sum_totals(&measurements));
 
             if self.engines.len() == 2 {
-                display_effect_size(&measurements, self.significance_level, output_file)?;
+                self.display_effect_sizes(&measurements, output_file)?;
             } else {
                 display_summaries(&measurements, output_file)?;
             }
         }
         Ok(())
+    }
+
+    /// Compute and write the effect sizes between engines for `measurements`.
+    fn display_effect_sizes(
+        &self,
+        measurements: &[Measurement<'_>],
+        output_file: &mut dyn WriteColor,
+    ) -> Result<()> {
+        let keep_instantiation =
+            self.show_instantiation || self.benchmark_phase == Some(Phase::Instantiation);
+        let measurements: Vec<Measurement<'_>> = measurements
+            .iter()
+            .filter(|m| keep_instantiation || m.phase != Phase::Instantiation)
+            .cloned()
+            .collect();
+
+        let effect_sizes =
+            sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
+        let summaries = sightglass_analysis::summarize::calculate(&measurements);
+        sightglass_analysis::effect_size::write(
+            effect_sizes,
+            &summaries,
+            self.significance_level,
+            output_file,
+        )
     }
 
     /// Determine the working directory in which to run the benchmark using:
@@ -886,22 +922,6 @@ fn this_arch() -> &'static str {
     } else {
         unimplemented!("please add support for the current target architecture")
     }
-}
-
-fn display_effect_size(
-    measurements: &[Measurement<'_>],
-    significance_level: f64,
-    output_file: &mut dyn WriteColor,
-) -> Result<()> {
-    let effect_sizes =
-        sightglass_analysis::effect_size::calculate(significance_level, measurements)?;
-    let summaries = sightglass_analysis::summarize::calculate(measurements);
-    sightglass_analysis::effect_size::write(
-        effect_sizes,
-        &summaries,
-        significance_level,
-        output_file,
-    )
 }
 
 fn display_summaries(
@@ -1157,12 +1177,53 @@ execution
     }
 
     #[test]
+    fn effect_sizes_filter_instantiation_by_default() -> Result<()> {
+        let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
+            .context("failed to read fixture file")?;
+        let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
+
+        // By default, instantiation measurements are filtered out.
+        let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            !actual.contains("instantiation"),
+            "instantiation should be filtered out by default:\n{actual}"
+        );
+        assert!(actual.contains("compilation"));
+
+        // With `--show-instantiation`, it is included.
+        let command =
+            BenchmarkCommand::try_parse_from(["benchmark", "--show-instantiation", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("instantiation"),
+            "instantiation should be shown with --show-instantiation:\n{actual}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn test_display_effect_size() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
+
+        // Use `--show-instantiation` so every phase appears, and a 0.05
+        // significance level to match this fixture's expected output.
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "--show-instantiation",
+            "--significance-level",
+            "0.05",
+            "dummy.wasm",
+        ])?;
         let mut output = NoColor::new(Vec::new());
-        display_effect_size(&measurements, 0.05, &mut output)?;
+        command.display_effect_sizes(&measurements, &mut output)?;
 
         let actual = String::from_utf8(output.into_inner())?;
         eprintln!("=== Actual ===\n{actual}");
@@ -1268,6 +1329,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             output_format: Format::Json,
             output_file: None,
             color: None,
+            show_instantiation: false,
             measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
             small_workloads: false,
             working_dir: None,
