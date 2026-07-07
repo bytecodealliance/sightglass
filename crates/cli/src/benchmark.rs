@@ -308,6 +308,11 @@ pub struct BenchmarkCommand {
     #[arg(long, conflicts_with = "raw")]
     show_insignificant: bool,
 
+    /// Print per-engine summaries rather than an effect-size comparison between
+    /// engines. This is the default when only a single engine is benchmarked.
+    #[arg(short = 'z', long, conflicts_with = "raw")]
+    summary: bool,
+
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
     /// noop, vtune, callgrind) when recording benchmark performance.
     ///
@@ -351,8 +356,7 @@ pub struct BenchmarkCommand {
 
     /// The significance level for confidence intervals. Typical values are 0.01
     /// and 0.05, which correspond to 99% and 95% confidence respectively. This
-    /// is ignored when using `--raw` or when there aren't exactly two engines
-    /// supplied.
+    /// is ignored when using `--raw` or when comparing summaries.
     #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 
@@ -793,10 +797,10 @@ impl BenchmarkCommand {
             let mut measurements = measurements.to_vec();
             measurements.extend(sum_totals(&measurements));
 
-            if self.engines.len() == 2 {
-                self.display_effect_sizes(&measurements, output_file)?;
-            } else {
+            if self.summary || self.engines.len() == 1 {
                 display_summaries(&measurements, output_file)?;
+            } else {
+                self.display_effect_sizes(&measurements, output_file)?;
             }
         }
         Ok(())
@@ -1308,6 +1312,54 @@ execution
     }
 
     #[test]
+    fn summary_flag_forces_summaries() -> Result<()> {
+        let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
+            .context("failed to read fixture file")?;
+        let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
+
+        // Two engines without `--summary`: an effect-size comparison, whose
+        // headers use " :: " separators.
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "-e",
+            "a",
+            "-e",
+            "b",
+            "--show-insignificant",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.write_results(&measurements, &mut output)?;
+        let effect = String::from_utf8(output.into_inner())?;
+        assert!(
+            effect.contains("::"),
+            "expected an effect-size comparison:\n{effect}"
+        );
+
+        // With `--summary`, per-engine summaries are printed instead (no " :: "
+        // effect-size headers).
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "-e",
+            "a",
+            "-e",
+            "b",
+            "--summary",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.write_results(&measurements, &mut output)?;
+        let summary = String::from_utf8(output.into_inner())?;
+        assert!(
+            !summary.contains("::"),
+            "expected summaries without effect-size headers:\n{summary}"
+        );
+        assert!(summary.contains("compilation"));
+
+        Ok(())
+    }
+
+    #[test]
     fn test_display_effect_size() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
@@ -1433,6 +1485,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             color: None,
             show_instantiation: false,
             show_insignificant: false,
+            summary: false,
             measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
             small_workloads: false,
             working_dir: None,
