@@ -1,7 +1,7 @@
 use crate::keys::KeyBuilder;
 use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
-use std::io::Write;
+use termcolor::WriteColor;
 
 /// Summarize measurements grouped by: architecture, engine, flags, benchmark file, phase and event.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
@@ -105,7 +105,7 @@ fn median(numbers: &mut [u64]) -> u64 {
 }
 
 /// Write a vector of [Summary] structures to the passed `output_file` in human-readable form.
-pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Result<()> {
+pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) -> Result<()> {
     // TODO this sorting is not using `arch` which is not guaranteed to be the
     // same in result sets; potentially this could re-use `Key` functionality.
     //
@@ -134,20 +134,33 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
             last_phase = Some(summary.phase);
             last_wasm = None;
             last_event = None;
-            writeln!(output_file, "{}", summary.phase)?;
+            crate::write_in(
+                output_file,
+                &crate::phase_spec(),
+                &summary.phase.to_string(),
+            )?;
+            writeln!(output_file)?;
         }
 
         if last_wasm.as_ref() != Some(&summary.wasm) {
             flush_stats_table(output_file, &mut rows)?;
             last_wasm = Some(summary.wasm.clone());
             last_event = None;
-            writeln!(output_file, "    {}", crate::benchmark_label(&summary.wasm))?;
+            write!(output_file, "    ")?;
+            crate::write_in(
+                output_file,
+                &crate::benchmark_spec(),
+                crate::benchmark_label(&summary.wasm),
+            )?;
+            writeln!(output_file)?;
         }
 
         if last_event.as_ref() != Some(&summary.event) {
             flush_stats_table(output_file, &mut rows)?;
             last_event = Some(summary.event.clone());
-            writeln!(output_file, "        {}", summary.event)?;
+            write!(output_file, "        ")?;
+            crate::write_in(output_file, &crate::event_spec(), &summary.event)?;
+            writeln!(output_file)?;
         }
 
         rows.push(crate::summary_row(summary, summary.engine.to_string()));
@@ -159,9 +172,9 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
 
 /// Render any buffered statistics `rows` as a table, then clear them. A no-op if
 /// there are no rows.
-fn flush_stats_table(output_file: &mut dyn Write, rows: &mut Vec<Vec<String>>) -> Result<()> {
+fn flush_stats_table(output_file: &mut dyn WriteColor, rows: &mut Vec<Vec<String>>) -> Result<()> {
     if !rows.is_empty() {
-        crate::write_table(output_file, "            ", &crate::STATS_HEADERS, rows)?;
+        crate::write_stats_table(output_file, "            ", rows)?;
         rows.clear();
     }
     Ok(())
@@ -278,9 +291,9 @@ mod tests {
         // "Aaa" sorts before "Sum Total" lexicographically, so this exercises
         // the explicit total-first ordering rather than a sorting accident.
         let summaries = vec![summary("Aaa"), summary("Sum Total"), summary("zzz")];
-        let mut out = vec![];
+        let mut out = termcolor::NoColor::new(Vec::new());
         write(summaries, &mut out).unwrap();
-        let out = String::from_utf8(out).unwrap();
+        let out = String::from_utf8(out.into_inner()).unwrap();
 
         let total = out.find("Sum Total").unwrap();
         let aaa = out.find("Aaa").unwrap();

@@ -1,19 +1,20 @@
 use crate::suite::BenchmarkOrSuite;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
-use sightglass_recorder::measure::multi::MultiMeasure;
 use sightglass_recorder::measure::Measurements;
+use sightglass_recorder::measure::multi::MultiMeasure;
 use sightglass_recorder::{bench_api::BenchApi, benchmark, measure::MeasureType};
 use std::{
     fs,
-    io::{self, BufWriter, Write},
+    io::{self, BufWriter, IsTerminal},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
 const DEFAULT_PROCESSES: usize = 10;
 const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
@@ -282,6 +283,15 @@ pub struct BenchmarkCommand {
     #[arg(short = 'o', long = "output-file")]
     output_file: Option<String>,
 
+    /// When to color the human-readable output: `auto` (the default; color only
+    /// when writing to a terminal), `always`, `ansi`, or `never`.
+    #[arg(
+        long,
+        value_parser = parse_color_choice,
+        conflicts_with_all = ["raw", "output_file"],
+    )]
+    color: Option<ColorChoice>,
+
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
     /// noop, vtune, callgrind) when recording benchmark performance.
     ///
@@ -380,11 +390,7 @@ impl BenchmarkCommand {
 
     /// Execute benchmark(s) in the provided engine(s) using the current process.
     pub fn execute_in_current_process(&self) -> Result<()> {
-        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
-            Box::new(BufWriter::new(fs::File::create(file)?))
-        } else {
-            Box::new(io::stdout())
-        };
+        let mut output_file = self.make_output_writer()?;
 
         if self.pin {
             bind_to_single_core().context("attempting to pin execution to a single core")?;
@@ -623,11 +629,7 @@ impl BenchmarkCommand {
     where
         F: FnMut(&Path, &Path) -> Result<PreparedCommand>,
     {
-        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
-            Box::new(BufWriter::new(fs::File::create(file)?))
-        } else {
-            Box::new(io::stdout())
-        };
+        let mut output_file = self.make_output_writer()?;
 
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
@@ -740,10 +742,31 @@ impl BenchmarkCommand {
         Ok(())
     }
 
+    /// Open the output stream for results, honoring `--output-file` and
+    /// `--color`.
+    fn make_output_writer(&self) -> Result<Box<dyn WriteColor>> {
+        if let Some(file) = self.output_file.as_ref() {
+            Ok(Box::new(NoColor::new(BufWriter::new(fs::File::create(
+                file,
+            )?))))
+        } else {
+            let color = self.color.unwrap_or(ColorChoice::Auto);
+
+            // `ColorChoice::Auto` does not itself check for a terminal, so we
+            // downgrade `Auto` to `Never` when stdout is not a tty. Other choices
+            // pass through unchanged.
+            if color == ColorChoice::Auto && !io::stdout().is_terminal() {
+                Ok(Box::new(StandardStream::stdout(ColorChoice::Never)))
+            } else {
+                Ok(Box::new(StandardStream::stdout(color)))
+            }
+        }
+    }
+
     fn write_results(
         &self,
         measurements: &[Measurement<'_>],
-        output_file: &mut dyn Write,
+        output_file: &mut dyn WriteColor,
     ) -> Result<()> {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
@@ -868,7 +891,7 @@ fn this_arch() -> &'static str {
 fn display_effect_size(
     measurements: &[Measurement<'_>],
     significance_level: f64,
-    output_file: &mut dyn Write,
+    output_file: &mut dyn WriteColor,
 ) -> Result<()> {
     let effect_sizes =
         sightglass_analysis::effect_size::calculate(significance_level, measurements)?;
@@ -881,9 +904,25 @@ fn display_effect_size(
     )
 }
 
-fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Write) -> Result<()> {
+fn display_summaries(
+    measurements: &[Measurement<'_>],
+    output_file: &mut dyn WriteColor,
+) -> Result<()> {
     let summaries = sightglass_analysis::summarize::calculate(measurements);
     sightglass_analysis::summarize::write(summaries, output_file)
+}
+
+/// Parse a `--color` value into a `ColorChoice`.
+fn parse_color_choice(s: &str) -> Result<ColorChoice, String> {
+    match s.to_ascii_lowercase().as_str() {
+        "auto" => Ok(ColorChoice::Auto),
+        "always" | "y" | "yes" => Ok(ColorChoice::Always),
+        "ansi" => Ok(ColorChoice::AlwaysAnsi),
+        "never" | "n" | "no" => Ok(ColorChoice::Never),
+        _ => Err(format!(
+            "invalid color choice `{s}` (expected auto, always, ansi, or never)"
+        )),
+    }
 }
 
 /// Sum measurement `count`s across all benchmarks for each iteration, producing
@@ -1037,10 +1076,10 @@ mod tests {
         let fixture = std::fs::read("../../test/fixtures/old-backends.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
-        let mut output = vec![];
+        let mut output = NoColor::new(Vec::new());
         display_summaries(&measurements, &mut output)?;
 
-        let actual = String::from_utf8(output)?;
+        let actual = String::from_utf8(output.into_inner())?;
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
@@ -1122,10 +1161,10 @@ execution
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
-        let mut output = vec![];
+        let mut output = NoColor::new(Vec::new());
         display_effect_size(&measurements, 0.05, &mut output)?;
 
-        let actual = String::from_utf8(output)?;
+        let actual = String::from_utf8(output.into_inner())?;
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
@@ -1228,6 +1267,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             raw: false,
             output_format: Format::Json,
             output_file: None,
+            color: None,
             measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
             small_workloads: false,
             working_dir: None,

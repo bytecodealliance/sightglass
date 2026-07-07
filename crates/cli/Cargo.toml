@@ -22,6 +22,7 @@ sightglass-fingerprint = { path = "../fingerprint" }
 sightglass-recorder = { path = "../recorder" }
 sightglass-upload = { path = "../upload" }
 clap = { version = "4", features = ["derive"] }
+termcolor = "1"
 thiserror = "1.0"
 rand = { version = "0.7.3", features = ["small_rng"] }
 csv = "1.1.6"

@@ -44,7 +44,7 @@ impl SummarizeCommand {
         if let Some(output_format) = &self.output_format {
             output_format.write(&summaries, io::stdout())
         } else {
-            summarize::write(summaries, &mut io::stdout())
+            summarize::write(summaries, &mut crate::stdout_writer())
         }
     }
 }

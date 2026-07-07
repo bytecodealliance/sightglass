@@ -1,7 +1,8 @@
 use crate::keys::KeyBuilder;
 use anyhow::Result;
 use sightglass_data::{EffectSize, Engine, Measurement, Phase, Summary};
-use std::{collections::BTreeSet, io::Write};
+use std::collections::BTreeSet;
+use termcolor::{ColorSpec, WriteColor};
 
 /// Find the effect size (and confidence interval) between different engines
 /// (i.e. different commits of Wasmtime).
@@ -95,7 +96,7 @@ pub fn write(
     mut effect_sizes: Vec<EffectSize<'_>>,
     summaries: &[Summary<'_>],
     significance_level: f64,
-    output_file: &mut dyn Write,
+    output_file: &mut dyn WriteColor,
 ) -> Result<()> {
     // Sort the effect sizes so that our "Sum Total" results come first, then we
     // focus on statistically significant results before insignificant results
@@ -111,15 +112,40 @@ pub fn write(
             })
     });
 
+    // Bold variants of the engine (blue) and ratio (green) colors, plus plain
+    // bold, for the "faster than" message.
+    let bold = {
+        let mut spec = ColorSpec::new();
+        spec.set_bold(true);
+        spec
+    };
+    let bold_engine = {
+        let mut spec = crate::engine_spec();
+        spec.set_bold(true);
+        spec
+    };
+    let bold_ratio = {
+        let mut spec = crate::ratio_spec();
+        spec.set_bold(true);
+        spec
+    };
+
     for effect_size in effect_sizes {
         writeln!(output_file)?;
-        writeln!(
+        crate::write_in(
             output_file,
-            "{} :: {} :: {}",
-            effect_size.phase,
-            effect_size.event,
-            crate::benchmark_label(&effect_size.wasm)
+            &crate::phase_spec(),
+            &effect_size.phase.to_string(),
         )?;
+        write!(output_file, " :: ")?;
+        crate::write_in(output_file, &crate::event_spec(), &effect_size.event)?;
+        write!(output_file, " :: ")?;
+        crate::write_in(
+            output_file,
+            &crate::benchmark_spec(),
+            crate::benchmark_label(&effect_size.wasm),
+        )?;
+        writeln!(output_file)?;
         writeln!(output_file)?;
 
         // For readability, trim the shared prefix from our two engine names.
@@ -131,34 +157,60 @@ pub fn write(
             effect_size.a_engine.relative_labels(&effect_size.b_engine);
 
         if effect_size.is_significant() {
-            writeln!(
+            write!(output_file, "    ")?;
+            crate::write_in(output_file, &crate::orange(), "Δ")?;
+            write!(
                 output_file,
-                "    Δ = {:.2} ± {:.2} (confidence = {}%)",
+                " = {:.2} ± {:.2} ",
                 (effect_size.b_mean - effect_size.a_mean).abs(),
                 effect_size.half_width_confidence_interval.abs(),
-                (1.0 - significance_level) * 100.0,
+            )?;
+            crate::write_in(
+                output_file,
+                &crate::stats_parenthetical_spec(),
+                &format!(
+                    "(confidence = {}%)",
+                    (1.0 - significance_level) * 100.0,
+                ),
             )?;
             writeln!(output_file)?;
+            writeln!(output_file)?;
 
-            if effect_size.a_mean < effect_size.b_mean {
-                let ratio = effect_size.b_mean / effect_size.a_mean;
-                let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
-                writeln!(
-                    output_file,
-                    "    {a_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_eng_label}!",
-                    ratio_min = ratio - ratio_ci,
-                    ratio_max = ratio + ratio_ci,
-                )?;
+            // Whichever engine has the smaller mean is the faster one.
+            let (faster, slower, ratio, ratio_ci) = if effect_size.a_mean < effect_size.b_mean {
+                (
+                    &a_eng_label,
+                    &b_eng_label,
+                    effect_size.b_mean / effect_size.a_mean,
+                    effect_size.half_width_confidence_interval / effect_size.a_mean,
+                )
             } else {
-                let ratio = effect_size.a_mean / effect_size.b_mean;
-                let ratio_ci = effect_size.half_width_confidence_interval / effect_size.b_mean;
-                writeln!(
-                    output_file,
-                    "    {b_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_eng_label}!",
-                    ratio_min = ratio - ratio_ci,
-                    ratio_max = ratio + ratio_ci,
-                )?;
-            }
+                (
+                    &b_eng_label,
+                    &a_eng_label,
+                    effect_size.a_mean / effect_size.b_mean,
+                    effect_size.half_width_confidence_interval / effect_size.b_mean,
+                )
+            };
+
+            write!(output_file, "    ")?;
+            crate::write_in(output_file, &bold_engine, faster)?;
+            crate::write_in(output_file, &bold, " is ")?;
+            crate::write_in(
+                output_file,
+                &bold_ratio,
+                &format!("{:.2}x", ratio - ratio_ci),
+            )?;
+            crate::write_in(output_file, &bold, " to ")?;
+            crate::write_in(
+                output_file,
+                &bold_ratio,
+                &format!("{:.2}x", ratio + ratio_ci),
+            )?;
+            crate::write_in(output_file, &bold, " faster than ")?;
+            crate::write_in(output_file, &bold_engine, slower)?;
+            crate::write_in(output_file, &bold, "!")?;
+            writeln!(output_file)?;
         } else {
             writeln!(output_file, "    No difference in performance.")?;
         }
@@ -192,7 +244,7 @@ pub fn write(
             crate::summary_row(a_summary, a_eng_label),
             crate::summary_row(b_summary, b_eng_label),
         ];
-        crate::write_table(output_file, "    ", &crate::STATS_HEADERS, &rows)?;
+        crate::write_stats_table(output_file, "    ", &rows)?;
     }
 
     Ok(())
@@ -304,9 +356,9 @@ mod tests {
         let (es_total, mut total_summaries) = pair("Sum Total");
         summaries.append(&mut total_summaries);
 
-        let mut out = vec![];
+        let mut out = termcolor::NoColor::new(Vec::new());
         write(vec![es_aaa, es_total], &summaries, 0.01, &mut out)?;
-        let out = String::from_utf8(out)?;
+        let out = String::from_utf8(out.into_inner())?;
 
         let total = out.find("Sum Total").unwrap();
         let aaa = out.find("Aaa").unwrap();

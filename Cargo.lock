@@ -3125,6 +3125,7 @@ dependencies = [
  "behrens-fisher",
  "serde",
  "sightglass-data",
+ "termcolor",
  "thiserror 1.0.69",
 ]
 
@@ -3175,6 +3176,7 @@ dependencies = [
  "sightglass-recorder",
  "sightglass-upload",
  "tempfile",
+ "termcolor",
  "thiserror 1.0.69",
  "vega_lite_4",
  "wasm-encoder 0.243.0",
