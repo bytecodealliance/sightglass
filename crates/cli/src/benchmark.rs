@@ -747,10 +747,18 @@ impl BenchmarkCommand {
     ) -> Result<()> {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
-        } else if self.engines.len() == 2 {
-            display_effect_size(measurements, self.significance_level, output_file)?;
         } else {
-            display_summaries(measurements, output_file)?;
+            // Augment the measurements with "Sum Total" measurements that sum
+            // each sample's counts across all benchmarks, so that the analysis
+            // reports totals in addition to per-benchmark results.
+            let mut measurements = measurements.to_vec();
+            measurements.extend(sum_totals(&measurements));
+
+            if self.engines.len() == 2 {
+                display_effect_size(&measurements, self.significance_level, output_file)?;
+            } else {
+                display_summaries(&measurements, output_file)?;
+            }
         }
         Ok(())
     }
@@ -878,6 +886,67 @@ fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Wri
     sightglass_analysis::summarize::write(summaries, output_file)
 }
 
+/// Sum measurement `count`s across all benchmarks for each iteration, producing
+/// new "Sum Total" measurements.
+///
+/// That is, if the given measurements have 50 unique samples for each
+/// benchmark, then this will add 50 "Sum Total" measurements, each of which is
+/// the sum of, e.g., instructions retired when compiling all benchmarks on
+/// their `i`th sample.
+///
+/// This is useful because (a) it gives us a single "top line" number for the
+/// whole benchmark run, and (b) on noisy machines with high variance it can
+/// (often) be the case that any individual benchmark doesn't show statistically
+/// significant differences between two engines but the sum totals *do* show
+/// statistically significant differences due to effetively having a greater
+/// number of samples.
+fn sum_totals<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
+    use std::borrow::Cow;
+    use std::collections::BTreeMap;
+
+    // Key by every field except `wasm` and `count`: (arch, engine, process,
+    // iteration, phase, event).
+    let mut totals: BTreeMap<
+        (
+            Cow<'a, str>,
+            sightglass_data::Engine<'a>,
+            u32,
+            u32,
+            Phase,
+            Cow<'a, str>,
+        ),
+        u64,
+    > = BTreeMap::new();
+
+    for m in measurements {
+        let key = (
+            m.arch.clone(),
+            m.engine.clone(),
+            m.process,
+            m.iteration,
+            m.phase,
+            m.event.clone(),
+        );
+        *totals.entry(key).or_insert(0) += m.count;
+    }
+
+    totals
+        .into_iter()
+        .map(
+            |((arch, engine, process, iteration, phase, event), count)| Measurement {
+                arch,
+                engine,
+                wasm: "Sum Total".into(),
+                process,
+                iteration,
+                phase,
+                event,
+                count,
+            },
+        )
+        .collect()
+}
+
 // Check that a passed engine path is indeed a valid path; the returned value is a path to the built
 // engine's dylib.
 pub fn check_engine_path(engine: &str) -> Result<PathBuf> {
@@ -923,6 +992,45 @@ fn compare_output_file(wasm: &Path, actual: &Path, expected: &Path) -> Result<()
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sum_totals_sums_counts_across_benchmarks() {
+        let m = |wasm: &'static str, iteration: u32, count: u64| Measurement {
+            arch: "x86_64".into(),
+            engine: sightglass_data::Engine {
+                name: "e".into(),
+                flags: None,
+            },
+            wasm: wasm.into(),
+            process: 7,
+            iteration,
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            count,
+        };
+
+        // Two benchmarks measured over two iterations, sharing every other
+        // field. Each (process, iteration) sample is summed across benchmarks.
+        let measurements = vec![
+            m("a.wasm", 0, 10),
+            m("b.wasm", 0, 100),
+            m("a.wasm", 1, 20),
+            m("b.wasm", 1, 200),
+        ];
+
+        let totals = sum_totals(&measurements);
+        assert_eq!(totals.len(), 2);
+        for t in &totals {
+            assert_eq!(t.wasm, "Sum Total");
+            assert_eq!(t.process, 7);
+            assert_eq!(t.phase, Phase::Execution);
+            assert_eq!(t.event, "cycles");
+        }
+
+        let mut by_iteration: Vec<_> = totals.iter().map(|t| (t.iteration, t.count)).collect();
+        by_iteration.sort();
+        assert_eq!(by_iteration, vec![(0, 110), (1, 220)]);
+    }
 
     #[test]
     fn test_display_summaries() -> Result<()> {

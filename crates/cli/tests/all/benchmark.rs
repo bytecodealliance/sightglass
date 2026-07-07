@@ -205,6 +205,24 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// With multiple benchmarks and non-raw (summary) output, a "Sum Total" row is
+/// added that sums each sample's counts across the benchmarks. Using a single
+/// process makes the per-sample sums span both benchmarks.
+#[test]
+fn benchmark_sum_total() {
+    sightglass_cli_benchmark()
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("2")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .arg(benchmark("pulldown-cmark"))
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("Sum Total"));
+}
+
 /// --output-file writes raw JSON to a file rather than stdout.
 #[test]
 fn benchmark_output_file() -> anyhow::Result<()> {
