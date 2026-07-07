@@ -181,8 +181,8 @@ pub fn write(
         );
         writeln!(
             output_file,
-            "  [{} {:.2} {}] {}",
-            a_summary.min, a_summary.mean, a_summary.max, a_eng_label,
+            "  [{} {:.2} {} {}] {}",
+            a_summary.min, a_summary.mean, a_summary.median, a_summary.max, a_eng_label,
         )?;
 
         let b_summary = get_summary(
@@ -193,8 +193,8 @@ pub fn write(
         );
         writeln!(
             output_file,
-            "  [{} {:.2} {}] {}",
-            b_summary.min, b_summary.mean, b_summary.max, b_eng_label,
+            "  [{} {:.2} {} {}] {}",
+            b_summary.min, b_summary.mean, b_summary.median, b_summary.max, b_eng_label,
         )?;
     }
 

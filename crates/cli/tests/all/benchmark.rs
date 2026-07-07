@@ -154,7 +154,7 @@ fn benchmark_summary() {
                 .and(predicate::str::contains("instantiation"))
                 .and(predicate::str::contains("execution"))
                 .and(predicate::str::contains(benchmark("noop")))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+\]"#).unwrap())
+                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
                 .and(predicate::str::contains(
                     test_engine().display().to_string(),
                 )),
@@ -195,7 +195,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
                     "execution :: cycles :: {}",
                     benchmark("noop")
                 )))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+\]"#).unwrap())
+                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
                 .and(
                     predicate::str::contains("Δ = ")
                         .or(predicate::str::contains("No difference in performance.")),

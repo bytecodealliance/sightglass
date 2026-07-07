@@ -144,8 +144,8 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
 
         writeln!(
             output_file,
-            "      [{} {:.2} {}] {}",
-            summary.min, summary.mean, summary.max, summary.engine,
+            "      [{} {:.2} {} {}] {}",
+            summary.min, summary.mean, summary.median, summary.max, summary.engine,
         )?;
     }
 
