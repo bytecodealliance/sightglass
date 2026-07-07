@@ -303,6 +303,11 @@ pub struct BenchmarkCommand {
     #[arg(long)]
     show_instantiation: bool,
 
+    /// Also show statistically insignificant results in the effect-size
+    /// comparison. By default only statistically significant results are shown.
+    #[arg(long, conflicts_with = "raw")]
+    show_insignificant: bool,
+
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
     /// noop, vtune, callgrind) when recording benchmark performance.
     ///
@@ -811,15 +816,41 @@ impl BenchmarkCommand {
             .cloned()
             .collect();
 
-        let effect_sizes =
+        let mut effect_sizes =
             sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
+
+        // By default, hide statistically insignificant results. Our "Sum Total"
+        // results are always kept, even when they are insignificant.
+        let mut hidden = 0;
+        if !self.show_insignificant {
+            let before = effect_sizes.len();
+            effect_sizes.retain(|e| e.is_significant() || e.wasm == "Sum Total");
+            hidden = before - effect_sizes.len();
+        }
+
         let summaries = sightglass_analysis::summarize::calculate(&measurements);
         sightglass_analysis::effect_size::write(
             effect_sizes,
             &summaries,
             self.significance_level,
             output_file,
-        )
+        )?;
+
+        if hidden > 0 {
+            writeln!(output_file)?;
+            writeln!(
+                output_file,
+                "{hidden} statistically insignificant result(s) hidden."
+            )?;
+            writeln!(output_file)?;
+            writeln!(
+                output_file,
+                "Note: You can pass `--show-insignificant` to show statistically insignificant"
+            )?;
+            writeln!(output_file, "results.")?;
+        }
+
+        Ok(())
     }
 
     /// Determine the working directory in which to run the benchmark using:
@@ -1183,7 +1214,8 @@ execution
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
 
         // By default, instantiation measurements are filtered out.
-        let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
+        let command =
+            BenchmarkCommand::try_parse_from(["benchmark", "--show-insignificant", "dummy.wasm"])?;
         let mut output = NoColor::new(Vec::new());
         command.display_effect_sizes(&measurements, &mut output)?;
         let actual = String::from_utf8(output.into_inner())?;
@@ -1194,8 +1226,12 @@ execution
         assert!(actual.contains("compilation"));
 
         // With `--show-instantiation`, it is included.
-        let command =
-            BenchmarkCommand::try_parse_from(["benchmark", "--show-instantiation", "dummy.wasm"])?;
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "--show-instantiation",
+            "--show-insignificant",
+            "dummy.wasm",
+        ])?;
         let mut output = NoColor::new(Vec::new());
         command.display_effect_sizes(&measurements, &mut output)?;
         let actual = String::from_utf8(output.into_inner())?;
@@ -1208,16 +1244,82 @@ execution
     }
 
     #[test]
+    fn effect_sizes_filter_insignificant_by_default() -> Result<()> {
+        // Two engines with identical measurements, so no result is significant.
+        // Include a synthetic "Sum Total" benchmark alongside a regular one.
+        let m = |engine: &'static str, wasm: &'static str, count: u64| Measurement {
+            arch: "x86".into(),
+            engine: sightglass_data::Engine {
+                name: engine.into(),
+                flags: None,
+            },
+            wasm: wasm.into(),
+            process: 0,
+            iteration: 0,
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            count,
+        };
+        let mut measurements = vec![];
+        for wasm in ["bench.wasm", "Sum Total"] {
+            for count in [100, 101, 102, 103, 104] {
+                measurements.push(m("a", wasm, count));
+                measurements.push(m("b", wasm, count));
+            }
+        }
+
+        // By default, the insignificant benchmark is hidden and reported by
+        // count, but the (also insignificant) "Sum Total" is kept.
+        let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("Sum Total"),
+            "the Sum Total comparison should be kept:\n{actual}"
+        );
+        assert!(
+            !actual.contains("bench"),
+            "the insignificant benchmark should be hidden:\n{actual}"
+        );
+        assert!(
+            actual.contains("1 statistically insignificant result(s) hidden."),
+            "expected the hidden-count message:\n{actual}"
+        );
+        assert!(actual.contains("--show-insignificant"));
+
+        // With `--show-insignificant`, every comparison is shown and nothing is
+        // reported as hidden.
+        let command =
+            BenchmarkCommand::try_parse_from(["benchmark", "--show-insignificant", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("No difference in performance."),
+            "expected the insignificant comparison to be shown:\n{actual}"
+        );
+        assert!(
+            !actual.contains("hidden."),
+            "nothing should be hidden with --show-insignificant:\n{actual}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn test_display_effect_size() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
 
-        // Use `--show-instantiation` so every phase appears, and a 0.05
-        // significance level to match this fixture's expected output.
+        // Use `--show-instantiation` and `--show-insignificant` so every phase
+        // and comparison appears, and a 0.05 significance level to match this
+        // fixture's expected output.
         let command = BenchmarkCommand::try_parse_from([
             "benchmark",
             "--show-instantiation",
+            "--show-insignificant",
             "--significance-level",
             "0.05",
             "dummy.wasm",
@@ -1330,6 +1432,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             output_file: None,
             color: None,
             show_instantiation: false,
+            show_insignificant: false,
             measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
             small_workloads: false,
             working_dir: None,

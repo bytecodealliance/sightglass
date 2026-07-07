@@ -185,6 +185,9 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg("1")
         .arg("--iterations-per-process")
         .arg("200")
+        // The two engines are identical copies, so their differences are not
+        // significant; show them anyway to exercise the output format.
+        .arg("--show-insignificant")
         .arg(benchmark("noop"))
         .assert()
         .success()
