@@ -3,15 +3,18 @@ use anyhow::Result;
 use sightglass_data::{EffectSize, Engine, Measurement, Phase, Summary};
 use std::{collections::BTreeSet, io::Write};
 
-/// Find the effect size (and confidence interval) of between two different
-/// engines (i.e. two different commits of Wasmtime).
+/// Find the effect size (and confidence interval) between different engines
+/// (i.e. different commits of Wasmtime).
 ///
 /// This allows us to justify statements like "we are 99% confident that the new
 /// register allocator is 13.6% faster (± 1.7%) than the old register
 /// allocator."
 ///
-/// This can only test differences between the results for exactly two different
-/// engines. If there aren't exactly two different engines represented in
+/// The `measurements` must contain results for two or more different engines.
+/// Each returned [`EffectSize`] compares exactly two different engines: for
+/// every group of measurements that share an architecture, benchmark, phase,
+/// and event, one `EffectSize` is produced for each pair of engines present in
+/// that group. If fewer than two different engines are represented in
 /// `measurements` then an error is returned.
 pub fn calculate<'a>(
     significance_level: f64,
@@ -24,52 +27,58 @@ pub fn calculate<'a>(
              Found {significance_level}."
     );
 
+    // We need at least two different engines to have anything to compare.
+    let all_engines: BTreeSet<_> = measurements.iter().map(|m| &m.engine).collect();
+    anyhow::ensure!(
+        all_engines.len() >= 2,
+        "Comparing effect sizes requires two or more different engines. Found {} \
+             different engines.",
+        all_engines.len()
+    );
+
     let keys = KeyBuilder::all()
         .engine(false)
         .engine_flags(false)
         .keys(measurements);
-    let mut results = Vec::with_capacity(keys.len());
+    let mut results = Vec::new();
 
     for key in keys {
         let key_measurements: Vec<_> = measurements.iter().filter(|m| key.matches(m)).collect();
 
-        // NB: `BTreeSet` so they're always sorted.
-        let engines: BTreeSet<_> = key_measurements.iter().map(|m| &m.engine).collect();
-        anyhow::ensure!(
-            engines.len() == 2,
-            "Can only test significance between exactly two different engines. Found {} \
-                 different engines.",
-            engines.len()
-        );
+        let mut engines: Vec<_> = key_measurements.iter().map(|m| &m.engine).collect();
+        engines.sort();
 
-        let mut engines = engines.into_iter();
-        let engine_a = engines.next().unwrap();
-        let engine_b = engines.next().unwrap();
+        // Create an `EffectSize` comparing each pair of distinct engines within
+        // this group of measurements.
+        for (i, engine_a) in engines.iter().enumerate() {
+            for engine_b in &engines[i + 1..] {
+                let a: behrens_fisher::Stats = key_measurements
+                    .iter()
+                    .filter(|m| &m.engine == *engine_a)
+                    .map(|m| m.count as f64)
+                    .collect();
+                let b: behrens_fisher::Stats = key_measurements
+                    .iter()
+                    .filter(|m| &m.engine == *engine_b)
+                    .map(|m| m.count as f64)
+                    .collect();
 
-        let a: behrens_fisher::Stats = key_measurements
-            .iter()
-            .filter(|m| &m.engine == engine_a)
-            .map(|m| m.count as f64)
-            .collect();
-        let b: behrens_fisher::Stats = key_measurements
-            .iter()
-            .filter(|m| &m.engine == engine_b)
-            .map(|m| m.count as f64)
-            .collect();
-
-        let ci = behrens_fisher::confidence_interval(1.0 - significance_level, a, b).unwrap_or(0.0);
-        results.push(EffectSize {
-            arch: key.arch.unwrap(),
-            wasm: key.wasm.unwrap(),
-            phase: key.phase.unwrap(),
-            event: key.event.unwrap(),
-            a_engine: engine_a.clone(),
-            a_mean: a.mean,
-            b_engine: engine_b.clone(),
-            b_mean: b.mean,
-            significance_level,
-            half_width_confidence_interval: ci,
-        });
+                let ci = behrens_fisher::confidence_interval(1.0 - significance_level, a, b)
+                    .unwrap_or(0.0);
+                results.push(EffectSize {
+                    arch: key.arch.clone().unwrap(),
+                    wasm: key.wasm.clone().unwrap(),
+                    phase: key.phase.unwrap(),
+                    event: key.event.clone().unwrap(),
+                    a_engine: (*engine_a).clone(),
+                    a_mean: a.mean,
+                    b_engine: (*engine_b).clone(),
+                    b_mean: b.mean,
+                    significance_level,
+                    half_width_confidence_interval: ci,
+                });
+            }
+        }
     }
 
     Ok(results)
@@ -181,4 +190,67 @@ pub fn write(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn measurement<'a>(engine: &'a str, count: u64) -> Measurement<'a> {
+        Measurement {
+            arch: "x86_64".into(),
+            engine: Engine {
+                name: engine.into(),
+                flags: None,
+            },
+            wasm: "bench.wasm".into(),
+            process: 0,
+            iteration: 0,
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            count,
+        }
+    }
+
+    #[test]
+    fn effect_size_for_each_pair_of_engines() -> Result<()> {
+        // Three engines within a single (arch, wasm, phase, event) group should
+        // yield one `EffectSize` per unordered pair of engines: (a, b), (a, c),
+        // and (b, c).
+        let mut measurements = vec![];
+        for (engine, base) in [("a", 100), ("b", 200), ("c", 300)] {
+            for i in 0..5 {
+                measurements.push(measurement(engine, base + i));
+            }
+        }
+
+        let effect_sizes = calculate(0.01, &measurements)?;
+        assert_eq!(effect_sizes.len(), 3);
+
+        let pairs: Vec<(String, String)> = effect_sizes
+            .iter()
+            .map(|e| (e.a_engine.name.to_string(), e.b_engine.name.to_string()))
+            .collect();
+        assert_eq!(
+            pairs,
+            vec![
+                ("a".to_string(), "b".to_string()),
+                ("a".to_string(), "c".to_string()),
+                ("b".to_string(), "c".to_string()),
+            ]
+        );
+
+        // Every `EffectSize` compares two *different* engines.
+        for e in &effect_sizes {
+            assert_ne!(e.a_engine, e.b_engine);
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn effect_size_requires_at_least_two_engines() {
+        let measurements = vec![measurement("only", 1), measurement("only", 2)];
+        assert!(calculate(0.01, &measurements).is_err());
+    }
 }
