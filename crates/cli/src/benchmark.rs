@@ -269,7 +269,12 @@ pub struct BenchmarkCommand {
 
     /// The format of the raw output data when `--raw` is used. Either 'json' or
     /// 'csv'.
-    #[arg(short = 'f', long = "output-format", default_value = "json")]
+    #[arg(
+        short = 'f',
+        long = "output-format",
+        default_value = "json",
+        requires = "raw"
+    )]
     output_format: Format,
 
     /// Path to a file which will contain the output data, or nothing to print
