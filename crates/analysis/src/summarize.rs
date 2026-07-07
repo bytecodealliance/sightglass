@@ -134,7 +134,7 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
         if last_wasm.as_ref() != Some(&summary.wasm) {
             last_wasm = Some(summary.wasm.clone());
             last_event = None;
-            writeln!(output_file, "  {}", summary.wasm)?;
+            writeln!(output_file, "  {}", crate::benchmark_label(&summary.wasm))?;
         }
 
         if last_event.as_ref() != Some(&summary.event) {

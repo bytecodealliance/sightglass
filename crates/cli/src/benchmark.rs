@@ -1045,7 +1045,7 @@ mod tests {
 
         let expected = r#"
 compilation
-  benchmarks/pulldown-cmark/benchmark.wasm
+  pulldown-cmark
     cycles
       [696450758 740410589.60 725850172 823537015] /tmp/old_backend.so
       [688475571 710846289.20 704156210 796284592] /tmp/old_backend_2.so
@@ -1055,7 +1055,7 @@ compilation
       [237074550 244777841.50 242474132 274198271] /tmp/old_backend_2.so
       [248392822 267517235.10 258847426 321437562] /tmp/old_backend_3.so
 instantiation
-  benchmarks/pulldown-cmark/benchmark.wasm
+  pulldown-cmark
     cycles
       [186145 213469.60 221862 229974] /tmp/old_backend.so
       [200003 220099.00 213468 308810] /tmp/old_backend_2.so
@@ -1065,7 +1065,7 @@ instantiation
       [68870 75789.90 73507 106337] /tmp/old_backend_2.so
       [70064 80255.30 73884 103395] /tmp/old_backend_3.so
 execution
-  benchmarks/pulldown-cmark/benchmark.wasm
+  pulldown-cmark
     cycles
       [10334150 12342413.00 13146295 14169904] /tmp/old_backend.so
       [10328193 10829803.50 10688469 12631959] /tmp/old_backend_2.so
@@ -1093,7 +1093,7 @@ execution
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
-compilation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+compilation :: cycles :: pulldown-cmark
 
   Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
 
@@ -1102,7 +1102,7 @@ compilation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
   [889384088 935555419.78 932321327 1045075629] new_backend.so
   [688072501 703675480.90 699614293 826253416] old_backend.so
 
-compilation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+compilation :: nanoseconds :: pulldown-cmark
 
   Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
 
@@ -1111,7 +1111,7 @@ compilation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
   [306252409 322151144.14 321037510 359863566] new_backend.so
   [236932712 242305483.57 240907043 284514295] old_backend.so
 
-execution :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+execution :: nanoseconds :: pulldown-cmark
 
   Δ = 467229.61 ± 57708.35 (confidence = 95%)
 
@@ -1120,7 +1120,7 @@ execution :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
   [3061587 3240065.98 3194630 4419514] new_backend.so
   [3510983 3707295.59 3673498 5811112] old_backend.so
 
-execution :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+execution :: cycles :: pulldown-cmark
 
   Δ = 1356859.60 ± 167590.00 (confidence = 95%)
 
@@ -1129,14 +1129,14 @@ execution :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
   [8891120 9409439.69 9277491 12834660] new_backend.so
   [10196192 10766299.29 10668147 16875960] old_backend.so
 
-instantiation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+instantiation :: cycles :: pulldown-cmark
 
   No difference in performance.
 
   [191466 207762.01 199222 325810] new_backend.so
   [179617 200451.81 188412 334016] old_backend.so
 
-instantiation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+instantiation :: nanoseconds :: pulldown-cmark
 
   No difference in performance.
 

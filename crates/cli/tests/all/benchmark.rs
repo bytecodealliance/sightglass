@@ -153,7 +153,8 @@ fn benchmark_summary() {
             predicate::str::contains("compilation")
                 .and(predicate::str::contains("instantiation"))
                 .and(predicate::str::contains("execution"))
-                .and(predicate::str::contains(benchmark("noop")))
+                // The benchmark is displayed by its short label, not its path.
+                .and(predicate::str::contains("noop"))
                 .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
                 .and(predicate::str::contains(
                     test_engine().display().to_string(),
@@ -186,15 +187,10 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .assert()
         .success()
         .stdout(
-            predicate::str::contains(format!("compilation :: cycles :: {}", benchmark("noop")))
-                .and(predicate::str::contains(format!(
-                    "instantiation :: cycles :: {}",
-                    benchmark("noop")
-                )))
-                .and(predicate::str::contains(format!(
-                    "execution :: cycles :: {}",
-                    benchmark("noop")
-                )))
+            // The benchmark is displayed by its short label ("noop"), not its path.
+            predicate::str::contains("compilation :: cycles :: noop")
+                .and(predicate::str::contains("instantiation :: cycles :: noop"))
+                .and(predicate::str::contains("execution :: cycles :: noop"))
                 .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
                 .and(
                     predicate::str::contains("Δ = ")

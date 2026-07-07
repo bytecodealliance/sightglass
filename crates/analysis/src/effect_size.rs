@@ -116,7 +116,9 @@ pub fn write(
         writeln!(
             output_file,
             "{} :: {} :: {}",
-            effect_size.phase, effect_size.event, effect_size.wasm
+            effect_size.phase,
+            effect_size.event,
+            crate::benchmark_label(&effect_size.wasm)
         )?;
         writeln!(output_file)?;
 
