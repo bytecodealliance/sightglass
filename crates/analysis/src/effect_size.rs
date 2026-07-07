@@ -133,7 +133,7 @@ pub fn write(
         if effect_size.is_significant() {
             writeln!(
                 output_file,
-                "  Δ = {:.2} ± {:.2} (confidence = {}%)",
+                "    Δ = {:.2} ± {:.2} (confidence = {}%)",
                 (effect_size.b_mean - effect_size.a_mean).abs(),
                 effect_size.half_width_confidence_interval.abs(),
                 (1.0 - significance_level) * 100.0,
@@ -145,7 +145,7 @@ pub fn write(
                 let ratio_ci = effect_size.half_width_confidence_interval / effect_size.a_mean;
                 writeln!(
                     output_file,
-                    "  {a_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_eng_label}!",
+                    "    {a_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {b_eng_label}!",
                     ratio_min = ratio - ratio_ci,
                     ratio_max = ratio + ratio_ci,
                 )?;
@@ -154,13 +154,13 @@ pub fn write(
                 let ratio_ci = effect_size.half_width_confidence_interval / effect_size.b_mean;
                 writeln!(
                     output_file,
-                    "  {b_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_eng_label}!",
+                    "    {b_eng_label} is {ratio_min:.2}x to {ratio_max:.2}x faster than {a_eng_label}!",
                     ratio_min = ratio - ratio_ci,
                     ratio_max = ratio + ratio_ci,
                 )?;
             }
         } else {
-            writeln!(output_file, "  No difference in performance.")?;
+            writeln!(output_file, "    No difference in performance.")?;
         }
         writeln!(output_file)?;
 
@@ -181,23 +181,18 @@ pub fn write(
             effect_size.phase,
             &effect_size.event,
         );
-        writeln!(
-            output_file,
-            "  [{} {:.2} {} {}] {}",
-            a_summary.min, a_summary.mean, a_summary.median, a_summary.max, a_eng_label,
-        )?;
-
         let b_summary = get_summary(
             &effect_size.b_engine,
             &effect_size.wasm,
             effect_size.phase,
             &effect_size.event,
         );
-        writeln!(
-            output_file,
-            "  [{} {:.2} {} {}] {}",
-            b_summary.min, b_summary.mean, b_summary.median, b_summary.max, b_eng_label,
-        )?;
+
+        let rows = vec![
+            crate::summary_row(a_summary, a_eng_label),
+            crate::summary_row(b_summary, b_eng_label),
+        ];
+        crate::write_table(output_file, "    ", &crate::STATS_HEADERS, &rows)?;
     }
 
     Ok(())

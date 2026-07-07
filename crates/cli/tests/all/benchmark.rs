@@ -155,7 +155,9 @@ fn benchmark_summary() {
                 .and(predicate::str::contains("execution"))
                 // The benchmark is displayed by its short label, not its path.
                 .and(predicate::str::contains("noop"))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
+                // Statistics are rendered as a box-drawing table.
+                .and(predicate::str::contains("Median"))
+                .and(predicate::str::is_match(r#"│ \d+ +│"#).unwrap())
                 .and(predicate::str::contains(
                     test_engine().display().to_string(),
                 )),
@@ -191,7 +193,9 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
             predicate::str::contains("compilation :: cycles :: noop")
                 .and(predicate::str::contains("instantiation :: cycles :: noop"))
                 .and(predicate::str::contains("execution :: cycles :: noop"))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+ \d+\]"#).unwrap())
+                // Statistics are rendered as a box-drawing table.
+                .and(predicate::str::contains("Median"))
+                .and(predicate::str::is_match(r#"│ \d+ +│"#).unwrap())
                 .and(
                     predicate::str::contains("Δ = ")
                         .or(predicate::str::contains("No difference in performance.")),

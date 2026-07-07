@@ -123,8 +123,14 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
     let mut last_phase = None;
     let mut last_wasm = None;
     let mut last_event = None;
-    for summary in summaries {
+
+    // Statistics for the engines of the current (phase, benchmark, event) group,
+    // buffered so they can be rendered together as a single table.
+    let mut rows: Vec<Vec<String>> = vec![];
+
+    for summary in &summaries {
         if last_phase != Some(summary.phase) {
+            flush_stats_table(output_file, &mut rows)?;
             last_phase = Some(summary.phase);
             last_wasm = None;
             last_event = None;
@@ -132,23 +138,32 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Re
         }
 
         if last_wasm.as_ref() != Some(&summary.wasm) {
+            flush_stats_table(output_file, &mut rows)?;
             last_wasm = Some(summary.wasm.clone());
             last_event = None;
-            writeln!(output_file, "  {}", crate::benchmark_label(&summary.wasm))?;
+            writeln!(output_file, "    {}", crate::benchmark_label(&summary.wasm))?;
         }
 
         if last_event.as_ref() != Some(&summary.event) {
+            flush_stats_table(output_file, &mut rows)?;
             last_event = Some(summary.event.clone());
-            writeln!(output_file, "    {}", summary.event)?;
+            writeln!(output_file, "        {}", summary.event)?;
         }
 
-        writeln!(
-            output_file,
-            "      [{} {:.2} {} {}] {}",
-            summary.min, summary.mean, summary.median, summary.max, summary.engine,
-        )?;
+        rows.push(crate::summary_row(summary, summary.engine.to_string()));
     }
+    flush_stats_table(output_file, &mut rows)?;
 
+    Ok(())
+}
+
+/// Render any buffered statistics `rows` as a table, then clear them. A no-op if
+/// there are no rows.
+fn flush_stats_table(output_file: &mut dyn Write, rows: &mut Vec<Vec<String>>) -> Result<()> {
+    if !rows.is_empty() {
+        crate::write_table(output_file, "            ", &crate::STATS_HEADERS, rows)?;
+        rows.clear();
+    }
     Ok(())
 }
 
