@@ -4,6 +4,16 @@ use predicates::prelude::*;
 use sightglass_data::Measurement;
 use std::path::PathBuf;
 use tempfile::TempDir;
+
+#[test]
+fn benchmark_output_format_requires_raw() {
+    sightglass_cli()
+        .args(["benchmark", "--output-format", "csv", "dummy.wasm"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--raw"));
+}
+
 #[test]
 fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
