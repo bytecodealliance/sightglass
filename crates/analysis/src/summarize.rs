@@ -106,11 +106,15 @@ fn median(numbers: &mut [u64]) -> u64 {
 
 /// Write a vector of [Summary] structures to the passed `output_file` in human-readable form.
 pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn Write) -> Result<()> {
-    // TODO this sorting is not using `arch` which is not guaranteed to be the same in result sets;
-    // potentially this could re-use `Key` functionality.
+    // TODO this sorting is not using `arch` which is not guaranteed to be the
+    // same in result sets; potentially this could re-use `Key` functionality.
+    //
+    // Our "Sum Total" results always come first, then we sort by phase,
+    // benchmark, event, and finally engine.
     summaries.sort_by(|x, y| {
-        x.phase
-            .cmp(&y.phase)
+        (y.wasm == "Sum Total")
+            .cmp(&(x.wasm == "Sum Total"))
+            .then_with(|| x.phase.cmp(&y.phase))
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
             .then_with(|| x.engine.cmp(&y.engine))
@@ -237,6 +241,39 @@ mod tests {
         ];
 
         assert_eq!(calculate(&measurements).len(), 3);
+    }
+
+    #[test]
+    fn write_sorts_sum_total_first() {
+        fn summary<'a>(wasm: &'a str) -> Summary<'a> {
+            Summary {
+                arch: "x86".into(),
+                engine: "e".into(),
+                wasm: wasm.into(),
+                phase: Phase::Compilation,
+                event: "cycles".into(),
+                min: 1,
+                max: 3,
+                median: 2,
+                mean: 2.0,
+                mean_deviation: 0.0,
+            }
+        }
+
+        // "Aaa" sorts before "Sum Total" lexicographically, so this exercises
+        // the explicit total-first ordering rather than a sorting accident.
+        let summaries = vec![summary("Aaa"), summary("Sum Total"), summary("zzz")];
+        let mut out = vec![];
+        write(summaries, &mut out).unwrap();
+        let out = String::from_utf8(out).unwrap();
+
+        let total = out.find("Sum Total").unwrap();
+        let aaa = out.find("Aaa").unwrap();
+        let zzz = out.find("zzz").unwrap();
+        assert!(
+            total < aaa && total < zzz,
+            "Sum Total should be first:\n{out}"
+        );
     }
 
     #[test]

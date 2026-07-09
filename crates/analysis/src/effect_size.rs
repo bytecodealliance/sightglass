@@ -45,8 +45,13 @@ pub fn calculate<'a>(
     for key in keys {
         let key_measurements: Vec<_> = measurements.iter().filter(|m| key.matches(m)).collect();
 
-        let mut engines: Vec<_> = key_measurements.iter().map(|m| &m.engine).collect();
-        engines.sort();
+        let engines: Vec<_> = key_measurements
+            .iter()
+            .map(|m| &m.engine)
+            // Deduplicate. Use a `BTreeSet` to keep them sorted.
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect::<Vec<_>>();
 
         // Create an `EffectSize` comparing each pair of distinct engines within
         // this group of measurements.
@@ -92,14 +97,18 @@ pub fn write(
     significance_level: f64,
     output_file: &mut dyn Write,
 ) -> Result<()> {
-    // Sort the effect sizes so that we focus on statistically significant results before
-    // insignificant results and larger relative effect sizes before smaller relative effect sizes.
+    // Sort the effect sizes so that our "Sum Total" results come first, then we
+    // focus on statistically significant results before insignificant results
+    // and larger relative effect sizes before smaller relative effect sizes.
     effect_sizes.sort_by(|x, y| {
-        y.is_significant().cmp(&x.is_significant()).then_with(|| {
-            let x_speedup = x.a_speed_up_over_b().0.max(x.b_speed_up_over_a().0);
-            let y_speedup = y.a_speed_up_over_b().0.max(y.b_speed_up_over_a().0);
-            y_speedup.partial_cmp(&x_speedup).unwrap()
-        })
+        (y.wasm == "Sum Total")
+            .cmp(&(x.wasm == "Sum Total"))
+            .then_with(|| y.is_significant().cmp(&x.is_significant()))
+            .then_with(|| {
+                let x_speedup = x.a_speed_up_over_b().0.max(x.b_speed_up_over_a().0);
+                let y_speedup = y.a_speed_up_over_b().0.max(y.b_speed_up_over_a().0);
+                y_speedup.partial_cmp(&x_speedup).unwrap()
+            })
     });
 
     for effect_size in effect_sizes {
@@ -252,5 +261,59 @@ mod tests {
     fn effect_size_requires_at_least_two_engines() {
         let measurements = vec![measurement("only", 1), measurement("only", 2)];
         assert!(calculate(0.01, &measurements).is_err());
+    }
+
+    #[test]
+    fn write_sorts_sum_total_first() -> Result<()> {
+        fn pair<'a>(wasm: &'a str) -> (EffectSize<'a>, Vec<Summary<'a>>) {
+            let a = Engine {
+                name: "a".into(),
+                flags: None,
+            };
+            let b = Engine {
+                name: "b".into(),
+                flags: None,
+            };
+            let effect_size = EffectSize {
+                arch: "x86".into(),
+                wasm: wasm.into(),
+                phase: Phase::Execution,
+                event: "cycles".into(),
+                a_engine: a.clone(),
+                a_mean: 100.0,
+                b_engine: b.clone(),
+                b_mean: 200.0,
+                significance_level: 0.01,
+                half_width_confidence_interval: 1.0,
+            };
+            let summary = |engine: Engine<'a>, mean: f64| Summary {
+                arch: "x86".into(),
+                engine,
+                wasm: wasm.into(),
+                phase: Phase::Execution,
+                event: "cycles".into(),
+                min: mean as u64,
+                max: mean as u64,
+                median: mean as u64,
+                mean,
+                mean_deviation: 0.0,
+            };
+            (effect_size, vec![summary(a, 100.0), summary(b, 200.0)])
+        }
+
+        // "Aaa" sorts before "Sum Total" and is passed first, so this exercises
+        // the explicit total-first ordering rather than a sorting accident.
+        let (es_aaa, mut summaries) = pair("Aaa");
+        let (es_total, mut total_summaries) = pair("Sum Total");
+        summaries.append(&mut total_summaries);
+
+        let mut out = vec![];
+        write(vec![es_aaa, es_total], &summaries, 0.01, &mut out)?;
+        let out = String::from_utf8(out)?;
+
+        let total = out.find("Sum Total").unwrap();
+        let aaa = out.find("Aaa").unwrap();
+        assert!(total < aaa, "Sum Total should be first:\n{out}");
+        Ok(())
     }
 }
