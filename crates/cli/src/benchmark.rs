@@ -1,19 +1,20 @@
 use crate::suite::BenchmarkOrSuite;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use clap::Parser;
-use rand::{rngs::SmallRng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
-use sightglass_recorder::measure::multi::MultiMeasure;
 use sightglass_recorder::measure::Measurements;
+use sightglass_recorder::measure::multi::MultiMeasure;
 use sightglass_recorder::{bench_api::BenchApi, benchmark, measure::MeasureType};
 use std::{
     fs,
-    io::{self, BufWriter, Write},
+    io::{self, BufWriter, IsTerminal},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
 const DEFAULT_PROCESSES: usize = 10;
 const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
@@ -282,6 +283,36 @@ pub struct BenchmarkCommand {
     #[arg(short = 'o', long = "output-file")]
     output_file: Option<String>,
 
+    /// When to color the human-readable output: `auto` (the default; color only
+    /// when writing to a terminal), `always`, `ansi`, or `never`.
+    #[arg(
+        long,
+        value_parser = parse_color_choice,
+        conflicts_with_all = ["raw", "output_file"],
+    )]
+    color: Option<ColorChoice>,
+
+    /// Include instantiation measurements in the effect-size comparison.
+    ///
+    /// Instantiation is usually fast and noisy, so by default it is filtered
+    /// out of effect-size comparisons.
+    ///
+    /// Additionally, instantiation is often better benchmarked via Wasmtime's
+    /// dedicated instantiation microbenchmarks: `cargo bench --bench
+    /// instantiation`.
+    #[arg(long)]
+    show_instantiation: bool,
+
+    /// Also show statistically insignificant results in the effect-size
+    /// comparison. By default only statistically significant results are shown.
+    #[arg(long, conflicts_with = "raw")]
+    show_insignificant: bool,
+
+    /// Print per-engine summaries rather than an effect-size comparison between
+    /// engines. This is the default when only a single engine is benchmarked.
+    #[arg(short = 'z', long, conflicts_with = "raw")]
+    summary: bool,
+
     /// The type of measurement to use (cycles, insts-retired, perf-counters,
     /// noop, vtune, callgrind) when recording benchmark performance.
     ///
@@ -325,8 +356,7 @@ pub struct BenchmarkCommand {
 
     /// The significance level for confidence intervals. Typical values are 0.01
     /// and 0.05, which correspond to 99% and 95% confidence respectively. This
-    /// is ignored when using `--raw` or when there aren't exactly two engines
-    /// supplied.
+    /// is ignored when using `--raw` or when comparing summaries.
     #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 
@@ -380,11 +410,7 @@ impl BenchmarkCommand {
 
     /// Execute benchmark(s) in the provided engine(s) using the current process.
     pub fn execute_in_current_process(&self) -> Result<()> {
-        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
-            Box::new(BufWriter::new(fs::File::create(file)?))
-        } else {
-            Box::new(io::stdout())
-        };
+        let mut output_file = self.make_output_writer()?;
 
         if self.pin {
             bind_to_single_core().context("attempting to pin execution to a single core")?;
@@ -623,11 +649,7 @@ impl BenchmarkCommand {
     where
         F: FnMut(&Path, &Path) -> Result<PreparedCommand>,
     {
-        let mut output_file: Box<dyn Write> = if let Some(file) = self.output_file.as_ref() {
-            Box::new(BufWriter::new(fs::File::create(file)?))
-        } else {
-            Box::new(io::stdout())
-        };
+        let mut output_file = self.make_output_writer()?;
 
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
@@ -740,10 +762,31 @@ impl BenchmarkCommand {
         Ok(())
     }
 
+    /// Open the output stream for results, honoring `--output-file` and
+    /// `--color`.
+    fn make_output_writer(&self) -> Result<Box<dyn WriteColor>> {
+        if let Some(file) = self.output_file.as_ref() {
+            Ok(Box::new(NoColor::new(BufWriter::new(fs::File::create(
+                file,
+            )?))))
+        } else {
+            let color = self.color.unwrap_or(ColorChoice::Auto);
+
+            // `ColorChoice::Auto` does not itself check for a terminal, so we
+            // downgrade `Auto` to `Never` when stdout is not a tty. Other choices
+            // pass through unchanged.
+            if color == ColorChoice::Auto && !io::stdout().is_terminal() {
+                Ok(Box::new(StandardStream::stdout(ColorChoice::Never)))
+            } else {
+                Ok(Box::new(StandardStream::stdout(color)))
+            }
+        }
+    }
+
     fn write_results(
         &self,
         measurements: &[Measurement<'_>],
-        output_file: &mut dyn Write,
+        output_file: &mut dyn WriteColor,
     ) -> Result<()> {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
@@ -754,12 +797,63 @@ impl BenchmarkCommand {
             let mut measurements = measurements.to_vec();
             measurements.extend(sum_totals(&measurements));
 
-            if self.engines.len() == 2 {
-                display_effect_size(&measurements, self.significance_level, output_file)?;
-            } else {
+            if self.summary || self.engines.len() == 1 {
                 display_summaries(&measurements, output_file)?;
+            } else {
+                self.display_effect_sizes(&measurements, output_file)?;
             }
         }
+        Ok(())
+    }
+
+    /// Compute and write the effect sizes between engines for `measurements`.
+    fn display_effect_sizes(
+        &self,
+        measurements: &[Measurement<'_>],
+        output_file: &mut dyn WriteColor,
+    ) -> Result<()> {
+        let keep_instantiation =
+            self.show_instantiation || self.benchmark_phase == Some(Phase::Instantiation);
+        let measurements: Vec<Measurement<'_>> = measurements
+            .iter()
+            .filter(|m| keep_instantiation || m.phase != Phase::Instantiation)
+            .cloned()
+            .collect();
+
+        let mut effect_sizes =
+            sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
+
+        // By default, hide statistically insignificant results. Our "Sum Total"
+        // results are always kept, even when they are insignificant.
+        let mut hidden = 0;
+        if !self.show_insignificant {
+            let before = effect_sizes.len();
+            effect_sizes.retain(|e| e.is_significant() || e.wasm == "Sum Total");
+            hidden = before - effect_sizes.len();
+        }
+
+        let summaries = sightglass_analysis::summarize::calculate(&measurements);
+        sightglass_analysis::effect_size::write(
+            effect_sizes,
+            &summaries,
+            self.significance_level,
+            output_file,
+        )?;
+
+        if hidden > 0 {
+            writeln!(output_file)?;
+            writeln!(
+                output_file,
+                "{hidden} statistically insignificant result(s) hidden."
+            )?;
+            writeln!(output_file)?;
+            writeln!(
+                output_file,
+                "Note: You can pass `--show-insignificant` to show statistically insignificant"
+            )?;
+            writeln!(output_file, "results.")?;
+        }
+
         Ok(())
     }
 
@@ -865,25 +959,25 @@ fn this_arch() -> &'static str {
     }
 }
 
-fn display_effect_size(
+fn display_summaries(
     measurements: &[Measurement<'_>],
-    significance_level: f64,
-    output_file: &mut dyn Write,
+    output_file: &mut dyn WriteColor,
 ) -> Result<()> {
-    let effect_sizes =
-        sightglass_analysis::effect_size::calculate(significance_level, measurements)?;
-    let summaries = sightglass_analysis::summarize::calculate(measurements);
-    sightglass_analysis::effect_size::write(
-        effect_sizes,
-        &summaries,
-        significance_level,
-        output_file,
-    )
-}
-
-fn display_summaries(measurements: &[Measurement<'_>], output_file: &mut dyn Write) -> Result<()> {
     let summaries = sightglass_analysis::summarize::calculate(measurements);
     sightglass_analysis::summarize::write(summaries, output_file)
+}
+
+/// Parse a `--color` value into a `ColorChoice`.
+fn parse_color_choice(s: &str) -> Result<ColorChoice, String> {
+    match s.to_ascii_lowercase().as_str() {
+        "auto" => Ok(ColorChoice::Auto),
+        "always" | "y" | "yes" => Ok(ColorChoice::Always),
+        "ansi" => Ok(ColorChoice::AlwaysAnsi),
+        "never" | "n" | "no" => Ok(ColorChoice::Never),
+        _ => Err(format!(
+            "invalid color choice `{s}` (expected auto, always, ansi, or never)"
+        )),
+    }
 }
 
 /// Sum measurement `count`s across all benchmarks for each iteration, producing
@@ -1037,43 +1131,79 @@ mod tests {
         let fixture = std::fs::read("../../test/fixtures/old-backends.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
-        let mut output = vec![];
+        let mut output = NoColor::new(Vec::new());
         display_summaries(&measurements, &mut output)?;
 
-        let actual = String::from_utf8(output)?;
+        let actual = String::from_utf8(output.into_inner())?;
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
 compilation
-  benchmarks/pulldown-cmark/benchmark.wasm
-    cycles
-      [696450758 740410589.60 823537015] /tmp/old_backend.so
-      [688475571 710846289.20 796284592] /tmp/old_backend_2.so
-      [721352134 776890922.40 933479759] /tmp/old_backend_3.so
-    nanoseconds
-      [239819667 254957035.80 283581244] /tmp/old_backend.so
-      [237074550 244777841.50 274198271] /tmp/old_backend_2.so
-      [248392822 267517235.10 321437562] /tmp/old_backend_3.so
+    pulldown-cmark
+        cycles
+            ┌───────────┬───────────┬──────────────┬───────────┬───────────────────────┐
+            │ Min       │ Max       │ Mean         │ Median    │ Engine                │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 696450758 │ 823537015 │ 740410589.60 │ 725850172 │ /tmp/old_backend.so   │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 688475571 │ 796284592 │ 710846289.20 │ 704156210 │ /tmp/old_backend_2.so │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 721352134 │ 933479759 │ 776890922.40 │ 751713121 │ /tmp/old_backend_3.so │
+            └───────────┴───────────┴──────────────┴───────────┴───────────────────────┘
+        nanoseconds
+            ┌───────────┬───────────┬──────────────┬───────────┬───────────────────────┐
+            │ Min       │ Max       │ Mean         │ Median    │ Engine                │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 239819667 │ 283581244 │ 254957035.80 │ 249943222 │ /tmp/old_backend.so   │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 237074550 │ 274198271 │ 244777841.50 │ 242474132 │ /tmp/old_backend_2.so │
+            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
+            │ 248392822 │ 321437562 │ 267517235.10 │ 258847426 │ /tmp/old_backend_3.so │
+            └───────────┴───────────┴──────────────┴───────────┴───────────────────────┘
 instantiation
-  benchmarks/pulldown-cmark/benchmark.wasm
-    cycles
-      [186145 213469.60 229974] /tmp/old_backend.so
-      [200003 220099.00 308810] /tmp/old_backend_2.so
-      [203474 233069.30 300269] /tmp/old_backend_3.so
-    nanoseconds
-      [64098 73506.90 79190] /tmp/old_backend.so
-      [68870 75789.90 106337] /tmp/old_backend_2.so
-      [70064 80255.30 103395] /tmp/old_backend_3.so
+    pulldown-cmark
+        cycles
+            ┌────────┬────────┬───────────┬────────┬───────────────────────┐
+            │ Min    │ Max    │ Mean      │ Median │ Engine                │
+            ├────────┼────────┼───────────┼────────┼───────────────────────┤
+            │ 186145 │ 229974 │ 213469.60 │ 221862 │ /tmp/old_backend.so   │
+            ├────────┼────────┼───────────┼────────┼───────────────────────┤
+            │ 200003 │ 308810 │ 220099.00 │ 213468 │ /tmp/old_backend_2.so │
+            ├────────┼────────┼───────────┼────────┼───────────────────────┤
+            │ 203474 │ 300269 │ 233069.30 │ 214567 │ /tmp/old_backend_3.so │
+            └────────┴────────┴───────────┴────────┴───────────────────────┘
+        nanoseconds
+            ┌───────┬────────┬──────────┬────────┬───────────────────────┐
+            │ Min   │ Max    │ Mean     │ Median │ Engine                │
+            ├───────┼────────┼──────────┼────────┼───────────────────────┤
+            │ 64098 │ 79190  │ 73506.90 │ 76397  │ /tmp/old_backend.so   │
+            ├───────┼────────┼──────────┼────────┼───────────────────────┤
+            │ 68870 │ 106337 │ 75789.90 │ 73507  │ /tmp/old_backend_2.so │
+            ├───────┼────────┼──────────┼────────┼───────────────────────┤
+            │ 70064 │ 103395 │ 80255.30 │ 73884  │ /tmp/old_backend_3.so │
+            └───────┴────────┴──────────┴────────┴───────────────────────┘
 execution
-  benchmarks/pulldown-cmark/benchmark.wasm
-    cycles
-      [10334150 12342413.00 14169904] /tmp/old_backend.so
-      [10328193 10829803.50 12631959] /tmp/old_backend_2.so
-      [10569938 11690281.50 16792916] /tmp/old_backend_3.so
-    nanoseconds
-      [3558517 4250053.60 4879342] /tmp/old_backend.so
-      [3556483 3729210.70 4349778] /tmp/old_backend_2.so
-      [3639688 4025470.30 5782529] /tmp/old_backend_3.so
+    pulldown-cmark
+        cycles
+            ┌──────────┬──────────┬─────────────┬──────────┬───────────────────────┐
+            │ Min      │ Max      │ Mean        │ Median   │ Engine                │
+            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
+            │ 10334150 │ 14169904 │ 12342413.00 │ 13146295 │ /tmp/old_backend.so   │
+            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
+            │ 10328193 │ 12631959 │ 10829803.50 │ 10688469 │ /tmp/old_backend_2.so │
+            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
+            │ 10569938 │ 16792916 │ 11690281.50 │ 10845308 │ /tmp/old_backend_3.so │
+            └──────────┴──────────┴─────────────┴──────────┴───────────────────────┘
+        nanoseconds
+            ┌─────────┬─────────┬────────────┬─────────┬───────────────────────┐
+            │ Min     │ Max     │ Mean       │ Median  │ Engine                │
+            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
+            │ 3558517 │ 4879342 │ 4250053.60 │ 4526867 │ /tmp/old_backend.so   │
+            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
+            │ 3556483 │ 4349778 │ 3729210.70 │ 3680543 │ /tmp/old_backend_2.so │
+            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
+            │ 3639688 │ 5782529 │ 4025470.30 │ 3734509 │ /tmp/old_backend_3.so │
+            └─────────┴─────────┴────────────┴─────────┴───────────────────────┘
 "#;
         eprintln!("=== Expected ===\n{expected}");
 
@@ -1082,66 +1212,256 @@ execution
     }
 
     #[test]
+    fn effect_sizes_filter_instantiation_by_default() -> Result<()> {
+        let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
+            .context("failed to read fixture file")?;
+        let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
+
+        // By default, instantiation measurements are filtered out.
+        let command =
+            BenchmarkCommand::try_parse_from(["benchmark", "--show-insignificant", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            !actual.contains("instantiation"),
+            "instantiation should be filtered out by default:\n{actual}"
+        );
+        assert!(actual.contains("compilation"));
+
+        // With `--show-instantiation`, it is included.
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "--show-instantiation",
+            "--show-insignificant",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("instantiation"),
+            "instantiation should be shown with --show-instantiation:\n{actual}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn effect_sizes_filter_insignificant_by_default() -> Result<()> {
+        // Two engines with identical measurements, so no result is significant.
+        // Include a synthetic "Sum Total" benchmark alongside a regular one.
+        let m = |engine: &'static str, wasm: &'static str, count: u64| Measurement {
+            arch: "x86".into(),
+            engine: sightglass_data::Engine {
+                name: engine.into(),
+                flags: None,
+            },
+            wasm: wasm.into(),
+            process: 0,
+            iteration: 0,
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            count,
+        };
+        let mut measurements = vec![];
+        for wasm in ["bench.wasm", "Sum Total"] {
+            for count in [100, 101, 102, 103, 104] {
+                measurements.push(m("a", wasm, count));
+                measurements.push(m("b", wasm, count));
+            }
+        }
+
+        // By default, the insignificant benchmark is hidden and reported by
+        // count, but the (also insignificant) "Sum Total" is kept.
+        let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("Sum Total"),
+            "the Sum Total comparison should be kept:\n{actual}"
+        );
+        assert!(
+            !actual.contains("bench"),
+            "the insignificant benchmark should be hidden:\n{actual}"
+        );
+        assert!(
+            actual.contains("1 statistically insignificant result(s) hidden."),
+            "expected the hidden-count message:\n{actual}"
+        );
+        assert!(actual.contains("--show-insignificant"));
+
+        // With `--show-insignificant`, every comparison is shown and nothing is
+        // reported as hidden.
+        let command =
+            BenchmarkCommand::try_parse_from(["benchmark", "--show-insignificant", "dummy.wasm"])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+        let actual = String::from_utf8(output.into_inner())?;
+        assert!(
+            actual.contains("No difference in performance."),
+            "expected the insignificant comparison to be shown:\n{actual}"
+        );
+        assert!(
+            !actual.contains("hidden."),
+            "nothing should be hidden with --show-insignificant:\n{actual}"
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn summary_flag_forces_summaries() -> Result<()> {
+        let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
+            .context("failed to read fixture file")?;
+        let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
+
+        // Two engines without `--summary`: an effect-size comparison, whose
+        // headers use " :: " separators.
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "-e",
+            "a",
+            "-e",
+            "b",
+            "--show-insignificant",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.write_results(&measurements, &mut output)?;
+        let effect = String::from_utf8(output.into_inner())?;
+        assert!(
+            effect.contains("::"),
+            "expected an effect-size comparison:\n{effect}"
+        );
+
+        // With `--summary`, per-engine summaries are printed instead (no " :: "
+        // effect-size headers).
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "-e",
+            "a",
+            "-e",
+            "b",
+            "--summary",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.write_results(&measurements, &mut output)?;
+        let summary = String::from_utf8(output.into_inner())?;
+        assert!(
+            !summary.contains("::"),
+            "expected summaries without effect-size headers:\n{summary}"
+        );
+        assert!(summary.contains("compilation"));
+
+        Ok(())
+    }
+
+    #[test]
     fn test_display_effect_size() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
         let measurements: Vec<Measurement<'_>> = serde_json::from_slice(&fixture)?;
-        let mut output = vec![];
-        display_effect_size(&measurements, 0.05, &mut output)?;
 
-        let actual = String::from_utf8(output)?;
+        // Use `--show-instantiation` and `--show-insignificant` so every phase
+        // and comparison appears, and a 0.05 significance level to match this
+        // fixture's expected output.
+        let command = BenchmarkCommand::try_parse_from([
+            "benchmark",
+            "--show-instantiation",
+            "--show-insignificant",
+            "--significance-level",
+            "0.05",
+            "dummy.wasm",
+        ])?;
+        let mut output = NoColor::new(Vec::new());
+        command.display_effect_sizes(&measurements, &mut output)?;
+
+        let actual = String::from_utf8(output.into_inner())?;
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
-compilation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+compilation :: cycles :: pulldown-cmark
 
-  Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
+    Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
 
-  old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
-  [889384088 935555419.78 1045075629] new_backend.so
-  [688072501 703675480.90 826253416] old_backend.so
+    ┌───────────┬────────────┬──────────────┬───────────┬────────────────┐
+    │ Min       │ Max        │ Mean         │ Median    │ Engine         │
+    ├───────────┼────────────┼──────────────┼───────────┼────────────────┤
+    │ 889384088 │ 1045075629 │ 935555419.78 │ 932321327 │ new_backend.so │
+    ├───────────┼────────────┼──────────────┼───────────┼────────────────┤
+    │ 688072501 │ 826253416  │ 703675480.90 │ 699614293 │ old_backend.so │
+    └───────────┴────────────┴──────────────┴───────────┴────────────────┘
 
-compilation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+compilation :: nanoseconds :: pulldown-cmark
 
-  Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
+    Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
 
-  old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    old_backend.so is 1.32x to 1.34x faster than new_backend.so!
 
-  [306252409 322151144.14 359863566] new_backend.so
-  [236932712 242305483.57 284514295] old_backend.so
+    ┌───────────┬───────────┬──────────────┬───────────┬────────────────┐
+    │ Min       │ Max       │ Mean         │ Median    │ Engine         │
+    ├───────────┼───────────┼──────────────┼───────────┼────────────────┤
+    │ 306252409 │ 359863566 │ 322151144.14 │ 321037510 │ new_backend.so │
+    ├───────────┼───────────┼──────────────┼───────────┼────────────────┤
+    │ 236932712 │ 284514295 │ 242305483.57 │ 240907043 │ old_backend.so │
+    └───────────┴───────────┴──────────────┴───────────┴────────────────┘
 
-execution :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+execution :: nanoseconds :: pulldown-cmark
 
-  Δ = 467229.61 ± 57708.35 (confidence = 95%)
+    Δ = 467229.61 ± 57708.35 (confidence = 95%)
 
-  new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
 
-  [3061587 3240065.98 4419514] new_backend.so
-  [3510983 3707295.59 5811112] old_backend.so
+    ┌─────────┬─────────┬────────────┬─────────┬────────────────┐
+    │ Min     │ Max     │ Mean       │ Median  │ Engine         │
+    ├─────────┼─────────┼────────────┼─────────┼────────────────┤
+    │ 3061587 │ 4419514 │ 3240065.98 │ 3194630 │ new_backend.so │
+    ├─────────┼─────────┼────────────┼─────────┼────────────────┤
+    │ 3510983 │ 5811112 │ 3707295.59 │ 3673498 │ old_backend.so │
+    └─────────┴─────────┴────────────┴─────────┴────────────────┘
 
-execution :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+execution :: cycles :: pulldown-cmark
 
-  Δ = 1356859.60 ± 167590.00 (confidence = 95%)
+    Δ = 1356859.60 ± 167590.00 (confidence = 95%)
 
-  new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
 
-  [8891120 9409439.69 12834660] new_backend.so
-  [10196192 10766299.29 16875960] old_backend.so
+    ┌──────────┬──────────┬─────────────┬──────────┬────────────────┐
+    │ Min      │ Max      │ Mean        │ Median   │ Engine         │
+    ├──────────┼──────────┼─────────────┼──────────┼────────────────┤
+    │ 8891120  │ 12834660 │ 9409439.69  │ 9277491  │ new_backend.so │
+    ├──────────┼──────────┼─────────────┼──────────┼────────────────┤
+    │ 10196192 │ 16875960 │ 10766299.29 │ 10668147 │ old_backend.so │
+    └──────────┴──────────┴─────────────┴──────────┴────────────────┘
 
-instantiation :: cycles :: benchmarks/pulldown-cmark/benchmark.wasm
+instantiation :: cycles :: pulldown-cmark
 
-  No difference in performance.
+    No difference in performance.
 
-  [191466 207762.01 325810] new_backend.so
-  [179617 200451.81 334016] old_backend.so
+    ┌────────┬────────┬───────────┬────────┬────────────────┐
+    │ Min    │ Max    │ Mean      │ Median │ Engine         │
+    ├────────┼────────┼───────────┼────────┼────────────────┤
+    │ 191466 │ 325810 │ 207762.01 │ 199222 │ new_backend.so │
+    ├────────┼────────┼───────────┼────────┼────────────────┤
+    │ 179617 │ 334016 │ 200451.81 │ 188412 │ old_backend.so │
+    └────────┴────────┴───────────┴────────┴────────────────┘
 
-instantiation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
+instantiation :: nanoseconds :: pulldown-cmark
 
-  No difference in performance.
+    No difference in performance.
 
-  [65929 71540.70 112190] new_backend.so
-  [61849 69023.59 115015] old_backend.so
+    ┌───────┬────────┬──────────┬────────┬────────────────┐
+    │ Min   │ Max    │ Mean     │ Median │ Engine         │
+    ├───────┼────────┼──────────┼────────┼────────────────┤
+    │ 65929 │ 112190 │ 71540.70 │ 68600  │ new_backend.so │
+    ├───────┼────────┼──────────┼────────┼────────────────┤
+    │ 61849 │ 115015 │ 69023.59 │ 64878  │ old_backend.so │
+    └───────┴────────┴──────────┴────────┴────────────────┘
 "#;
         eprintln!("=== Expected ===\n{expected}");
 
@@ -1162,6 +1482,10 @@ instantiation :: nanoseconds :: benchmarks/pulldown-cmark/benchmark.wasm
             raw: false,
             output_format: Format::Json,
             output_file: None,
+            color: None,
+            show_instantiation: false,
+            show_insignificant: false,
+            summary: false,
             measures: vec![MeasureType::Callgrind, MeasureType::Cycles],
             small_workloads: false,
             working_dir: None,

@@ -18,9 +18,22 @@ use fingerprint::FingerprintCommand;
 use log::trace;
 use pca_metrics::PcaMetricsCommand;
 use report::ReportCommand;
+use std::io::{self, IsTerminal};
 use summarize::SummarizeCommand;
+use termcolor::{ColorChoice, StandardStream};
 use upload::UploadCommand;
 use validate::ValidateCommand;
+
+/// A stdout writer for human-readable output. Colors are only emitted when
+/// stdout is a terminal.
+pub(crate) fn stdout_writer() -> StandardStream {
+    let choice = if io::stdout().is_terminal() {
+        ColorChoice::Auto
+    } else {
+        ColorChoice::Never
+    };
+    StandardStream::stdout(choice)
+}
 
 /// Main entry point for CLI.
 fn main() -> Result<()> {

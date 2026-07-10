@@ -153,8 +153,11 @@ fn benchmark_summary() {
             predicate::str::contains("compilation")
                 .and(predicate::str::contains("instantiation"))
                 .and(predicate::str::contains("execution"))
-                .and(predicate::str::contains(benchmark("noop")))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+\]"#).unwrap())
+                // The benchmark is displayed by its short label, not its path.
+                .and(predicate::str::contains("noop"))
+                // Statistics are rendered as a box-drawing table.
+                .and(predicate::str::contains("Median"))
+                .and(predicate::str::is_match(r#"│ \d+ +│"#).unwrap())
                 .and(predicate::str::contains(
                     test_engine().display().to_string(),
                 )),
@@ -182,20 +185,21 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg("1")
         .arg("--iterations-per-process")
         .arg("200")
+        // The two engines are identical copies, so their differences are not
+        // significant; show them anyway to exercise the output format.
+        .arg("--show-insignificant")
         .arg(benchmark("noop"))
         .assert()
         .success()
         .stdout(
-            predicate::str::contains(format!("compilation :: cycles :: {}", benchmark("noop")))
-                .and(predicate::str::contains(format!(
-                    "instantiation :: cycles :: {}",
-                    benchmark("noop")
-                )))
-                .and(predicate::str::contains(format!(
-                    "execution :: cycles :: {}",
-                    benchmark("noop")
-                )))
-                .and(predicate::str::is_match(r#"\[\d+ \d+\.\d+ \d+\]"#).unwrap())
+            // The benchmark is displayed by its short label ("noop"), not its path.
+            predicate::str::contains("compilation :: cycles :: noop")
+                // Instantiation is filtered out of effect-size output by default.
+                .and(predicate::str::contains("instantiation").not())
+                .and(predicate::str::contains("execution :: cycles :: noop"))
+                // Statistics are rendered as a box-drawing table.
+                .and(predicate::str::contains("Median"))
+                .and(predicate::str::is_match(r#"│ \d+ +│"#).unwrap())
                 .and(
                     predicate::str::contains("Δ = ")
                         .or(predicate::str::contains("No difference in performance.")),

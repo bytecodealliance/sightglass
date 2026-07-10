@@ -53,7 +53,7 @@ impl EffectSizeCommand {
                 effects,
                 &summaries,
                 self.significance_level,
-                &mut io::stdout(),
+                &mut crate::stdout_writer(),
             )
         }
     }
