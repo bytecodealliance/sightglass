@@ -65,7 +65,7 @@ mod callgrind {
             }
         }
 
-        pub(super) fn validate(&self) -> Result<()> {
+        pub(super) fn validate_callgrind(&self) -> Result<()> {
             if self.uses_callgrind() && self.measures.len() > 1 {
                 anyhow::bail!(
                     "callgrind must be used by itself and cannot be combined with other measures"
@@ -83,6 +83,7 @@ mod callgrind {
             &self,
             this_exe: &Path,
             engine: &Path,
+            engine_flags: Option<&str>,
             wasm: &Path,
         ) -> Result<PreparedCommand> {
             ensure_tools_available()?;
@@ -122,6 +123,7 @@ mod callgrind {
             self.add_benchmark_child_args(
                 &mut prepared.command,
                 engine,
+                engine_flags,
                 wasm,
                 1,
                 self.iterations_per_process(),
@@ -182,7 +184,7 @@ mod callgrind {
             DEFAULT_ITERATIONS_PER_PROCESS
         }
 
-        pub(super) fn validate(&self) -> Result<()> {
+        pub(super) fn validate_callgrind(&self) -> Result<()> {
             Ok(())
         }
 
@@ -194,6 +196,7 @@ mod callgrind {
             &self,
             _this_exe: &Path,
             _engine: &Path,
+            _engine_flags: Option<&str>,
             _wasm: &Path,
         ) -> Result<PreparedCommand> {
             unreachable!()
@@ -229,14 +232,71 @@ pub struct BenchmarkCommand {
     #[arg(long = "engine", short = 'e', value_name = "PATH")]
     engines: Vec<String>,
 
-    /// Configure an engine using engine-specific flags. (For the Wasmtime
-    /// engine, these can be a subset of flags from `wasmtime run --help`).
+    /// Configure an individual engine using engine-specific flags.
+    ///
+    /// For a Wasmtime-based engine, for example, these can be a subset of flags
+    /// from `wasmtime run --help`.
+    ///
+    /// You must either pass no `--engine-flags` at all, or exactly one per
+    /// engine. When given, each set of flags is paired with the engine
+    /// (`-e`/`--engine`) at the same position: the Nth `--engine-flags` applies
+    /// to the Nth engine.
+    ///
+    /// To instead apply the same flags to *every* engine, use
+    /// `--engine-flags-common`. The two may also be combined, in which case the
+    /// common flags are applied to each engine before its own flags.
+    ///
+    /// For example, comparing two different engines, each configured with its
+    /// own flags:
+    ///
+    /// ```text
+    /// sightglass-cli benchmark \
+    ///     -e path/to/main.dylib --engine-flags "-Ccompiler=winch" \
+    ///     -e path/to/feature.dylib --engine-flags "-Ccompiler=cranelift" \
+    ///     -- benchmarks/pulldown-cmark/benchmark.wasm
+    /// ```
+    ///
+    /// Alternatively, the same engine may be repeated to compare it against
+    /// itself under different flags, for example comparing Wasmtime's DRC and
+    /// copying garbage collectors:
+    ///
+    /// ```text
+    /// sightglass-cli benchmark \
+    ///     -e engines/wasmtime/libengine.dylib --engine-flags "-Ccollector=copying" \
+    ///     -e engines/wasmtime/libengine.dylib --engine-flags "-Ccollector=drc" \
+    ///     -- benchmarks/splay/splay.wasm
+    /// ```
     #[arg(
         long = "engine-flags",
         value_name = "ENGINE_FLAGS",
         allow_hyphen_values = true
     )]
-    engine_flags: Option<String>,
+    engine_flags: Vec<String>,
+
+    /// Configure every engine using these common engine flags.
+    ///
+    /// Unlike `--engine-flags`, which is paired with an individual engine,
+    /// these flags are applied to all of the engines (`-e`/`--engine`), which
+    /// is a convenient way to configure several engines identically.
+    ///
+    /// For example, to enable Wasmtime's DRC collector for all engines:
+    ///
+    /// ```text
+    /// sightglass-cli benchmark \
+    ///     -e path/to/main.dylib \
+    ///     -e path/to/feature.dylib \
+    ///     --engine-flags-common "-Ccollector=drc" \
+    ///     -- benchmarks/splay/splay.wasm
+    /// ```
+    ///
+    /// These may also be combined with per-engine `--engine-flags`, in which
+    /// case the common flags are applied to each engine before its own flags.
+    #[arg(
+        long = "engine-flags-common",
+        value_name = "ENGINE_FLAGS",
+        allow_hyphen_values = true
+    )]
+    engine_flags_common: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
     ///
@@ -387,8 +447,8 @@ impl BenchmarkCommand {
         if self.should_wrap_subprocesses() {
             let this_exe =
                 std::env::current_exe().context("failed to get the current executable's path")?;
-            return self.execute_in_subprocesses("callgrind iterations", |engine, wasm| {
-                self.prepare_command(&this_exe, engine, wasm)
+            return self.execute_in_subprocesses("callgrind iterations", |engine, flags, wasm| {
+                self.prepare_command(&this_exe, engine, flags, wasm)
             });
         }
 
@@ -399,6 +459,14 @@ impl BenchmarkCommand {
         }
     }
 
+    fn validate(&self) -> Result<()> {
+        self.validate_callgrind()?;
+        // Validate the engines/engine-flags pairing up front so that we fail
+        // fast before spawning any benchmark processes.
+        self.engine_flag_pairs()?;
+        Ok(())
+    }
+
     fn processes(&self) -> usize {
         self.processes.unwrap_or_else(|| self.default_processes())
     }
@@ -406,6 +474,54 @@ impl BenchmarkCommand {
     fn iterations_per_process(&self) -> usize {
         self.iterations_per_process
             .unwrap_or_else(|| self.default_iterations_per_process())
+    }
+
+    /// Pair each engine with the flags it should be configured with.
+    ///
+    /// Each engine is configured with the common `--engine-flags-common` flags
+    /// (if any) followed by its own positional `--engine-flags` (if any). The
+    /// per-engine `--engine-flags` must either be omitted entirely or given
+    /// exactly once per engine.
+    fn engine_flag_pairs(&self) -> Result<Vec<(&str, Option<String>)>> {
+        let engines = &self.engines;
+        let common = self.engine_flags_common.as_deref();
+        let per_engine = &self.engine_flags;
+
+        anyhow::ensure!(
+            per_engine.is_empty() || per_engine.len() == engines.len(),
+            "mismatched numbers of engines ({}) and `--engine-flags` ({}): pass either no \
+             `--engine-flags` or exactly one per engine (use `--engine-flags-common` to apply \
+             the same flags to every engine)",
+            engines.len(),
+            per_engine.len(),
+        );
+
+        Ok(engines
+            .iter()
+            .enumerate()
+            .map(|(i, engine)| {
+                let per_engine = per_engine.get(i).map(String::as_str);
+                (
+                    engine.as_str(),
+                    Self::combine_engine_flags(common, per_engine),
+                )
+            })
+            .collect())
+    }
+
+    /// Combine the common engine flags with a single engine's own flags.
+    ///
+    /// A present-but-empty per-engine flag string is preserved as a distinct
+    /// (empty) configuration, so that the same engine can be compared against
+    /// itself with and without flags.
+    fn combine_engine_flags(common: Option<&str>, per_engine: Option<&str>) -> Option<String> {
+        match (common, per_engine) {
+            (None, None) => None,
+            (Some(flags), None) | (None, Some(flags)) => Some(flags.to_string()),
+            (Some(common), Some(per_engine)) => {
+                Some(format!("{common} {per_engine}").trim().to_string())
+            }
+        }
     }
 
     /// Execute benchmark(s) in the provided engine(s) using the current process.
@@ -422,10 +538,13 @@ impl BenchmarkCommand {
             .flat_map(|f| f.paths())
             .map(|p| p.display().to_string())
             .collect();
+
+        let engine_flag_pairs = self.engine_flag_pairs()?;
         let mut all_measurements = vec![];
 
-        for (i, engine_name) in self.engines.iter().enumerate() {
-            let engine_path = check_engine_path(engine_name)?;
+        for (i, (engine_name, engine_flags)) in engine_flag_pairs.iter().enumerate() {
+            let engine_flags = engine_flags.as_deref();
+            let engine_path = check_engine_path(*engine_name)?;
             let engine_name = self
                 .names
                 .as_ref()
@@ -466,7 +585,7 @@ impl BenchmarkCommand {
 
                 let engine = sightglass_data::Engine {
                     name: engine_name.into(),
-                    flags: self.engine_flags.as_ref().map(|ef| ef.into()),
+                    flags: engine_flags.map(|ef| ef.into()),
                 };
                 let mut measurements = Measurements::new(this_arch(), engine, wasm_file);
                 let mut measure = if self.measures.len() <= 1 {
@@ -486,7 +605,7 @@ impl BenchmarkCommand {
                     stdin,
                     &mut measurements,
                     &mut measure,
-                    self.engine_flags.as_deref(),
+                    engine_flags,
                 );
                 let mut engine = Some(engine);
 
@@ -617,7 +736,7 @@ impl BenchmarkCommand {
     fn execute_in_multiple_processes(&self) -> Result<()> {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
-        self.execute_in_subprocesses("iterations", |engine, wasm| {
+        self.execute_in_subprocesses("iterations", |engine, flags, wasm| {
             let mut prepared = PreparedCommand::new(
                 Command::new(&this_exe),
                 "benchmark subprocess",
@@ -632,6 +751,7 @@ impl BenchmarkCommand {
             self.add_benchmark_child_args(
                 &mut prepared.command,
                 engine,
+                flags,
                 wasm,
                 1,
                 self.iterations_per_process(),
@@ -647,7 +767,7 @@ impl BenchmarkCommand {
         mut prepare_command: F,
     ) -> Result<()>
     where
-        F: FnMut(&Path, &Path) -> Result<PreparedCommand>,
+        F: FnMut(&Path, Option<&str>, &Path) -> Result<PreparedCommand>,
     {
         let mut output_file = self.make_output_writer()?;
 
@@ -675,14 +795,14 @@ impl BenchmarkCommand {
         // Worklist that we randomly sample from.
         let mut choices = vec![];
 
-        for engine in &self.engines {
+        for (engine, flags) in self.engine_flag_pairs()? {
             // Ensure that each of our engines is built before we spawn any
             // child processes (potentially in a different working directory,
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), wasm, self.processes()));
+                choices.push((engine.clone(), flags.clone(), wasm, self.processes()));
             }
         }
 
@@ -695,8 +815,8 @@ impl BenchmarkCommand {
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, wasm, procs_left) = &mut choices[index];
-            let mut prepared = prepare_command(engine, wasm)?;
+            let (engine, flags, wasm, procs_left) = &mut choices[index];
+            let mut prepared = prepare_command(engine, flags.as_deref(), wasm)?;
             let output = prepared
                 .command
                 .output()
@@ -797,7 +917,10 @@ impl BenchmarkCommand {
             let mut measurements = measurements.to_vec();
             measurements.extend(sum_totals(&measurements));
 
-            if self.summary || self.engines.len() == 1 {
+            // Compare engine configurations against each other, unless there is
+            // only one of them (a single engine with a single set of flags) or
+            // the user explicitly asked for summaries.
+            if self.summary || self.engine_flag_pairs()?.len() == 1 {
                 display_summaries(&measurements, output_file)?;
             } else {
                 self.display_effect_sizes(&measurements, output_file)?;
@@ -876,6 +999,7 @@ impl BenchmarkCommand {
         &self,
         command: &mut Command,
         engine: &Path,
+        engine_flags: Option<&str>,
         wasm: &Path,
         processes: usize,
         iterations_per_process: usize,
@@ -914,7 +1038,7 @@ impl BenchmarkCommand {
             command.arg("--benchmark-phase").arg(phase.to_string());
         }
 
-        if let Some(flags) = self.engine_flags.as_deref() {
+        if let Some(flags) = engine_flags {
             command.arg(format!("--engine-flags={flags}"));
         }
 
@@ -1312,6 +1436,141 @@ execution
     }
 
     #[test]
+    fn engine_flag_pairing() -> Result<()> {
+        // Parse a benchmark command with the given engine/flag arguments and
+        // return its (engine, flags) pairs as owned values. The trailing
+        // `dummy.wasm` avoids touching the default suite file.
+        let pairs = |args: &[&str]| -> Result<Vec<(String, Option<String>)>> {
+            let mut full = vec!["benchmark"];
+            full.extend_from_slice(args);
+            full.push("dummy.wasm");
+            let command = BenchmarkCommand::try_parse_from(full)?;
+            Ok(command
+                .engine_flag_pairs()?
+                .into_iter()
+                .map(|(e, f)| (e.to_string(), f))
+                .collect())
+        };
+
+        // Build the expected owned pairs from string literals.
+        let expect = |pairs: &[(&str, Option<&str>)]| -> Vec<(String, Option<String>)> {
+            pairs
+                .iter()
+                .map(|(e, f)| (e.to_string(), f.map(String::from)))
+                .collect()
+        };
+
+        // Equal counts: `--engine-flags` is paired with each engine by position.
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y"
+            ])?,
+            expect(&[("a", Some("x")), ("b", Some("y"))]),
+        );
+
+        // No flags at all: every engine runs without any flags.
+        assert_eq!(
+            pairs(&["-e", "a", "-e", "b"])?,
+            expect(&[("a", None), ("b", None)]),
+        );
+
+        // A single engine with a single set of flags.
+        assert_eq!(
+            pairs(&["-e", "a", "--engine-flags", "x"])?,
+            expect(&[("a", Some("x"))]),
+        );
+
+        // `--engine-flags-common` is applied to every engine.
+        assert_eq!(
+            pairs(&["-e", "a", "-e", "b", "--engine-flags-common", "c"])?,
+            expect(&[("a", Some("c")), ("b", Some("c"))]),
+        );
+
+        // Common and per-engine flags compose: the common flags come first,
+        // followed by each engine's own flags.
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags-common",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y",
+            ])?,
+            expect(&[("a", Some("c x")), ("b", Some("c y"))]),
+        );
+
+        // When an engine's own flags are empty, only the common flags remain
+        // (with no stray trailing whitespace).
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags-common",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "",
+            ])?,
+            expect(&[("a", Some("c x")), ("b", Some("c"))]),
+        );
+
+        // The same engine can be repeated to compare it against itself under
+        // different flags; an empty flags value is a distinct configuration.
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "wasmtime",
+                "-e",
+                "wasmtime",
+                "--engine-flags",
+                "",
+                "--engine-flags",
+                "-W fuel=1",
+            ])?,
+            expect(&[("wasmtime", Some("")), ("wasmtime", Some("-W fuel=1"))]),
+        );
+
+        // A single set of per-engine flags is *not* silently applied to all
+        // engines; `--engine-flags-common` must be used for that instead.
+        assert!(pairs(&["-e", "a", "-e", "b", "--engine-flags", "x"]).is_err());
+
+        // Any other mismatch between the engine and per-engine flag counts is
+        // an error.
+        assert!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "-e",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y",
+            ])
+            .is_err()
+        );
+
+        Ok(())
+    }
+
+    #[test]
     fn summary_flag_forces_summaries() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
             .context("failed to read fixture file")?;
@@ -1475,7 +1734,8 @@ instantiation :: nanoseconds :: pulldown-cmark
         let command = BenchmarkCommand {
             benchmarks: vec![],
             engines: vec!["/tmp/engine.so".into()],
-            engine_flags: None,
+            engine_flags: vec![],
+            engine_flags_common: None,
             processes: None,
             names: None,
             iterations_per_process: None,

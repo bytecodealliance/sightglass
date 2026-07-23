@@ -7,6 +7,7 @@ mod component;
 use super::Counts;
 use super::category::{Category, NUM_CATEGORIES};
 use anyhow::{Context, Result, bail};
+#[cfg(any(test, all(target_os = "linux", feature = "callgrind")))]
 use sightglass_data::{Measurement, Phase};
 use std::path::Path;
 #[cfg(all(target_os = "linux", feature = "callgrind"))]
@@ -139,6 +140,7 @@ fn callgrind_metrics(
     Ok(())
 }
 
+#[cfg(any(test, all(target_os = "linux", feature = "callgrind")))]
 fn accumulate_callgrind_counts(measurements: &[Measurement<'_>], counts: &mut Counts) {
     for measurement in measurements {
         if measurement.phase != Phase::Execution {

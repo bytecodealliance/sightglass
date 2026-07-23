@@ -1,4 +1,4 @@
-FROM rust:1.87
+FROM rust:1.96
 RUN rustup target add wasm32-wasip1
 # Install protobuf compiler for rust-protobuf benchmark
 RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*

@@ -209,6 +209,144 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Make a second, distinct on-disk copy of the test engine so we can benchmark
+/// multiple engines.
+fn alt_test_engine() -> PathBuf {
+    let engine = test_engine();
+    let alt = tempfile::NamedTempFile::new().unwrap();
+    let alt_path: PathBuf = alt.path().into();
+    alt.close().unwrap();
+    std::fs::copy(&engine, &alt_path).unwrap();
+    assert!(alt_path.exists());
+    alt_path
+}
+
+/// The same engine can be repeated to compare it against itself with different
+/// flags: no flags vs. fuel vs. epoch interruption.
+#[test]
+#[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
+fn benchmark_single_engine_multiple_flags() {
+    let engine = test_engine();
+    sightglass_cli()
+        .arg("benchmark")
+        .arg("-e")
+        .arg(&engine)
+        .arg("-e")
+        .arg(&engine)
+        .arg("-e")
+        .arg(&engine)
+        .arg("--engine-flags")
+        .arg("")
+        .arg("--engine-flags")
+        .arg("-W fuel=99999999")
+        .arg("--engine-flags")
+        .arg("-W epoch-interruption=y")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("5")
+        .arg("--show-insignificant")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(
+            // The engine is compared against itself, so the configurations are
+            // labeled by their flags.
+            predicate::str::contains("compilation :: cycles :: noop")
+                .and(predicate::str::contains("fuel=99999999"))
+                .and(predicate::str::contains("epoch-interruption=y")),
+        );
+}
+
+/// A single set of `--engine-flags-common` applies to every engine.
+#[test]
+#[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
+fn benchmark_multiple_engines_common_flags() {
+    let engine = test_engine();
+    let alt = alt_test_engine();
+    sightglass_cli()
+        .arg("benchmark")
+        .arg("-e")
+        .arg(&engine)
+        .arg("-e")
+        .arg(&alt)
+        .arg("--engine-flags-common")
+        .arg("-W fuel=99999999")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("5")
+        .arg("--show-insignificant")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("compilation :: cycles :: noop"));
+}
+
+/// Multiple engines can each be paired with their own flags.
+#[test]
+#[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
+fn benchmark_multiple_engines_multiple_flags() {
+    let engine = test_engine();
+    let alt = alt_test_engine();
+    sightglass_cli()
+        .arg("benchmark")
+        .arg("-e")
+        .arg(&engine)
+        .arg("-e")
+        .arg(&alt)
+        .arg("--engine-flags")
+        .arg("-W fuel=99999999")
+        .arg("--engine-flags")
+        .arg("-W epoch-interruption=y")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("5")
+        .arg("--show-insignificant")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("compilation :: cycles :: noop"));
+}
+
+/// `--engine-flags-common` composes with per-engine `--engine-flags`: the common
+/// flags are applied to every engine, followed by that engine's own flags. Here
+/// the same engine is repeated so the configurations are labeled by their
+/// (composed) flags.
+#[test]
+#[cfg_attr(target_os = "windows", ignore)] // TODO: https://github.com/bytecodealliance/sightglass/issues/178
+fn benchmark_common_and_per_engine_flags() {
+    let engine = test_engine();
+    sightglass_cli()
+        .arg("benchmark")
+        .arg("-e")
+        .arg(&engine)
+        .arg("-e")
+        .arg(&engine)
+        .arg("--engine-flags-common")
+        .arg("-W fuel=99999999")
+        .arg("--engine-flags")
+        .arg("")
+        .arg("--engine-flags")
+        .arg("-W epoch-interruption=y")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("5")
+        .arg("--show-insignificant")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stdout(
+            // Both configurations get the common `fuel` flag; only the second
+            // additionally gets `epoch-interruption`.
+            predicate::str::contains("compilation :: cycles :: noop")
+                .and(predicate::str::contains("fuel=99999999"))
+                .and(predicate::str::contains("epoch-interruption=y")),
+        );
+}
+
 /// With multiple benchmarks and non-raw (summary) output, a "Sum Total" row is
 /// added that sums each sample's counts across the benchmarks. Using a single
 /// process makes the per-sample sums span both benchmarks.
