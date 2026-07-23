@@ -86,7 +86,7 @@ pub trait Measure: 'static {
 pub mod callgrind;
 #[cfg(target_os = "linux")]
 pub mod counters;
-#[cfg(target_os = "linux")]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub mod insts;
 
 pub mod cycles;
@@ -121,7 +121,7 @@ pub enum MeasureType {
     PerfCounters,
 
     /// Measure instructions retired.
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
     InstsRetired,
 
     /// Measure deterministic instruction, cache, and branch simulation events
@@ -139,7 +139,7 @@ impl fmt::Display for MeasureType {
             MeasureType::VTune => write!(f, "vtune"),
             #[cfg(target_os = "linux")]
             MeasureType::PerfCounters => write!(f, "perf-counters"),
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             MeasureType::InstsRetired => write!(f, "insts-retired"),
             #[cfg(all(target_os = "linux", feature = "callgrind"))]
             MeasureType::Callgrind => write!(f, "callgrind"),
@@ -161,10 +161,10 @@ impl FromStr for MeasureType {
             #[cfg(not(target_os = "linux"))]
             "perf-counters" => Err("`perf-counters` measure is only available on Linux"),
 
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             "insts-retired" => Ok(Self::InstsRetired),
-            #[cfg(not(target_os = "linux"))]
-            "insts-retired" => Err("`insts-retired` measure is only available on Linux"),
+            #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+            "insts-retired" => Err("`insts-retired` measure is only available on Linux and macOS"),
 
             #[cfg(all(target_os = "linux", feature = "callgrind"))]
             "callgrind" => Ok(Self::Callgrind),
@@ -191,7 +191,7 @@ impl MeasureType {
             Self::VTune => Box::new(vtune::VTuneMeasure::new()),
             #[cfg(target_os = "linux")]
             Self::PerfCounters => Box::new(counters::CounterMeasure::new()),
-            #[cfg(target_os = "linux")]
+            #[cfg(any(target_os = "linux", target_os = "macos"))]
             Self::InstsRetired => Box::new(insts::InstsRetiredMeasure::new()),
             #[cfg(all(target_os = "linux", feature = "callgrind"))]
             Self::Callgrind => Box::new(callgrind::CallgrindMeasure::new()),

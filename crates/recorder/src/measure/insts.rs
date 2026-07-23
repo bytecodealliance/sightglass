@@ -1,12 +1,86 @@
-//! Measure instructions retired via perf events.
+//! Measure instructions retired.
 
 use super::Measure;
 use crate::measure::Measurements;
-use perf_event::{events::Hardware, Builder, Counter};
 use sightglass_data::Phase;
 
-/// Measure CPU counters.
-pub struct InstsRetiredMeasure(Counter);
+/// On Linux we can use `perf_event` to access the hardware performance
+/// counters.
+#[cfg(target_os = "linux")]
+mod linux {
+    use perf_event::{Builder, events::Hardware};
+
+    pub use perf_event::Counter as State;
+
+    pub fn new() -> State {
+        Builder::new().kind(Hardware::INSTRUCTIONS).build().expect(
+            "Unable to create INSTRUCTIONS hardware counter. Does this system actually \
+             have such a counter? If it does, your kernel may not fully support this \
+             processor.",
+        )
+    }
+
+    pub fn start(counter: &mut State) {
+        counter.reset().unwrap();
+        counter.enable().unwrap();
+    }
+
+    pub fn end(counter: &mut State) -> u64 {
+        counter.disable().unwrap();
+        counter.read().unwrap()
+    }
+}
+#[cfg(target_os = "linux")]
+use linux as imp;
+
+/// On macOS, user space cannot read the PMU instruction counter itself, so we
+/// instead ask the kernel for this process's retired-instruction count via
+/// `proc_pid_rusage`. The kernel maintains that count from the hardware
+/// performance monitor and exposes it without requiring sudo or enabling
+/// Apple's developer tools (which some corporate laptops disallow... on that
+/// corporation's developers' machines... yeah.)
+#[cfg(target_os = "macos")]
+mod macos {
+    pub use u64 as State;
+
+    pub fn new() -> State {
+        0
+    }
+
+    pub fn start(count: &mut State) {
+        *count = read_instructions_retired();
+    }
+
+    pub fn end(initial_count: &mut State) -> u64 {
+        read_instructions_retired().wrapping_sub(*initial_count)
+    }
+
+    /// Read the number of instructions this process has retired so far.
+    fn read_instructions_retired() -> u64 {
+        // SAFETY: `rusage_info_v4` is a plain-old-data struct for which an
+        // all-zero bit pattern is valid, and we hand `proc_pid_rusage` a
+        // pointer to storage large enough for the `RUSAGE_INFO_V4` flavor we
+        // request.
+        let mut info: libc::rusage_info_v4 = unsafe { std::mem::zeroed() };
+        let ret = unsafe {
+            libc::proc_pid_rusage(
+                libc::getpid(),
+                libc::RUSAGE_INFO_V4,
+                &mut info as *mut libc::rusage_info_v4 as *mut libc::rusage_info_t,
+            )
+        };
+        assert_eq!(
+            ret, 0,
+            "proc_pid_rusage failed to read the retired-instruction count"
+        );
+        info.ri_instructions
+    }
+}
+#[cfg(target_os = "macos")]
+use macos as imp;
+
+/// Measure the number of instructions retired.
+pub struct InstsRetiredMeasure(imp::State);
 
 impl Default for InstsRetiredMeasure {
     fn default() -> Self {
@@ -16,24 +90,17 @@ impl Default for InstsRetiredMeasure {
 
 impl InstsRetiredMeasure {
     pub fn new() -> Self {
-        let counter = Builder::new().kind(Hardware::INSTRUCTIONS).build().expect(
-            "Unable to create INSTRUCTIONS hardware counter. Does this system actually \
-             have such a counter? If it does, your kernel may not fully support this \
-             processor.",
-        );
-        InstsRetiredMeasure(counter)
+        InstsRetiredMeasure(imp::new())
     }
 }
 
 impl Measure for InstsRetiredMeasure {
     fn start(&mut self, _phase: Phase) {
-        self.0.reset().unwrap();
-        self.0.enable().unwrap()
+        imp::start(&mut self.0);
     }
 
     fn end(&mut self, phase: Phase, measurements: &mut Measurements) {
-        self.0.disable().unwrap();
-        let count = self.0.read().unwrap();
+        let count = imp::end(&mut self.0);
         measurements.add(phase, "instructions-retired".into(), count);
     }
 }
