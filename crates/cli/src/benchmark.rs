@@ -232,47 +232,38 @@ pub struct BenchmarkCommand {
     #[arg(long = "engine", short = 'e', value_name = "PATH")]
     engines: Vec<String>,
 
-    /// Configure the engine(s) using engine-specific flags.
+    /// Configure an individual engine using engine-specific flags.
     ///
     /// For a Wasmtime-based engine, for example, these can be a subset of flags
     /// from `wasmtime run --help`.
     ///
-    /// This may be passed multiple times and is paired with the engines
-    /// (`-e`/`--engine`) as follows:
+    /// You must either pass no `--engine-flags` at all, or exactly one per
+    /// engine. When given, each set of flags is paired with the engine
+    /// (`-e`/`--engine`) at the same position: the Nth `--engine-flags` applies
+    /// to the Nth engine.
     ///
-    /// - If there is a single engine and more than one set of `--engine-flags`,
-    ///   then that engine is paired with each set of flags.
+    /// To instead apply the same flags to *every* engine, use
+    /// `--engine-flags-common`. The two may also be combined, in which case the
+    /// common flags are applied to each engine before its own flags.
     ///
-    /// - Otherwise, if the number of `--engine-flags` equals the number of
-    ///   engines, then each engine is paired with the flags in the same
-    ///   position.
-    ///
-    /// - Otherwise, if no `--engine-flags` are given, then every engine is run
-    ///   without any flags.
-    ///
-    /// - Otherwise, if exactly one `--engine-flags` is given, then it is applied
-    ///   to every engine.
-    ///
-    /// - Otherwise, it is an error.
-    ///
-    /// For example, using the same engine to compare Wasmtime's two garbage
-    /// collectors:
+    /// For example, comparing two different engines, each configured with its
+    /// own flags:
     ///
     /// ```text
     /// sightglass-cli benchmark \
-    ///     -e engines/wasmtime/libengine.dylib \
-    ///     --engine-flags "-Ccollector=copying" \
-    ///     --engine-flags "-Ccollector=drc" \
-    ///     -- benchmarks/splay/splay.wasm
+    ///     -e path/to/main.dylib --engine-flags "-Ccompiler=winch" \
+    ///     -e path/to/feature.dylib --engine-flags "-Ccompiler=cranelift" \
+    ///     -- benchmarks/pulldown-cmark/benchmark.wasm
     /// ```
     ///
-    /// For example, comparing two different engines with the same non-default flags:
+    /// Alternatively, the same engine may be repeated to compare it against
+    /// itself under different flags, for example comparing Wasmtime's DRC and
+    /// copying garbage collectors:
     ///
     /// ```text
     /// sightglass-cli benchmark \
-    ///     -e path/to/main.dylib \
-    ///     -e path/to/feature.dylib \
-    ///     --engine-flags "-Ccollector=drc" \
+    ///     -e engines/wasmtime/libengine.dylib --engine-flags "-Ccollector=copying" \
+    ///     -e engines/wasmtime/libengine.dylib --engine-flags "-Ccollector=drc" \
     ///     -- benchmarks/splay/splay.wasm
     /// ```
     #[arg(
@@ -281,6 +272,31 @@ pub struct BenchmarkCommand {
         allow_hyphen_values = true
     )]
     engine_flags: Vec<String>,
+
+    /// Configure every engine using these common engine flags.
+    ///
+    /// Unlike `--engine-flags`, which is paired with an individual engine,
+    /// these flags are applied to all of the engines (`-e`/`--engine`), which
+    /// is a convenient way to configure several engines identically.
+    ///
+    /// For example, to enable Wasmtime's DRC collector for all engines:
+    ///
+    /// ```text
+    /// sightglass-cli benchmark \
+    ///     -e path/to/main.dylib \
+    ///     -e path/to/feature.dylib \
+    ///     --engine-flags-common "-Ccollector=drc" \
+    ///     -- benchmarks/splay/splay.wasm
+    /// ```
+    ///
+    /// These may also be combined with per-engine `--engine-flags`, in which
+    /// case the common flags are applied to each engine before its own flags.
+    #[arg(
+        long = "engine-flags-common",
+        value_name = "ENGINE_FLAGS",
+        allow_hyphen_values = true
+    )]
+    engine_flags_common: Option<String>,
 
     /// How many processes should we use for each Wasm benchmark?
     ///
@@ -461,39 +477,50 @@ impl BenchmarkCommand {
     }
 
     /// Pair each engine with the flags it should be configured with.
-    fn engine_flag_pairs(&self) -> Result<Vec<(&str, Option<&str>)>> {
+    ///
+    /// Each engine is configured with the common `--engine-flags-common` flags
+    /// (if any) followed by its own positional `--engine-flags` (if any). The
+    /// per-engine `--engine-flags` must either be omitted entirely or given
+    /// exactly once per engine.
+    fn engine_flag_pairs(&self) -> Result<Vec<(&str, Option<String>)>> {
         let engines = &self.engines;
-        let flags = &self.engine_flags;
-        if engines.len() == 1 && flags.len() > 1 {
-            // Pair the single engine with each set of flags.
-            Ok(flags
-                .iter()
-                .map(|f| (engines[0].as_str(), Some(f.as_str())))
-                .collect())
-        } else if flags.len() == engines.len() {
-            // Pair each engine with the flags in the same position.
-            Ok(engines
-                .iter()
-                .zip(flags)
-                .map(|(e, f)| (e.as_str(), Some(f.as_str())))
-                .collect())
-        } else if flags.is_empty() {
-            // Pair each engine with empty (no) flags.
-            Ok(engines.iter().map(|e| (e.as_str(), None)).collect())
-        } else if flags.len() == 1 {
-            // Pair each engine with the single set of flags.
-            Ok(engines
-                .iter()
-                .map(|e| (e.as_str(), Some(flags[0].as_str())))
-                .collect())
-        } else {
-            anyhow::bail!(
-                "mismatched numbers of engines ({}) and engine flags ({}): pass either no \
-                 `--engine-flags`, exactly one (which is applied to every engine), one per \
-                 engine, or one engine with multiple flags",
-                engines.len(),
-                flags.len(),
-            );
+        let common = self.engine_flags_common.as_deref();
+        let per_engine = &self.engine_flags;
+
+        anyhow::ensure!(
+            per_engine.is_empty() || per_engine.len() == engines.len(),
+            "mismatched numbers of engines ({}) and `--engine-flags` ({}): pass either no \
+             `--engine-flags` or exactly one per engine (use `--engine-flags-common` to apply \
+             the same flags to every engine)",
+            engines.len(),
+            per_engine.len(),
+        );
+
+        Ok(engines
+            .iter()
+            .enumerate()
+            .map(|(i, engine)| {
+                let per_engine = per_engine.get(i).map(String::as_str);
+                (
+                    engine.as_str(),
+                    Self::combine_engine_flags(common, per_engine),
+                )
+            })
+            .collect())
+    }
+
+    /// Combine the common engine flags with a single engine's own flags.
+    ///
+    /// A present-but-empty per-engine flag string is preserved as a distinct
+    /// (empty) configuration, so that the same engine can be compared against
+    /// itself with and without flags.
+    fn combine_engine_flags(common: Option<&str>, per_engine: Option<&str>) -> Option<String> {
+        match (common, per_engine) {
+            (None, None) => None,
+            (Some(flags), None) | (None, Some(flags)) => Some(flags.to_string()),
+            (Some(common), Some(per_engine)) => {
+                Some(format!("{common} {per_engine}").trim().to_string())
+            }
         }
     }
 
@@ -511,10 +538,13 @@ impl BenchmarkCommand {
             .flat_map(|f| f.paths())
             .map(|p| p.display().to_string())
             .collect();
+
+        let engine_flag_pairs = self.engine_flag_pairs()?;
         let mut all_measurements = vec![];
 
-        for (i, (engine_name, engine_flags)) in self.engine_flag_pairs()?.into_iter().enumerate() {
-            let engine_path = check_engine_path(engine_name)?;
+        for (i, (engine_name, engine_flags)) in engine_flag_pairs.iter().enumerate() {
+            let engine_flags = engine_flags.as_deref();
+            let engine_path = check_engine_path(*engine_name)?;
             let engine_name = self
                 .names
                 .as_ref()
@@ -770,7 +800,6 @@ impl BenchmarkCommand {
             // child processes (potentially in a different working directory,
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
-            let flags = flags.map(|f| f.to_string());
 
             for wasm in wasm_files.iter().cloned() {
                 choices.push((engine.clone(), flags.clone(), wasm, self.processes()));
@@ -1408,89 +1437,135 @@ execution
 
     #[test]
     fn engine_flag_pairing() -> Result<()> {
-        // Parse a benchmark command with the given engine/flag arguments. The
-        // trailing `dummy.wasm` avoids touching the default suite file.
-        let command = |args: &[&str]| -> Result<BenchmarkCommand> {
+        // Parse a benchmark command with the given engine/flag arguments and
+        // return its (engine, flags) pairs as owned values. The trailing
+        // `dummy.wasm` avoids touching the default suite file.
+        let pairs = |args: &[&str]| -> Result<Vec<(String, Option<String>)>> {
             let mut full = vec!["benchmark"];
             full.extend_from_slice(args);
             full.push("dummy.wasm");
-            Ok(BenchmarkCommand::try_parse_from(full)?)
+            let command = BenchmarkCommand::try_parse_from(full)?;
+            Ok(command
+                .engine_flag_pairs()?
+                .into_iter()
+                .map(|(e, f)| (e.to_string(), f))
+                .collect())
         };
 
-        // Equal counts: paired by position.
-        let c = command(&[
-            "-e",
-            "a",
-            "-e",
-            "b",
-            "--engine-flags",
-            "x",
-            "--engine-flags",
-            "y",
-        ])?;
+        // Build the expected owned pairs from string literals.
+        let expect = |pairs: &[(&str, Option<&str>)]| -> Vec<(String, Option<String>)> {
+            pairs
+                .iter()
+                .map(|(e, f)| (e.to_string(), f.map(String::from)))
+                .collect()
+        };
+
+        // Equal counts: `--engine-flags` is paired with each engine by position.
         assert_eq!(
-            c.engine_flag_pairs()?,
-            vec![("a", Some("x")), ("b", Some("y"))]
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y"
+            ])?,
+            expect(&[("a", Some("x")), ("b", Some("y"))]),
         );
 
-        // No flags: every engine runs without any flags.
-        let c = command(&["-e", "a", "-e", "b"])?;
-        assert_eq!(c.engine_flag_pairs()?, vec![("a", None), ("b", None)]);
-
-        // A single set of flags: applied to every engine.
-        let c = command(&["-e", "a", "-e", "b", "--engine-flags", "x"])?;
+        // No flags at all: every engine runs without any flags.
         assert_eq!(
-            c.engine_flag_pairs()?,
-            vec![("a", Some("x")), ("b", Some("x"))]
+            pairs(&["-e", "a", "-e", "b"])?,
+            expect(&[("a", None), ("b", None)]),
         );
 
-        // A single engine with multiple sets of flags: paired with each.
-        let c = command(&[
-            "-e",
-            "a",
-            "--engine-flags",
-            "x",
-            "--engine-flags",
-            "y",
-            "--engine-flags",
-            "z",
-        ])?;
+        // A single engine with a single set of flags.
         assert_eq!(
-            c.engine_flag_pairs()?,
-            vec![("a", Some("x")), ("a", Some("y")), ("a", Some("z"))]
+            pairs(&["-e", "a", "--engine-flags", "x"])?,
+            expect(&[("a", Some("x"))]),
         );
 
-        // The same engine can be repeated, and an empty flags value is a
-        // distinct, valid configuration.
-        let c = command(&[
-            "-e",
-            "wasmtime",
-            "-e",
-            "wasmtime",
-            "--engine-flags",
-            "",
-            "--engine-flags",
-            "-W fuel=1",
-        ])?;
+        // `--engine-flags-common` is applied to every engine.
         assert_eq!(
-            c.engine_flag_pairs()?,
-            vec![("wasmtime", Some("")), ("wasmtime", Some("-W fuel=1"))]
+            pairs(&["-e", "a", "-e", "b", "--engine-flags-common", "c"])?,
+            expect(&[("a", Some("c")), ("b", Some("c"))]),
         );
 
-        // Mismatched counts (neither equal, nor one, nor zero) is an error.
-        let c = command(&[
-            "-e",
-            "a",
-            "-e",
-            "b",
-            "-e",
-            "c",
-            "--engine-flags",
-            "x",
-            "--engine-flags",
-            "y",
-        ])?;
-        assert!(c.engine_flag_pairs().is_err());
+        // Common and per-engine flags compose: the common flags come first,
+        // followed by each engine's own flags.
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags-common",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y",
+            ])?,
+            expect(&[("a", Some("c x")), ("b", Some("c y"))]),
+        );
+
+        // When an engine's own flags are empty, only the common flags remain
+        // (with no stray trailing whitespace).
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "--engine-flags-common",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "",
+            ])?,
+            expect(&[("a", Some("c x")), ("b", Some("c"))]),
+        );
+
+        // The same engine can be repeated to compare it against itself under
+        // different flags; an empty flags value is a distinct configuration.
+        assert_eq!(
+            pairs(&[
+                "-e",
+                "wasmtime",
+                "-e",
+                "wasmtime",
+                "--engine-flags",
+                "",
+                "--engine-flags",
+                "-W fuel=1",
+            ])?,
+            expect(&[("wasmtime", Some("")), ("wasmtime", Some("-W fuel=1"))]),
+        );
+
+        // A single set of per-engine flags is *not* silently applied to all
+        // engines; `--engine-flags-common` must be used for that instead.
+        assert!(pairs(&["-e", "a", "-e", "b", "--engine-flags", "x"]).is_err());
+
+        // Any other mismatch between the engine and per-engine flag counts is
+        // an error.
+        assert!(
+            pairs(&[
+                "-e",
+                "a",
+                "-e",
+                "b",
+                "-e",
+                "c",
+                "--engine-flags",
+                "x",
+                "--engine-flags",
+                "y",
+            ])
+            .is_err()
+        );
 
         Ok(())
     }
@@ -1660,6 +1735,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             benchmarks: vec![],
             engines: vec!["/tmp/engine.so".into()],
             engine_flags: vec![],
+            engine_flags_common: None,
             processes: None,
             names: None,
             iterations_per_process: None,
