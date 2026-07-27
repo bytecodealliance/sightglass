@@ -168,10 +168,7 @@ pub fn write(
             crate::write_in(
                 output_file,
                 &crate::stats_parenthetical_spec(),
-                &format!(
-                    "(confidence = {}%)",
-                    (1.0 - significance_level) * 100.0,
-                ),
+                &format!("(confidence = {}%)", (1.0 - significance_level) * 100.0,),
             )?;
             writeln!(output_file)?;
             writeln!(output_file)?;

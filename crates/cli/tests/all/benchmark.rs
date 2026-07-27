@@ -1,9 +1,22 @@
-use super::util::{benchmark, sightglass_cli, sightglass_cli_benchmark, test_engine};
+use super::util::{
+    benchmark, sightglass_cli, sightglass_cli_benchmark, test_engine, DATA_DIR_ENV_VAR,
+};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use sightglass_data::Measurement;
-use std::path::PathBuf;
+use sightglass_data::{Measurement, Phase};
+use std::path::{Path, PathBuf};
 use tempfile::TempDir;
+
+/// Read the measurements saved in the data file at `path`.
+fn read_data_file(path: &Path) -> Vec<Measurement<'static>> {
+    let contents = std::fs::read_to_string(path).unwrap();
+    eprintln!("=== {} ===\n{contents}\n===========", path.display());
+    let mut reader = csv::Reader::from_reader(contents.as_bytes());
+    reader
+        .deserialize::<Measurement<'static>>()
+        .map(|m| m.unwrap())
+        .collect()
+}
 
 #[test]
 fn benchmark_output_format_requires_raw() {
@@ -424,4 +437,166 @@ fn benchmark_measure_noop() {
         .assert()
         .success()
         .stdout(predicate::str::contains("nanoseconds"));
+}
+
+/// Without `--raw`, a copy of the raw results is saved to `sightglass-data.csv`
+/// so that they can be re-analyzed without re-running the benchmarks.
+#[test]
+fn benchmark_saves_data_file() -> anyhow::Result<()> {
+    let dir = TempDir::new()?;
+    let data = dir.path().join("sightglass-data.csv");
+    let old_data = dir.path().join("sightglass-data.old.csv");
+
+    sightglass_cli_benchmark()
+        .env(DATA_DIR_ENV_VAR, dir.path())
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("2")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("sightglass-data.csv"));
+
+    assert!(data.exists(), "the data file was not saved");
+    assert!(
+        !old_data.exists(),
+        "nothing should have been rotated on the first run"
+    );
+
+    let measurements = read_data_file(&data);
+    assert!(
+        !measurements.is_empty(),
+        "the data file has no measurements"
+    );
+    for phase in [Phase::Compilation, Phase::Instantiation, Phase::Execution] {
+        assert!(
+            measurements.iter().any(|m| m.phase == phase),
+            "expected {phase} measurements in the data file"
+        );
+    }
+    assert!(
+        measurements.iter().all(|m| m.wasm != "Sum Total"),
+        "the data file should hold the recorded data, not our synthetic totals"
+    );
+
+    // The whole point of saving the data: re-analyze it without re-benchmarking.
+    sightglass_cli()
+        .arg("summarize")
+        .arg("--input-format")
+        .arg("csv")
+        .arg("-f")
+        .arg(&data)
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("noop"));
+
+    Ok(())
+}
+
+/// The data file is also saved when the benchmark runs in multiple subprocesses.
+/// The subprocesses themselves are run with `--raw`, so only the parent saves it.
+#[test]
+fn benchmark_saves_data_file_from_subprocesses() -> anyhow::Result<()> {
+    let dir = TempDir::new()?;
+    let data = dir.path().join("sightglass-data.csv");
+
+    sightglass_cli_benchmark()
+        .env(DATA_DIR_ENV_VAR, dir.path())
+        .arg("--processes")
+        .arg("2")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success();
+
+    assert!(data.exists(), "the data file was not saved");
+    let measurements = read_data_file(&data);
+    assert!(
+        !measurements.is_empty(),
+        "the data file has no measurements"
+    );
+    assert!(
+        measurements
+            .iter()
+            .any(|m| m.process != measurements[0].process),
+        "expected measurements from more than one process: {measurements:?}"
+    );
+
+    Ok(())
+}
+
+/// A second run moves the first run's data file to `sightglass-data.old.csv`,
+/// overwriting any older file that was already there.
+#[test]
+fn benchmark_rotates_data_file() -> anyhow::Result<()> {
+    let dir = TempDir::new()?;
+    let data = dir.path().join("sightglass-data.csv");
+    let old_data = dir.path().join("sightglass-data.old.csv");
+
+    // Stale data from a hypothetical earlier run, which we expect to be
+    // overwritten once there is a real data file to rotate.
+    let stale = "stale data from two runs ago";
+    std::fs::write(&old_data, stale)?;
+
+    let run = || {
+        sightglass_cli_benchmark()
+            .env(DATA_DIR_ENV_VAR, dir.path())
+            .arg("--processes")
+            .arg("1")
+            .arg("--iterations-per-process")
+            .arg("1")
+            .arg("--")
+            .arg(benchmark("noop"))
+            .assert()
+            .success();
+    };
+
+    run();
+    let first = std::fs::read(&data)?;
+    assert_eq!(
+        std::fs::read_to_string(&old_data)?,
+        stale,
+        "the first run had no data file to rotate"
+    );
+
+    run();
+    assert_eq!(
+        std::fs::read(&old_data)?,
+        first,
+        "the first run's data should have been moved to the old data file"
+    );
+    assert!(
+        !read_data_file(&data).is_empty(),
+        "the second run's data file has no measurements"
+    );
+
+    Ok(())
+}
+
+/// In `--raw` mode the user is already getting the raw data themselves, so no
+/// data file is saved.
+#[test]
+fn benchmark_raw_does_not_save_data_file() -> anyhow::Result<()> {
+    let dir = TempDir::new()?;
+
+    sightglass_cli_benchmark()
+        .env(DATA_DIR_ENV_VAR, dir.path())
+        .arg("--raw")
+        .arg("--processes")
+        .arg("1")
+        .arg("--iterations-per-process")
+        .arg("1")
+        .arg("--")
+        .arg(benchmark("noop"))
+        .assert()
+        .success();
+
+    assert!(!dir.path().join("sightglass-data.csv").exists());
+    assert!(!dir.path().join("sightglass-data.old.csv").exists());
+
+    Ok(())
 }

@@ -1,12 +1,35 @@
 use assert_cmd::prelude::*;
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+pub const DATA_DIR_ENV_VAR: &str = "SIGHTGLASS_DATA_DIR";
 
 /// Get a `Command` for this crate's `sightglass-cli` executable.
 pub fn sightglass_cli() -> Command {
     drop(env_logger::try_init());
-    Command::cargo_bin("sightglass-cli").unwrap()
+    let mut cmd = Command::cargo_bin("sightglass-cli").unwrap();
+    cmd.env(DATA_DIR_ENV_VAR, data_dir());
+    cmd
 }
+
+/// Get a fresh directory for `sightglass-cli` to save its benchmark data file
+/// in.
+///
+/// Our working directory is the crate root, so without this every non-`--raw`
+/// benchmark run in the test suite would leave a `sightglass-data.csv` in the
+/// source tree, and tests running in parallel would race over it. Tests that
+/// assert on the data file override this with a directory of their own.
+fn data_dir() -> PathBuf {
+    static NEXT: AtomicUsize = AtomicUsize::new(0);
+    let n = NEXT.fetch_add(1, Ordering::Relaxed);
+    let dir = std::env::temp_dir()
+        .join("sightglass-test-data")
+        .join(format!("{}-{n}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    dir
+}
+
 /// Get the path to the engine we are testing with.
 pub fn test_engine() -> PathBuf {
     if let Ok(engine) = std::env::var("SIGHTGLASS_TEST_ENGINE") {

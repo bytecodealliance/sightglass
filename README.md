@@ -222,6 +222,26 @@ with a fixed cache model and forces single-threaded Wasmtime compilation with
 Valgrind version when comparing data recorded on different machines for best
 results.
 
+### Re-analyzing a Previous Run's Results
+
+Benchmark runs are expensive, so every run saves a copy of its raw results to
+`sightglass-data.csv` in the current directory in addition to printing the
+human-readable analysis. If there was already a `sightglass-data.csv`, it is
+first moved to `sightglass-data.old.csv`, overwriting any file that was already
+there.
+
+This means you can analyze a run's results a different way without having to
+re-run the benchmarks:
+
+```
+$ cargo run -- summarize --input-format csv -f sightglass-data.csv
+$ cargo run -- effect-size --input-format csv -f sightglass-data.csv \
+    --significance-level 0.05
+```
+
+The data file is not saved in `--raw` mode, where you are already choosing what
+to do with the raw results yourself.
+
 ### Getting Raw JSON or CSV Results
 
 If you don't want the results to be summarized and displayed in a human-readable
