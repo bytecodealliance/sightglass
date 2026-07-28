@@ -1,12 +1,12 @@
 use crate::suite::BenchmarkOrSuite;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{anyhow, Context, Result};
 use clap::Parser;
-use rand::{Rng, SeedableRng, rngs::SmallRng};
+use rand::{rngs::SmallRng, Rng, SeedableRng};
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
-use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::measure::multi::MultiMeasure;
+use sightglass_recorder::measure::Measurements;
 use sightglass_recorder::{bench_api::BenchApi, benchmark, measure::MeasureType};
 use std::{
     fs,
@@ -18,6 +18,10 @@ use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
 const DEFAULT_PROCESSES: usize = 10;
 const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
+
+const DATA_FILE: &str = "sightglass-data.csv";
+const OLD_DATA_FILE: &str = "sightglass-data.old.csv";
+const DATA_DIR_ENV_VAR: &str = "SIGHTGLASS_DATA_DIR";
 
 #[cfg(all(target_os = "linux", feature = "callgrind"))]
 mod callgrind {
@@ -690,8 +694,13 @@ impl BenchmarkCommand {
             all_measurements.retain(|m| m.phase == phase);
         }
 
+        // Save a copy of the raw data before analyzing it, so that an expensive
+        // benchmark run is never lost to an analysis error. We hold on to any
+        // error until after the results have been written, so that a failure to
+        // save doesn't also cost the user the report they just waited for.
+        let saved = self.save_data_file(&all_measurements);
         self.write_results(&all_measurements, &mut output_file)?;
-        Ok(())
+        saved
     }
 
     /// Assert that our actual `stdout` and `stderr` match our expectations.
@@ -878,8 +887,11 @@ impl BenchmarkCommand {
         let secs = elapsed.as_secs() % 60;
         eprintln!("\n\nFinished benchmarking in {hours:02}h:{mins:02}m:{secs:02}s");
 
+        // See the comment on the equivalent lines in
+        // `execute_in_current_process`.
+        let saved = self.save_data_file(&measurements);
         self.write_results(&measurements, &mut output_file)?;
-        Ok(())
+        saved
     }
 
     /// Open the output stream for results, honoring `--output-file` and
@@ -901,6 +913,37 @@ impl BenchmarkCommand {
                 Ok(Box::new(StandardStream::stdout(color)))
             }
         }
+    }
+
+    /// Save a copy of the raw `measurements` to `sightglass-data.csv`, first
+    /// moving any existing data file to `sightglass-data.old.csv`.
+    ///
+    /// This is how we can both print human-readable analysis by default *and*
+    /// preserve the raw data, so that a slightly different analysis doesn't
+    /// require re-running the benchmarks. It is a no-op in `--raw` mode, where
+    /// the user is already deciding what to do with the raw data themselves.
+    fn save_data_file(&self, measurements: &[Measurement<'_>]) -> Result<()> {
+        if self.raw {
+            return Ok(());
+        }
+
+        let dir = std::env::var_os(DATA_DIR_ENV_VAR)
+            .map(PathBuf::from)
+            .unwrap_or_default();
+        let data = dir.join(DATA_FILE);
+        let old_data = dir.join(OLD_DATA_FILE);
+
+        if save_measurements(measurements, &data, &old_data)? {
+            eprintln!(
+                "\nSaved benchmark data to `{}`; the previous data was moved to `{}`.",
+                data.display(),
+                old_data.display(),
+            );
+        } else {
+            eprintln!("\nSaved benchmark data to `{}`.", data.display());
+        }
+
+        Ok(())
     }
 
     fn write_results(
@@ -1083,6 +1126,43 @@ fn this_arch() -> &'static str {
     }
 }
 
+/// Write `measurements` to `data` as CSV, first moving any existing `data` file
+/// to `old_data`.
+///
+/// Returns whether an existing data file was rotated to `old_data`.
+fn save_measurements(
+    measurements: &[Measurement<'_>],
+    data: &Path,
+    old_data: &Path,
+) -> Result<bool> {
+    // Note that `rename` replaces `old_data` when it already exists, which is
+    // what we want. We also tolerate `data` not existing (this is the first run
+    // in this directory) rather than checking for it first, which would race
+    // with any concurrent runs in the same directory.
+    let rotated = match fs::rename(data, old_data) {
+        Ok(()) => true,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => false,
+        Err(e) => {
+            return Err(e).with_context(|| {
+                format!(
+                    "failed to move `{}` to `{}`",
+                    data.display(),
+                    old_data.display()
+                )
+            });
+        }
+    };
+
+    let file =
+        fs::File::create(data).with_context(|| format!("failed to create `{}`", data.display()))?;
+
+    Format::csv(true)
+        .write(measurements, file)
+        .with_context(|| format!("failed to write `{}`", data.display()))?;
+
+    Ok(rotated)
+}
+
 fn display_summaries(
     measurements: &[Measurement<'_>],
     output_file: &mut dyn WriteColor,
@@ -1248,6 +1328,99 @@ mod tests {
         let mut by_iteration: Vec<_> = totals.iter().map(|t| (t.iteration, t.count)).collect();
         by_iteration.sort();
         assert_eq!(by_iteration, vec![(0, 110), (1, 220)]);
+    }
+
+    /// Build a measurement whose `count` identifies it.
+    fn measurement(count: u64) -> Measurement<'static> {
+        Measurement {
+            arch: "x86_64".into(),
+            engine: sightglass_data::Engine {
+                name: "engine.so".into(),
+                flags: Some("-Ccompiler=winch".into()),
+            },
+            wasm: "benchmarks/noop/benchmark.wasm".into(),
+            process: 0,
+            iteration: 0,
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            count,
+        }
+    }
+
+    /// Read back the measurements saved in `path`, projected down to the fields
+    /// we assert on (`Measurement` itself is not `PartialEq`).
+    fn saved_counts(path: &Path) -> Result<Vec<(String, Phase, String, u64)>> {
+        let measurements: Vec<Measurement<'_>> = Format::csv(true).read(fs::File::open(path)?)?;
+        Ok(measurements
+            .into_iter()
+            .map(|m| (m.wasm.into_owned(), m.phase, m.event.into_owned(), m.count))
+            .collect())
+    }
+
+    #[test]
+    fn save_measurements_without_an_existing_data_file() -> Result<()> {
+        let dir = tempfile::TempDir::new()?;
+        let data = dir.path().join(DATA_FILE);
+        let old_data = dir.path().join(OLD_DATA_FILE);
+
+        let measurements = vec![measurement(1), measurement(2)];
+        assert!(
+            !save_measurements(&measurements, &data, &old_data)?,
+            "there was nothing to rotate"
+        );
+
+        assert!(!old_data.exists(), "no old data file should be created");
+        assert_eq!(
+            saved_counts(&data)?,
+            [
+                (
+                    "benchmarks/noop/benchmark.wasm".to_string(),
+                    Phase::Execution,
+                    "cycles".to_string(),
+                    1
+                ),
+                (
+                    "benchmarks/noop/benchmark.wasm".to_string(),
+                    Phase::Execution,
+                    "cycles".to_string(),
+                    2
+                ),
+            ]
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn save_measurements_rotates_an_existing_data_file() -> Result<()> {
+        let dir = tempfile::TempDir::new()?;
+        let data = dir.path().join(DATA_FILE);
+        let old_data = dir.path().join(OLD_DATA_FILE);
+
+        // An existing old data file is overwritten by the rotation, rather than
+        // making us refuse to save.
+        fs::write(&old_data, "stale data from two runs ago")?;
+
+        assert!(!save_measurements(&[measurement(1)], &data, &old_data)?);
+        let first = fs::read(&data)?;
+
+        assert!(
+            save_measurements(&[measurement(2)], &data, &old_data)?,
+            "the first run's data should have been rotated"
+        );
+
+        assert_eq!(
+            fs::read(&old_data)?,
+            first,
+            "the old data file should hold the first run's data verbatim"
+        );
+        assert_eq!(
+            saved_counts(&data)?.iter().map(|m| m.3).collect::<Vec<_>>(),
+            [2],
+            "the data file should hold the second run's data"
+        );
+
+        Ok(())
     }
 
     #[test]
@@ -1551,21 +1724,19 @@ execution
 
         // Any other mismatch between the engine and per-engine flag counts is
         // an error.
-        assert!(
-            pairs(&[
-                "-e",
-                "a",
-                "-e",
-                "b",
-                "-e",
-                "c",
-                "--engine-flags",
-                "x",
-                "--engine-flags",
-                "y",
-            ])
-            .is_err()
-        );
+        assert!(pairs(&[
+            "-e",
+            "a",
+            "-e",
+            "b",
+            "-e",
+            "c",
+            "--engine-flags",
+            "x",
+            "--engine-flags",
+            "y",
+        ])
+        .is_err());
 
         Ok(())
     }

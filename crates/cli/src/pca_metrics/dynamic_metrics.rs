@@ -4,9 +4,9 @@
 
 mod component;
 
-use super::Counts;
 use super::category::{Category, NUM_CATEGORIES};
-use anyhow::{Context, Result, bail};
+use super::Counts;
+use anyhow::{bail, Context, Result};
 #[cfg(any(test, all(target_os = "linux", feature = "callgrind")))]
 use sightglass_data::{Measurement, Phase};
 use std::path::Path;

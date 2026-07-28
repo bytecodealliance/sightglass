@@ -9,3 +9,7 @@ benchmarks/**/*.o
 # Log files produced by running sightglass benchmarks.
 **/stdout-*-*.log
 **/stderr-*-*.log
+
+# Benchmark results saved by `sightglass-cli benchmark`.
+sightglass-data.csv
+sightglass-data.old.csv

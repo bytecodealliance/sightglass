@@ -8,7 +8,7 @@ use sightglass_data::Phase;
 /// counters.
 #[cfg(target_os = "linux")]
 mod linux {
-    use perf_event::{Builder, events::Hardware};
+    use perf_event::{events::Hardware, Builder};
 
     pub use perf_event::Counter as State;
 
