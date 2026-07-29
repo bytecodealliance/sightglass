@@ -44,6 +44,8 @@
 #   * `dendogram.svg`: Dendrogram from the hierarchical clustering of the
 #     benchmarks' principal-component scores, with a dotted line at the
 #     Pareto-optimal cluster cut.
+#   * `clusters.csv`: one `wasm,cluster` row per (post-filtering) benchmark,
+#     giving the cluster it lands in at the Pareto-optimal cut.
 
 library("FactoMineR")
 library("factoextra")
@@ -389,6 +391,20 @@ write_dendrogram <- function(clustering, best_k) {
     ggsave("dendogram.svg", plot = plot, width = 12, height = 24, limitsize = FALSE)
 }
 
+# Write `clusters.csv`: one row per (post-filtering) benchmark giving its full
+# wasm path and the cluster it falls in at the Pareto-optimal cut.
+write_clusters_csv <- function(clustering, paths, best_k) {
+    assignment <- cutree(clustering, k = best_k)
+    out <- data.frame(
+        wasm = paths,
+        cluster = as.integer(assignment) - 1L,
+        stringsAsFactors = FALSE
+    )
+    # Group the rows by cluster so the file reads nicely.
+    out <- out[order(out$cluster, out$wasm), , drop = FALSE]
+    write.csv(out, "clusters.csv", row.names = FALSE, quote = FALSE)
+}
+
 main <- function() {
     args <- commandArgs(trailingOnly = TRUE)
     if (length(args) < 1) {
@@ -432,6 +448,7 @@ main <- function() {
     write_biplot(pca, c(5, 6), "biplot-5-6.svg")
     write_pareto_plot(analysis)
     write_dendrogram(clustering, analysis$best_k)
+    write_clusters_csv(clustering, paths, analysis$best_k)
 
     # With the graphs written, report the suggested subset per cluster.
     clusters <- cluster_members(clustering, cost, paths, analysis$best_k)

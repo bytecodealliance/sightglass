@@ -1,4 +1,6 @@
 *.svg
+*.csv
+*.json
 
 **/*.rs.bk
 **/*~
