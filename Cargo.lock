@@ -2480,17 +2480,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "precision"
-version = "0.1.18"
-source = "git+https://github.com/posborne/rust-precision.git?branch=target-stable-asm#f9d7fb3b7d85216f5a9e0b39812cb0a16d60a9cf"
-dependencies = [
- "cc",
- "libc",
- "wasix",
- "wasm-bindgen",
-]
-
-[[package]]
 name = "precomputed-hash"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3224,7 +3213,6 @@ dependencies = [
  "libloading 0.9.0",
  "log",
  "perf-event",
- "precision",
  "pretty_env_logger",
  "serde",
  "sightglass-build",
@@ -3857,15 +3845,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0562428422c63773dad2c345a1882263bbf4d65cf3f42e90921f787ef5ad58e7"
 dependencies = [
  "wit-bindgen",
-]
-
-[[package]]
-name = "wasix"
-version = "0.12.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1fbb4ef9bbca0c1170e0b00dd28abc9e3b68669821600cad1caaed606583c6d"
-dependencies = [
- "wasi 0.11.1+wasi-snapshot-preview1",
 ]
 
 [[package]]
