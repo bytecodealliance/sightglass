@@ -3,7 +3,7 @@
 use super::util::{benchmark, sightglass_cli, test_engine};
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use sightglass_fingerprint::{Benchmark, Machine};
+use sightglass_fingerprint::{Benchmark, Engine, Machine};
 
 #[test]
 fn fingerprint_machine() {
@@ -55,27 +55,20 @@ fn fingerprint_engine() {
         .arg("--output-format")
         .arg("json")
         .arg(&engine_path)
-        .assert();
+        .assert()
+        .success();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
     eprintln!("=== stdout ===\n{stdout}\n===========");
-    let mut reader = csv::Reader::from_reader(stdout.as_bytes());
-    for measurement in reader.deserialize::<Benchmark>() {
-        drop(measurement.unwrap());
-    }
-
-    // On Windows, the paths will have extra escaping when printed to output.
-    let escaped_engine_path = engine_path.to_string_lossy().replace("\\", "\\\\");
-    use predicate::str::*;
-    assert
-        .stdout(
-            starts_with("{")
-                .and(contains(r#""id":"wasmtime-"#))
-                .and(contains(r#""name":"wasmtime""#))
-                .and(contains(r#""datetime":"20"#))
-                .and(contains(format!(r#""path":"{escaped_engine_path}""#)))
-                .and(contains(r#""buildinfo":"NAME=wasmtime"#))
-                .and(ends_with("}")),
-        )
-        .success();
+    let fingerprint: Engine = serde_json::from_str(stdout).unwrap();
+    assert!(fingerprint.id.starts_with("wasmtime-"));
+    assert_eq!(fingerprint.name.as_deref(), Some("wasmtime"));
+    assert_eq!(
+        fingerprint.path,
+        engine_path.canonicalize().unwrap().to_string_lossy()
+    );
+    assert!(fingerprint
+        .buildinfo
+        .as_deref()
+        .is_some_and(|buildinfo| buildinfo.starts_with("NAME=wasmtime")));
 }
