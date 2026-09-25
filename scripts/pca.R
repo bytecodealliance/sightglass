@@ -11,7 +11,11 @@
 # Usage:
 #
 #     $ cargo run -- pca-metrics -o ./pca-metrics.csv -- benchmarks...
-#     $ ./scripts/pca.R ./pca-metrics.csv
+#     $ ./scripts/pca.R ./pca-metrics.csv [native-instruction-budget]
+#
+# The native-instruction budget defaults to 900,000,000,000 instructions,
+# approximately five minutes at an assumed throughput of three native
+# instructions per nanosecond.
 #
 # The methodology is based on "A Workload Characterization of the SPEC CPU2017
 # Benchmark Suite" by Limaye and Adegbija:
@@ -24,12 +28,10 @@
 # Euclidean distance between their principal-component scores, as in the paper.
 #
 # Finally, we recommend a subset of the suite. Each cluster is represented by
-# the member whose dynamic wasm instruction count is closest to
-# `TARGET_INST_COUNT`, so the subset runs benchmarks of a representative,
-# substantial size rather than each cluster's briefest (and noisiest) member.
-# Sweeping the number of clusters traces a Pareto trade-off between clustering
-# error (SSE) and the cost of running the subset (its total dynamic
-# instructions); the knee of that curve is the Pareto-optimal cluster size.
+# its member with the lowest combined compilation and execution native
+# instruction cost. Sweeping the number of clusters finds the largest
+# representative subset whose compilation plus execution native instructions
+# fit the supplied budget.
 #
 # Outputs (written to the current working directory):
 #
@@ -39,11 +41,11 @@
 #   * `biplot-1-2.svg`: Biplot of every benchmark on principal components 1 & 2.
 #   * `biplot-3-4.svg`: Biplot of every benchmark on principal components 3 & 4.
 #   * `biplot-5-6.svg`: Biplot of every benchmark on principal components 5 & 6.
-#   * `pareto.svg`: SSE vs subset execution cost as the cluster count varies,
-#     with the Pareto-optimal cluster size marked.
+#   * `budget.svg`: native instruction totals for each cluster count, with the
+#     largest budget-feasible count marked.
 #   * `dendogram.svg`: Dendrogram from the hierarchical clustering of the
 #     benchmarks' principal-component scores, with a dotted line at the
-#     Pareto-optimal cluster cut.
+#     budget-selected cluster cut.
 
 library("FactoMineR")
 library("factoextra")
@@ -66,15 +68,26 @@ N_BIPLOT_VARS <- 12
 # little information and can be dropped without significant loss.
 CLUSTER_VAR_THRESHOLD <- 0.9
 
-# The metric holding each benchmark's dynamic instruction count. This is the
-# execution-cost axis of the Pareto subsetting analysis, not a workload
-# characteristic, so it is excluded from the PCA itself.
+# The metric holding each benchmark's dynamic Wasm instruction count. It is
+# used for filtering, not as a PCA feature or native-budget cost.
 COST_COLUMN <- "dynamic_total_inst_count"
+COMPILATION_NATIVE_INSTRUCTIONS_COLUMN <- "compilation_native_instructions"
+EXECUTION_NATIVE_INSTRUCTIONS_COLUMN <- "execution_native_instructions"
+NATIVE_INSTRUCTION_COLUMNS <- c(
+    COMPILATION_NATIVE_INSTRUCTIONS_COLUMN,
+    EXECUTION_NATIVE_INSTRUCTIONS_COLUMN
+)
+DEFAULT_NATIVE_INSTRUCTION_BUDGET <- (
+    5      # est. insts per ns
+    * 1000 # est. insts per us
+    * 1000 # est. insts per ms
+    * 1000 # est. insts per second
+    * 60   # est. insts per min
+    * 10   # est. insts per 10-minute, 30-iteration run
+    / 30   # est. insts per iteration
+)
 
-# Each cluster is represented by the benchmark whose dynamic instruction count
-# is closest to this target, rather than by its cheapest member. Choosing a
-# representative near this size keeps the subset's benchmarks long enough to be
-# meaningful while steering away from each cluster's most expensive members.
+# This target sets the desired workload size and the filtering floor below.
 TARGET_INST_COUNT <- 100000000
 
 # Benchmarks executing fewer than this many dynamic instructions run too briefly
@@ -111,8 +124,13 @@ benchmark_labels <- function(names) {
 # because executing too few instructions makes them noisy.
 read_data <- function(file_path) {
     df <- read.csv(file_path)
-    if (!(COST_COLUMN %in% names(df))) {
-        stop(sprintf("expected a '%s' column for the SSE/cost trade-off", COST_COLUMN))
+    required <- c(COST_COLUMN, NATIVE_INSTRUCTION_COLUMNS)
+    missing <- setdiff(required, names(df))
+    if (length(missing) > 0) {
+        stop(sprintf(
+            "expected required metric columns: %s",
+            paste(sprintf("'%s'", missing), collapse = ", ")
+        ))
     }
 
     # Label each row (individual) by a short version of its benchmark name; the
@@ -134,12 +152,14 @@ read_data <- function(file_path) {
 
 # Get the characterization metrics fed to PCA.
 #
-# This is every numeric column except the execution-cost column and any constant
-# column (a constant metric carries no information for PCA and would make
-# per-variable scaling divide by zero).
+# This is every numeric column except the filtering/representative-size metric,
+# raw native instruction count columns, and any constant column (a constant
+# metric carries no information for PCA and would make per-variable scaling
+# divide by zero).
 pca_features <- function(data) {
     numeric_cols <- names(data)[vapply(data, is.numeric, logical(1))]
-    features <- data[, setdiff(numeric_cols, COST_COLUMN), drop = FALSE]
+    excluded <- c(COST_COLUMN, NATIVE_INSTRUCTION_COLUMNS)
+    features <- data[, setdiff(numeric_cols, excluded), drop = FALSE]
     informative <- vapply(features, function(col) {
         v <- var(col)
         !is.na(v) && v > 0
@@ -244,109 +264,124 @@ within_cluster_sse <- function(scores, assignment) {
     }, numeric(1)))
 }
 
-# Index, within a vector of dynamic instruction counts, of a cluster's
-# representative: the member whose count is closest to `TARGET_INST_COUNT`.
-representative_index <- function(cost) {
-    which.min(abs(cost - TARGET_INST_COUNT))
+# Index, within a cluster's native instruction counts, of the representative:
+# the member with the minimum combined compilation and execution cost.
+representative_index <- function(compilation, execution) {
+    which.min(compilation + execution)
 }
 
-# Cost of representing every cluster by its representative member.
-#
-# Each cluster's representative -- the benchmark whose dynamic instruction count
-# is closest to `TARGET_INST_COUNT` -- stands in for the whole cluster, so this
-# total is the sum of the representatives' instruction counts.
-subset_cost <- function(cost, assignment) {
+# Return the original row indices of a cluster assignment's representatives.
+representative_indices <- function(compilation, execution, assignment) {
     clusters <- split(seq_along(assignment), assignment)
-    sum(vapply(clusters, function(idx) {
-        cluster_cost <- cost[idx]
-        cluster_cost[representative_index(cluster_cost)]
-    }, numeric(1)))
+    vapply(clusters, function(idx) {
+        idx[representative_index(compilation[idx], execution[idx])]
+    }, integer(1))
 }
 
-# Group benchmarks by cluster at size k.
+# Sum the compilation, execution, and combined native costs of representatives.
+representative_native_costs <- function(compilation, execution, assignment) {
+    indices <- representative_indices(compilation, execution, assignment)
+    compilation_total <- sum(compilation[indices])
+    execution_total <- sum(execution[indices])
+    list(
+        indices = indices,
+        compilation = compilation_total,
+        execution = execution_total,
+        combined = compilation_total + execution_total
+    )
+}
+
+# Group benchmarks by cluster for the suggested-subset report.
 #
-# Returns a list with one data frame per cluster: member full paths and dynamic
-# instruction counts, sorted ascending by count for a readable cost breakdown.
-cluster_members <- function(clustering, cost, paths, k) {
-    assignment <- cutree(clustering, k = k)
+# Each cluster's complete member table is sorted by combined native instructions
+# so the selected minimum-cost representative appears first.
+cluster_members <- function(assignment, cost, compilation, execution, paths) {
     lapply(split(seq_along(assignment), assignment), function(idx) {
         members <- data.frame(
             benchmark = paths[idx],
             dynamic_insts = cost[idx],
+            compilation_native_insts = compilation[idx],
+            execution_native_insts = execution[idx],
             stringsAsFactors = FALSE
         )
-        members[order(members$dynamic_insts), , drop = FALSE]
+        members$combined_native_insts <- (
+            members$compilation_native_insts + members$execution_native_insts
+        )
+        members[order(members$combined_native_insts, members$dynamic_insts), , drop = FALSE]
     })
 }
 
-# Get the knee of a two-objective trade-off curve.
-#
-# This is the point whose perpendicular distance from the chord joining the
-# curve's endpoints is greatest.
-#
-# Both axes are normalized to [0, 1] first so the distance does not depend on
-# their units.
-knee_index <- function(x, y) {
-    nx <- (x - min(x)) / (max(x) - min(x))
-    ny <- (y - min(y)) / (max(y) - min(y))
-    last <- length(nx)
-    dx <- nx[last] - nx[1]
-    dy <- ny[last] - ny[1]
-    distance <- abs(dy * nx - dx * ny + nx[last] * ny[1] - ny[last] * nx[1]) /
-        sqrt(dx^2 + dy^2)
-    which.max(distance)
+# Select the greatest cluster count whose representative total fits the budget.
+select_budget_cluster_count <- function(clusters, combined_cost, budget) {
+    one_cluster_cost <- combined_cost[clusters == 1]
+    if (length(one_cluster_cost) != 1 || one_cluster_cost > budget) {
+        stop(sprintf(
+            "native instruction budget (%s) is too small: no one-cluster subset fits",
+            format(budget, big.mark = ",", scientific = FALSE)
+        ))
+    }
+    feasible <- combined_cost <= budget
+    max(clusters[feasible])
 }
 
-# Sweep every possible cluster count, recording the clustering error (SSE) and
-# the subset's execution cost at each, and pick the Pareto-optimal count (the
-# knee of SSE vs cost).
-pareto_analysis <- function(scores, clustering, cost) {
+# Sweep every possible cluster count and retain the largest budget-feasible
+# representative subset. SSE is retained only as a clustering diagnostic.
+budget_analysis <- function(scores, clustering, compilation, execution, budget) {
     ks <- seq_len(nrow(scores))
     assignments <- lapply(ks, function(k) cutree(clustering, k = k))
     sse <- vapply(assignments, function(a) within_cluster_sse(scores, a), numeric(1))
-    subset_insts <- vapply(assignments, function(a) subset_cost(cost, a), numeric(1))
+    representative_costs <- lapply(
+        assignments,
+        function(a) representative_native_costs(compilation, execution, a)
+    )
+    compilation_totals <- vapply(representative_costs, `[[`, numeric(1), "compilation")
+    execution_totals <- vapply(representative_costs, `[[`, numeric(1), "execution")
+    combined_totals <- vapply(representative_costs, `[[`, numeric(1), "combined")
+    best_k <- select_budget_cluster_count(ks, combined_totals, budget)
     list(
         clusters = ks,
         sse = sse,
-        cost = subset_insts,
-        best_k = ks[knee_index(subset_insts, sse)]
+        compilation = compilation_totals,
+        execution = execution_totals,
+        combined = combined_totals,
+        representative_costs = representative_costs,
+        best_k = best_k,
+        budget = budget
     )
 }
 
-# Write a plot of the Pareto curve.
-#
-# This plots clustering error (SSE) against the subset's execution cost, one
-# point per cluster count, with the Pareto-optimal count highlighted.
-write_pareto_plot <- function(analysis) {
+# Write native instruction totals at each cluster count.
+write_budget_plot <- function(analysis) {
     best <- analysis$best_k
     data <- data.frame(
         clusters = analysis$clusters,
-        sse = analysis$sse,
-        cost = analysis$cost
+        compilation = analysis$compilation,
+        execution = analysis$execution,
+        combined = analysis$combined
     )
-    optimal <- data[data$clusters == best, ]
+    selected <- data[data$clusters == best, ]
     cat(sprintf(
-        paste0("Pareto-optimal cluster size: %d clusters; the subset runs ",
-               "%.1f%% of the suite's dynamic instructions.\n"),
-        best, 100 * optimal$cost / max(data$cost)
+        "Budget-selected cluster size: %d clusters within %s native instructions.\n",
+        best, format(analysis$budget, big.mark = ",", scientific = FALSE)
     ))
 
-    plot <- ggplot(data, aes(x = cost / 1e9, y = sse)) +
+    plot <- ggplot(data, aes(x = clusters, y = combined / 1e9)) +
         geom_line(color = "steelblue") +
         geom_point(color = "steelblue", size = 0.9) +
-        geom_point(data = optimal, color = "red", size = 2.5) +
+        geom_hline(yintercept = analysis$budget / 1e9, linetype = "dashed", color = "gray40") +
+        geom_point(data = selected, color = "red", size = 2.5) +
         annotate(
-            "text", x = optimal$cost / 1e9, y = optimal$sse,
-            label = sprintf("  Pareto-optimal: %d clusters", best),
+            "text", x = selected$clusters, y = selected$combined / 1e9,
+            label = sprintf("  Selected: %d clusters", best),
             hjust = 0, color = "red"
         ) +
         labs(
-            title = "Pareto-Optimal Cluster Size (clustering error vs execution cost)",
-            x = "Total dynamic wasm instructions executed by the subset (billions)",
-            y = "Within-cluster sum of squared errors (SSE)"
+            title = "Native Instruction Budget by Cluster Count",
+            x = "Cluster count",
+            y = "Representative compilation + execution native instructions (billions)"
         ) +
         theme_minimal()
-    ggsave("pareto.svg", plot = plot, width = 12, height = 6)
+    ggsave("budget.svg", plot = plot, width = 12, height = 6)
 }
 
 # The dendrogram height at which cutting the tree yields exactly `k` clusters:
@@ -360,7 +395,7 @@ cut_height_for_k <- function(clustering, k) {
 }
 
 # Write a dendrogram of the hierarchical clustering, with a dotted line marking
-# the Pareto-optimal cluster cut.
+# the budget-selected cluster cut.
 write_dendrogram <- function(clustering, best_k) {
     cut_height <- cut_height_for_k(clustering, best_k)
 
@@ -389,16 +424,36 @@ write_dendrogram <- function(clustering, best_k) {
     ggsave("dendogram.svg", plot = plot, width = 12, height = 24, limitsize = FALSE)
 }
 
-main <- function() {
-    args <- commandArgs(trailingOnly = TRUE)
-    if (length(args) < 1) {
-        stop("usage: ./scripts/pca.R <metrics.csv>")
+parse_args <- function(args) {
+    usage <- paste0(
+        "usage: ./scripts/pca.R <metrics.csv> [native-instruction-budget]\n",
+        "native-instruction-budget must be a single finite, positive whole number"
+    )
+    if (length(args) < 1 || length(args) > 2) {
+        stop(usage)
     }
+    budget <- DEFAULT_NATIVE_INSTRUCTION_BUDGET
+    if (length(args) == 2) {
+        value <- args[[2]]
+        if (!grepl("^[0-9]+$", value)) {
+            stop(usage)
+        }
+        budget <- suppressWarnings(as.numeric(value))
+        if (!is.finite(budget) || budget <= 0 || budget != floor(budget)) {
+            stop(usage)
+        }
+    }
+    list(metrics_path = args[[1]], budget = budget)
+}
 
-    data <- read_data(args[1])
-    # The execution-cost vector and full benchmark paths, aligned with the data's
-    # row order.
+main <- function() {
+    args <- parse_args(commandArgs(trailingOnly = TRUE))
+    data <- read_data(args$metrics_path)
+    # The representative-size metric, native instruction counts, and full
+    # benchmark paths, aligned with the data's row order.
     cost <- data[[COST_COLUMN]]
+    compilation <- data[[COMPILATION_NATIVE_INSTRUCTIONS_COLUMN]]
+    execution <- data[[EXECUTION_NATIVE_INSTRUCTIONS_COLUMN]]
     paths <- data$benchmark
 
     # Standardize each metric and run PCA on the correlation matrix. `retx`
@@ -422,49 +477,78 @@ main <- function() {
     scores <- pca$x[, seq_len(n_keep), drop = FALSE]
     clustering <- hclust(dist(scores, method = "euclidean"), method = "ward.D2")
 
-    # Find the Pareto-optimal cluster size; the dendrogram marks the same cut.
-    analysis <- pareto_analysis(scores, clustering, cost)
+    # Find the largest subset that fits the budget; the dendrogram marks the
+    # same cut.
+    analysis <- budget_analysis(
+        scores, clustering, compilation, execution, args$budget
+    )
 
     write_scree_plot(pca)
     write_cumulative_variance_plot(propve)
     write_biplot(pca, c(1, 2), "biplot-1-2.svg")
     write_biplot(pca, c(3, 4), "biplot-3-4.svg")
     write_biplot(pca, c(5, 6), "biplot-5-6.svg")
-    write_pareto_plot(analysis)
+    write_budget_plot(analysis)
     write_dendrogram(clustering, analysis$best_k)
 
-    # With the graphs written, report the suggested subset per cluster.
-    clusters <- cluster_members(clustering, cost, paths, analysis$best_k)
+    assignment <- cutree(clustering, k = analysis$best_k)
+    selected <- representative_native_costs(compilation, execution, assignment)
+    clusters <- cluster_members(assignment, cost, compilation, execution, paths)
+    remaining <- args$budget - selected$combined
     cat(sprintf(
-        paste0("\nSuggested subset: the benchmark closest to %s dynamic ",
-               "instructions in each of the %d clusters:\n\n"),
-        format(TARGET_INST_COUNT, big.mark = ",", scientific = FALSE),
+        paste0("\nSuggested subset: the benchmark with the minimum combined ",
+               "native instruction cost in each of the %d clusters:\n\n"),
         analysis$best_k
     ))
+    cat(sprintf(
+        paste0("Native instruction budget: %s\n",
+               "Selected compilation native instructions: %s\n",
+               "Selected execution native instructions: %s\n",
+               "Selected combined native instructions: %s\n",
+               "Remaining native instruction budget: %s\n\n"),
+        format(args$budget, big.mark = ",", scientific = FALSE),
+        format(selected$compilation, big.mark = ",", scientific = FALSE),
+        format(selected$execution, big.mark = ",", scientific = FALSE),
+        format(selected$combined, big.mark = ",", scientific = FALSE),
+        format(remaining, big.mark = ",", scientific = FALSE)
+    ))
     cat("```\n")
-    for (n in seq_along(clusters)) {
+    for (n in seq_along(selected$indices)) {
+        i <- selected$indices[[n]]
         members <- clusters[[n]]
         if (n > 1) {
             cat("\n")
         }
         cat(sprintf("# Cluster %d\n", n - 1L))
         cat("#\n")
-        cat(paste0("#", sprintf("%16s", "Instructions"), "    Benchmark\n"))
-        cat(paste0("# ", strrep("-", 78), "\n"))
+        cat(paste0(
+            "#",
+            sprintf("%16s", "Dynamic Wasm"),
+            sprintf("%22s", "Compilation Native"),
+            sprintf("%20s", "Execution Native"),
+            sprintf("%19s", "Combined Native"),
+            "    Benchmark\n"
+        ))
+        cat(paste0("# ", strrep("-", 118), "\n"))
         for (j in seq_len(nrow(members))) {
             cat(paste0(
                 "#",
                 sprintf("%16s", format(members$dynamic_insts[j],
                                        big.mark = ",", scientific = FALSE)),
+                sprintf("%22s", format(members$compilation_native_insts[j],
+                                       big.mark = ",", scientific = FALSE)),
+                sprintf("%20s", format(members$execution_native_insts[j],
+                                       big.mark = ",", scientific = FALSE)),
+                sprintf("%19s", format(members$combined_native_insts[j],
+                                       big.mark = ",", scientific = FALSE)),
                 "    ", members$benchmark[j], "\n"
             ))
         }
-        # The representative: the member whose instruction count is closest to
-        # `TARGET_INST_COUNT`.
-        rep_idx <- representative_index(members$dynamic_insts)
-        cat(members$benchmark[rep_idx], "\n", sep = "")
+        cat(paths[i], "\n", sep = "")
     }
     cat("```\n")
 }
 
-main()
+if (sys.nframe() == 0) {
+    main()
+}

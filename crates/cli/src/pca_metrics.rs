@@ -185,8 +185,9 @@ struct Counts {
     total_dynamic_insts: u64,
     dynamic_insts: [u64; NUM_CATEGORIES],
 
-    // Callgrind-based native execution counts.
-    instructions_retired: u64,
+    // Callgrind-based native counts.
+    compilation_native_instructions: u64,
+    execution_native_instructions: u64,
     conditional_branch_misses: u64,
     conditional_branches: u64,
     indirect_branch_misses: u64,
@@ -203,9 +204,9 @@ struct Counts {
 
 /// PCA metrics.
 ///
-/// Entity counts are normalized as `1.0 / (count + 1.0)`, and the instruction
+/// Entity counts are normalized as `1.0 / (count + 1.0)`, instruction mixes
 /// and Callgrind-derived fields are emitted as ratios over their respective
-/// totals.
+/// totals, and native instruction counts are emitted as raw counts.
 #[derive(Serialize)]
 struct PcaMetrics<'a> {
     benchmark: &'a str,
@@ -285,6 +286,8 @@ struct PcaMetrics<'a> {
     dynamic_select_inst_ratio: f64,
 
     // Callgrind-based dynamic ratios.
+    compilation_native_instructions: u64,
+    execution_native_instructions: u64,
     wasm_insts_per_native_inst: f64,
     conditional_branch_misses: f64,
     conditional_branches: f64,
@@ -381,17 +384,22 @@ impl<'a> PcaMetrics<'a> {
             dynamic_vector_inst_ratio: d(Category::Vector),
             dynamic_select_inst_ratio: d(Category::Select),
 
-            wasm_insts_per_native_inst: ratio(c.total_dynamic_insts, c.instructions_retired),
+            compilation_native_instructions: c.compilation_native_instructions,
+            execution_native_instructions: c.execution_native_instructions,
+            wasm_insts_per_native_inst: ratio(
+                c.total_dynamic_insts,
+                c.execution_native_instructions,
+            ),
             conditional_branch_misses: ratio(c.conditional_branch_misses, c.conditional_branches),
-            conditional_branches: ratio(c.conditional_branches, c.instructions_retired),
+            conditional_branches: ratio(c.conditional_branches, c.execution_native_instructions),
             indirect_branch_misses: ratio(c.indirect_branch_misses, c.indirect_branches),
-            indirect_branches: ratio(c.indirect_branches, c.instructions_retired),
+            indirect_branches: ratio(c.indirect_branches, c.execution_native_instructions),
             l1_dcache_read_misses: ratio(c.l1_dcache_read_misses, c.data_reads),
             l1_dcache_write_misses: ratio(c.l1_dcache_write_misses, c.data_writes),
             ll_dcache_read_misses: ratio(c.ll_dcache_read_misses, c.data_reads),
             ll_dcache_write_misses: ratio(c.ll_dcache_write_misses, c.data_writes),
-            l1_icache_misses: ratio(c.l1_icache_misses, c.instructions_retired),
-            ll_icache_misses: ratio(c.ll_icache_misses, c.instructions_retired),
+            l1_icache_misses: ratio(c.l1_icache_misses, c.execution_native_instructions),
+            ll_icache_misses: ratio(c.ll_icache_misses, c.execution_native_instructions),
         }
     }
 }
@@ -415,7 +423,8 @@ mod tests {
             "benchmark.wasm",
             &Counts {
                 total_dynamic_insts: 250,
-                instructions_retired: 500,
+                compilation_native_instructions: 1_000,
+                execution_native_instructions: 500,
                 conditional_branch_misses: 5,
                 conditional_branches: 20,
                 indirect_branch_misses: 3,
@@ -433,6 +442,8 @@ mod tests {
         );
 
         assert_eq!(metrics.wasm_insts_per_native_inst, 0.5);
+        assert_eq!(metrics.compilation_native_instructions, 1_000);
+        assert_eq!(metrics.execution_native_instructions, 500);
         assert_eq!(metrics.conditional_branch_misses, 0.25);
         assert_eq!(metrics.conditional_branches, 0.04);
         assert_eq!(metrics.indirect_branch_misses, 0.3);
