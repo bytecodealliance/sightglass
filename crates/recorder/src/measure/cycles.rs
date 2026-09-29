@@ -9,36 +9,53 @@ use sightglass_data::Phase;
 /// so they are cheap and precise but measure elapsed time, not work done.
 #[cfg(not(target_os = "macos"))]
 mod imp {
-    use lazy_static::lazy_static;
-    use precision::{Config, Precision, Timestamp};
+    use core::arch::asm;
 
-    lazy_static! {
-        static ref PRECISION: Precision = {
-            // NB: Disable wall-time measurement, as that requires calibrating the
-            // CPU frequency, which adds ~5 seconds on start up time per
-            // benchmarking process, and we only care about ticks anyways.
-            let config = Config::default().wall_time(false);
-            Precision::new(config).unwrap()
-        };
+    pub type State = Option<u64>;
+
+    #[inline]
+    fn cpucounter() -> u64 {
+        cfg_select! {
+            target_arch = "x86_64" => {
+                let (low, high): (u64, u64);
+                unsafe { asm!("rdtscp", out("eax") low, out("edx") high, out("ecx") _); }
+                (high << 32) | low
+            }
+            target_arch = "x86" => {
+                let (low, high): (u32, u32);
+                unsafe { asm!("rdtscp", out("eax") low, out("edx") high, out("ecx") _); }
+                ((high as u64) << 32) | (low as u64)
+            }
+            target_arch = "aarch64" => {
+                let vtm: u64;
+                unsafe { asm!("mrs {}, cntvct_el0", out(reg) vtm); }
+                vtm
+            }
+            target_arch = "riscv64" => {
+                let time: u64;
+                unsafe { asm!("rdtime {}", out(reg) time); }
+                time
+            }
+            target_arch = "s390x" => {
+                let time: u64;
+                unsafe { asm!("stck ({})", out(reg) &mut time); }
+                time
+            }
+        }
     }
-
-    pub type State = Option<Timestamp>;
 
     pub fn new() -> State {
         None
     }
 
     pub fn start(state: &mut State) {
-        *state = Some(PRECISION.now());
+        *state = Some(cpucounter());
     }
 
     pub fn end(state: &mut State) -> u64 {
-        // Deref the lazy-static just once.
-        let precision = &*PRECISION;
-
-        let end = precision.now();
+        let end = cpucounter();
         let start = state.take().expect("must call start before end");
-        (end - start).ticks()
+        end.wrapping_sub(start)
     }
 }
 
