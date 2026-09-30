@@ -96,8 +96,6 @@ fn callgrind_metrics(
         .arg("1")
         .arg("--iterations-per-process")
         .arg("1")
-        .arg("--benchmark-phase")
-        .arg("execution")
         .arg("--working-dir")
         .arg(working_dir)
         .arg("--engine-flags")
@@ -143,12 +141,18 @@ fn callgrind_metrics(
 #[cfg(any(test, all(target_os = "linux", feature = "callgrind")))]
 fn accumulate_callgrind_counts(measurements: &[Measurement<'_>], counts: &mut Counts) {
     for measurement in measurements {
+        if measurement.phase == Phase::Compilation {
+            if measurement.event.as_ref() == "instructions-retired" {
+                counts.compilation_native_instructions += measurement.count;
+            }
+            continue;
+        }
         if measurement.phase != Phase::Execution {
             continue;
         }
 
         match measurement.event.as_ref() {
-            "instructions-retired" => counts.instructions_retired += measurement.count,
+            "instructions-retired" => counts.execution_native_instructions += measurement.count,
             "conditional-branch-misses" => counts.conditional_branch_misses += measurement.count,
             "conditional-branches" => counts.conditional_branches += measurement.count,
             "indirect-branch-misses" => counts.indirect_branch_misses += measurement.count,
@@ -890,6 +894,8 @@ mod tests {
     fn accumulates_callgrind_measurements_by_event_name() {
         let measurements = vec![
             measurement(Phase::Compilation, "instructions-retired", 999),
+            measurement(Phase::Compilation, "conditional-branches", 123),
+            measurement(Phase::Instantiation, "instructions-retired", 888),
             measurement(Phase::Execution, "instructions-retired", 200),
             measurement(Phase::Execution, "conditional-branch-misses", 3),
             measurement(Phase::Execution, "conditional-branches", 12),
@@ -908,7 +914,8 @@ mod tests {
         let mut counts = Counts::default();
         accumulate_callgrind_counts(&measurements, &mut counts);
 
-        assert_eq!(counts.instructions_retired, 200);
+        assert_eq!(counts.compilation_native_instructions, 999);
+        assert_eq!(counts.execution_native_instructions, 200);
         assert_eq!(counts.conditional_branch_misses, 3);
         assert_eq!(counts.conditional_branches, 12);
         assert_eq!(counts.indirect_branch_misses, 1);

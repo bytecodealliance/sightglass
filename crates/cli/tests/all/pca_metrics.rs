@@ -115,11 +115,13 @@ fn pca_metrics_succeeds_on_all_benchmarks() {
 }
 
 #[test]
-fn pca_metrics_outputs_callgrind_ratio_columns() {
+fn pca_metrics_outputs_callgrind_columns() {
     let assert = sightglass_cli()
         .arg("pca-metrics")
         .arg("--engine")
         .arg(test_engine())
+        .arg("--fuel")
+        .arg("10000")
         .arg(benchmark("noop"))
         .assert()
         .success();
@@ -133,6 +135,8 @@ fn pca_metrics_outputs_callgrind_ratio_columns() {
         .collect();
 
     for name in [
+        "compilation_native_instructions",
+        "execution_native_instructions",
         "wasm_insts_per_native_inst",
         "conditional_branch_misses",
         "conditional_branches",
@@ -149,5 +153,24 @@ fn pca_metrics_outputs_callgrind_ratio_columns() {
             headers.iter().any(|header| header == name),
             "missing `{name}` column"
         );
+    }
+
+    let mut reader = csv::Reader::from_reader(stdout.as_slice());
+    let row = reader
+        .records()
+        .next()
+        .expect("output should contain a benchmark row")
+        .expect("benchmark row should parse");
+    for name in [
+        "compilation_native_instructions",
+        "execution_native_instructions",
+    ] {
+        let index = headers
+            .iter()
+            .position(|header| header == name)
+            .expect("native instruction column should exist");
+        row[index]
+            .parse::<u64>()
+            .unwrap_or_else(|_| panic!("column `{name}` should be a raw instruction count"));
     }
 }
