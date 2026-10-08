@@ -13,9 +13,8 @@
 #     $ cargo run -- pca-metrics -o ./pca-metrics.csv -- benchmarks...
 #     $ ./scripts/pca.R ./pca-metrics.csv [native-instruction-budget]
 #
-# The native-instruction budget defaults to 900,000,000,000 instructions,
-# approximately five minutes at an assumed throughput of three native
-# instructions per nanosecond.
+# The native-instruction budget defaults to `DEFAULT_NATIVE_INSTRUCTION_BUDGET`;
+# see its definition for the derivation.
 #
 # The methodology is based on "A Workload Characterization of the SPEC CPU2017
 # Benchmark Suite" by Limaye and Adegbija:

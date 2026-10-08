@@ -11,7 +11,7 @@ env:
   CARGO_TERM_COLOR: always
   RUST_LOG: info
 
-  REVISION: "v38.0.3"
+  REVISION: "v49.0.2"
 
 jobs:
   format-and-clippy:

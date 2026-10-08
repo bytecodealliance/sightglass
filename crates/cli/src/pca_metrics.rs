@@ -287,9 +287,11 @@ struct PcaMetrics<'a> {
     dynamic_select_inst_ratio: f64,
     dynamic_control_cast_inst_ratio: f64,
 
-    // Callgrind-based dynamic ratios.
+    // Callgrind-based native counts.
     compilation_native_instructions: u64,
     execution_native_instructions: u64,
+
+    // Callgrind-based dynamic ratios.
     wasm_insts_per_native_inst: f64,
     conditional_branch_misses: f64,
     conditional_branches: f64,
