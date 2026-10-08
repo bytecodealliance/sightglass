@@ -131,3 +131,4 @@ java-navier-stokes/java-navier-stokes.wasm
 dotnet-raytracer/dotnet-raytracer.wasm
 ocaml-raytrace/ocaml-raytrace.wasm
 rust-wat/rust-wat.wasm
+rust-wasmprinter/rust-wasmprinter.wasm
