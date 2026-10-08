@@ -1,0 +1,26 @@
+# Input for wat-bytecode-interp; see README.md for the bytecode format.
+# Keep in sync with the fallback copy in wat-bytecode-interp.wat.
+
+# N REPS: run the program REPS times, each starting with N on the stack.
+25 1
+
+# main:
+9 4 1     #  0: call 4, 1
+0         #  3: halt
+# fib(n):
+2 0       #  4: load 0
+1 2       #  6: push 2
+6         #  8: lt
+7 14      #  9: jz 14
+2 0       # 11: load 0
+10        # 13: ret
+2 0       # 14: load 0
+1 1       # 16: push 1
+5         # 18: sub
+9 4 1     # 19: call 4, 1
+2 0       # 22: load 0
+1 2       # 24: push 2
+5         # 26: sub
+9 4 1     # 27: call 4, 1
+4         # 30: add
+10        # 31: ret
