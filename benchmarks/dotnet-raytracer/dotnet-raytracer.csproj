@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>dotnet-raytracer</AssemblyName>
+    <RootNamespace>DotnetRaytracer</RootNamespace>
+    <Nullable>disable</Nullable>
+    <RuntimeIdentifier>wasi-wasm</RuntimeIdentifier>
+    <UseAppHost>false</UseAppHost>
+    <SelfContained>true</SelfContained>
+    <Optimize>true</Optimize>
+
+    <!-- Lower C# exceptions to Wasm exception-handling instructions instead of
+         the default emulated (return-flag checking) model. -->
+    <WasmEnableExceptionHandling>true</WasmEnableExceptionHandling>
+
+    <!-- Trim the runtime/BCL as far as possible to keep compile time down. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <InvariantTimezone>true</InvariantTimezone>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <StackTraceSupport>false</StackTraceSupport>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetricsSupport>false</MetricsSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <AutoreleasePoolSupport>false</AutoreleasePoolSupport>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Wit Update="wit/bench.wit" World="dotnet-raytracer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.Wasm.SDK" Version="[0.8.0-preview00011]" />
+    <PackageReference Include="BytecodeAlliance.Componentize.DotNet.WitBindgen" Version="[0.8.0-preview00011]" />
+    <PackageReference Update="Microsoft.DotNet.ILCompiler.LLVM" Version="[10.0.0-rc.1.26306.1]" />
+    <PackageReference Include="runtime.$(NETCoreSdkPortableRuntimeIdentifier).Microsoft.DotNet.ILCompiler.LLVM" Version="[10.0.0-rc.1.26306.1]" />
+  </ItemGroup>
+
+  <!-- NativeAOT-LLVM leaves LLVM's default of legacy Wasm EH (try/catch/
+       delegate/rethrow) in place; select the standard exnref form instead. -->
+  <Target Name="UseExnrefExceptions" AfterTargets="PrepareWasmSdks" BeforeTargets="_InitializeWasiSdk" Condition="'$(WasmEnableExceptionHandling)' == 'true'">
+    <PropertyGroup>
+      <CppCompiler>"$(WASI_SDK_PATH)/bin/clang" -mllvm -wasm-use-legacy-eh=false</CppCompiler>
+      <CppLinker>"$(WASI_SDK_PATH)/bin/clang"</CppLinker>
+    </PropertyGroup>
+  </Target>
+
+</Project>

@@ -1,0 +1,10 @@
+package sightglass:dotnet-raytracer;
+
+// Only the `bench` timing hooks are declared here. The WASI imports and the
+// `wasi:cli/run` export come from wasi-libc's command entry point.
+world dotnet-raytracer {
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}
