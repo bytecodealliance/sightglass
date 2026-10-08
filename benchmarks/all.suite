@@ -126,3 +126,4 @@ gcc-loops/benchmark.wasm
 quicksort/benchmark.wasm
 hashset/benchmark.wasm
 wat-bytecode-interp/wat-bytecode-interp.wasm
+dart-deltablue/dart-deltablue.wasm
