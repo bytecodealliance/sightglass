@@ -341,6 +341,8 @@ fn is_block_boundary(op: &wasmparser::Operator<'_>) -> bool {
             | BrOnNonNull { .. }
             | BrOnCast { .. }
             | BrOnCastFail { .. }
+            | BrOnCastDesc { .. }
+            | BrOnCastDescFail { .. }
             | Throw { .. }
             | ThrowRef
             | Rethrow { .. }

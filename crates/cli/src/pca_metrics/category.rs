@@ -38,10 +38,11 @@ pub(crate) enum Category {
     NumericFloat = 23,
     Vector = 24,
     Select = 25,
+    ControlCast = 26,
 }
 
 /// The total number of [`Category`] variants.
-pub(crate) const NUM_CATEGORIES: usize = 26;
+pub(crate) const NUM_CATEGORIES: usize = 27;
 
 impl Category {
     /// Classify a Wasm operator into its [`Category`], returning an error for
@@ -61,6 +62,10 @@ impl Category {
             | Operator::If { .. }
             | Operator::Loop { .. }
             | Operator::Return => Category::ControlBranch,
+            Operator::BrOnCast { .. }
+            | Operator::BrOnCastDesc { .. }
+            | Operator::BrOnCastDescFail { .. }
+            | Operator::BrOnCastFail { .. } => Category::ControlCast,
             Operator::Call { .. }
             | Operator::CallIndirect { .. }
             | Operator::CallRef { .. }
@@ -225,7 +230,8 @@ impl Category {
             | Operator::MemoryDiscard { .. }
             | Operator::MemoryFill { .. }
             | Operator::MemoryInit { .. } => Category::MemoryOther,
-            Operator::ExternConvertAny
+            Operator::AnyConvertExtern
+            | Operator::ExternConvertAny
             | Operator::RefAsNonNull
             | Operator::RefCastDescNonNull { .. }
             | Operator::RefCastDescNullable { .. }
@@ -482,6 +488,7 @@ impl Category {
             | Operator::F64x2PMax
             | Operator::F64x2PMin
             | Operator::F64x2PromoteLowF32x4
+            | Operator::F64x2RelaxedMadd
             | Operator::F64x2RelaxedMax
             | Operator::F64x2RelaxedMin
             | Operator::F64x2RelaxedNmadd
@@ -669,5 +676,52 @@ impl Category {
             // it means we encountered an instruction we don't categorize yet.
             _ => bail!("unknown instruction: {op:?}"),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Category;
+    use wasmparser::{Operator, RefType};
+
+    #[test]
+    fn categorizes_any_convert_extern_and_f64x2_relaxed_madd() {
+        assert!(matches!(
+            Category::for_op(&Operator::AnyConvertExtern),
+            Ok(Category::Ref)
+        ));
+        assert!(matches!(
+            Category::for_op(&Operator::F64x2RelaxedMadd),
+            Ok(Category::Vector)
+        ));
+    }
+
+    #[test]
+    fn br_on_cast_family_is_control_cast() {
+        let (from_ref_type, to_ref_type) = (RefType::ANYREF, RefType::EQREF);
+        for op in [
+            Operator::BrOnCast {
+                relative_depth: 0,
+                from_ref_type,
+                to_ref_type,
+            },
+            Operator::BrOnCastFail {
+                relative_depth: 0,
+                from_ref_type,
+                to_ref_type,
+            },
+            Operator::BrOnCastDesc {
+                relative_depth: 0,
+                from_ref_type,
+                to_ref_type,
+            },
+            Operator::BrOnCastDescFail {
+                relative_depth: 0,
+                from_ref_type,
+                to_ref_type,
+            },
+        ] {
+            assert!(matches!(Category::for_op(&op), Ok(Category::ControlCast)));
+        }
     }
 }
