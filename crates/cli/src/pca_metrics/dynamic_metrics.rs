@@ -266,16 +266,21 @@ fn run_instrumented_component(
         store.set_fuel(fuel)?;
     }
 
-    let instance = linker.instantiate(&mut store, &component)?;
-
-    // Run `wasi:cli/run`'s `run`. Completing (with any exit status) and running
-    // out of fuel are both acceptable stopping points: in either case the host
-    // already holds the counts pushed before we stopped.
-    let command = Command::new(&mut store, &instance)?;
-    if let Err(e) = command.wasi_cli_run().call_run(&mut store) {
-        if !(fuel.is_some() && matches!(e.downcast_ref::<Trap>(), Some(Trap::OutOfFuel))) {
-            return Err(e.into());
-        }
+    // Instantiate (which runs any core `start` functions) and run `wasi:cli/run`'s
+    // `run`. Running out of fuel in either step is an acceptable stopping point:
+    // the host already holds the counts pushed before we stopped.
+    let result = linker
+        .instantiate(&mut store, &component)
+        .and_then(|instance| {
+            let command = Command::new(&mut store, &instance)?;
+            command.wasi_cli_run().call_run(&mut store)
+        });
+    match result {
+        Ok(Ok(())) => {}
+        // The counts from a failed run are partial or missing.
+        Ok(Err(())) => bail!("benchmark's `wasi:cli/run` returned an error"),
+        Err(e) if fuel.is_some() && matches!(e.downcast_ref::<Trap>(), Some(Trap::OutOfFuel)) => {}
+        Err(e) => return Err(e.into()),
     }
 
     let host = store.data();
