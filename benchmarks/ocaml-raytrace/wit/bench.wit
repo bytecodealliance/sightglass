@@ -1,0 +1,10 @@
+package sightglass:ocaml-raytrace;
+
+// Only the `bench` import needs describing; `wasm-tools component new` takes
+// the WASI imports and `wasi:cli/run` export from the preview1 adapter.
+world raytrace {
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}
