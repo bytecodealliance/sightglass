@@ -1,0 +1,18 @@
+[package]
+name = "rust-wat"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+wat = { version = "=1.261.0", default-features = false }
+wit-bindgen = { version = "=0.62.0", default-features = false, features = ["macros"] }
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[workspace]
