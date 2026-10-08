@@ -1,0 +1,11 @@
+package sightglass:navier-stokes;
+
+// Only the `bench` timing hooks are described here. `wasm-tools component new`
+// gets the WASI imports and the `wasi:cli/run` export from the preview1
+// command adapter.
+world navier-stokes {
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}

@@ -127,3 +127,4 @@ quicksort/benchmark.wasm
 hashset/benchmark.wasm
 wat-bytecode-interp/wat-bytecode-interp.wasm
 dart-deltablue/dart-deltablue.wasm
+java-navier-stokes/java-navier-stokes.wasm
