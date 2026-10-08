@@ -88,6 +88,7 @@ mod callgrind {
             &self,
             this_exe: &Path,
             engine: &Path,
+            engine_name: Option<&str>,
             engine_flags: Option<&str>,
             wasm: &Path,
         ) -> Result<PreparedCommand> {
@@ -128,6 +129,7 @@ mod callgrind {
             self.add_benchmark_child_args(
                 &mut prepared.command,
                 engine,
+                engine_name,
                 engine_flags,
                 wasm,
                 1,
@@ -201,6 +203,7 @@ mod callgrind {
             &self,
             _this_exe: &Path,
             _engine: &Path,
+            _engine_name: Option<&str>,
             _engine_flags: Option<&str>,
             _wasm: &Path,
         ) -> Result<PreparedCommand> {
@@ -452,9 +455,12 @@ impl BenchmarkCommand {
         if self.should_wrap_subprocesses() {
             let this_exe =
                 std::env::current_exe().context("failed to get the current executable's path")?;
-            return self.execute_in_subprocesses("callgrind iterations", |engine, flags, wasm| {
-                self.prepare_command(&this_exe, engine, flags, wasm)
-            });
+            return self.execute_in_subprocesses(
+                "callgrind iterations",
+                |engine, name, flags, wasm| {
+                    self.prepare_command(&this_exe, engine, name, flags, wasm)
+                },
+            );
         }
 
         if self.processes() == 1 {
@@ -514,6 +520,11 @@ impl BenchmarkCommand {
             .collect())
     }
 
+    /// The `--name` override for the `i`th engine, if one was given.
+    fn engine_name_override(&self, i: usize) -> Option<&str> {
+        self.names.as_ref()?.get(i).map(|s| s.as_str())
+    }
+
     /// Combine the common engine flags with a single engine's own flags.
     ///
     /// A present-but-empty per-engine flag string is preserved as a distinct
@@ -550,11 +561,7 @@ impl BenchmarkCommand {
         for (i, (engine_name, engine_flags)) in engine_flag_pairs.iter().enumerate() {
             let engine_flags = engine_flags.as_deref();
             let engine_path = check_engine_path(*engine_name)?;
-            let engine_name = self
-                .names
-                .as_ref()
-                .and_then(|names| names.get(i).map(|s| s.as_str()))
-                .unwrap_or(engine_name);
+            let engine_name = self.engine_name_override(i).unwrap_or(engine_name);
             log::info!("Using benchmark engine: {}", engine_path.display());
             let lib = unsafe { libloading::Library::new(&engine_path)? };
             let mut bench_api = unsafe { BenchApi::new(&lib)? };
@@ -746,7 +753,7 @@ impl BenchmarkCommand {
     fn execute_in_multiple_processes(&self) -> Result<()> {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
-        self.execute_in_subprocesses("iterations", |engine, flags, wasm| {
+        self.execute_in_subprocesses("iterations", |engine, name, flags, wasm| {
             let mut prepared = PreparedCommand::new(
                 Command::new(&this_exe),
                 "benchmark subprocess",
@@ -761,6 +768,7 @@ impl BenchmarkCommand {
             self.add_benchmark_child_args(
                 &mut prepared.command,
                 engine,
+                name,
                 flags,
                 wasm,
                 1,
@@ -777,7 +785,7 @@ impl BenchmarkCommand {
         mut prepare_command: F,
     ) -> Result<()>
     where
-        F: FnMut(&Path, Option<&str>, &Path) -> Result<PreparedCommand>,
+        F: FnMut(&Path, Option<&str>, Option<&str>, &Path) -> Result<PreparedCommand>,
     {
         let mut output_file = self.make_output_writer()?;
 
@@ -805,14 +813,15 @@ impl BenchmarkCommand {
         // Worklist that we randomly sample from.
         let mut choices = vec![];
 
-        for (engine, flags) in self.engine_flag_pairs()? {
+        for (i, (engine, flags)) in self.engine_flag_pairs()?.into_iter().enumerate() {
             // Ensure that each of our engines is built before we spawn any
             // child processes (potentially in a different working directory,
             // and therefore potentially invalidating relative paths used here).
             let engine = check_engine_path(engine)?;
 
+            let name = self.engine_name_override(i);
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), flags.clone(), wasm, self.processes()));
+                choices.push((engine.clone(), name, flags.clone(), wasm, self.processes()));
             }
         }
 
@@ -825,8 +834,8 @@ impl BenchmarkCommand {
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, flags, wasm, procs_left) = &mut choices[index];
-            let mut prepared = prepare_command(engine, flags.as_deref(), wasm)?;
+            let (engine, name, flags, wasm, procs_left) = &mut choices[index];
+            let mut prepared = prepare_command(engine, *name, flags.as_deref(), wasm)?;
             let output = prepared
                 .command
                 .output()
@@ -1043,6 +1052,7 @@ impl BenchmarkCommand {
         &self,
         command: &mut Command,
         engine: &Path,
+        engine_name: Option<&str>,
         engine_flags: Option<&str>,
         wasm: &Path,
         processes: usize,
@@ -1080,6 +1090,10 @@ impl BenchmarkCommand {
 
         if let Some(phase) = self.benchmark_phase {
             command.arg("--benchmark-phase").arg(phase.to_string());
+        }
+
+        if let Some(name) = engine_name {
+            command.arg(format!("--name={name}"));
         }
 
         if let Some(flags) = engine_flags {
@@ -1638,6 +1652,62 @@ execution
             "y",
         ])
         .is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn child_args_forward_the_engine_name() -> Result<()> {
+        // The argv `add_benchmark_child_args` builds for the `i`th engine of a
+        // parsed command, as owned strings.
+        let child_args = |args: &[&str], i: usize| -> Result<Vec<String>> {
+            let mut full = vec!["benchmark"];
+            full.extend_from_slice(args);
+            full.push("dummy.wasm");
+            let command = BenchmarkCommand::try_parse_from(full)?;
+
+            let pairs = command.engine_flag_pairs()?;
+            let (engine, flags) = &pairs[i];
+            let mut child = Command::new("sightglass-cli");
+            command.add_benchmark_child_args(
+                &mut child,
+                Path::new(engine),
+                command.engine_name_override(i),
+                flags.as_deref(),
+                Path::new("dummy.wasm"),
+                1,
+                1,
+                Format::Json,
+            );
+
+            Ok(child
+                .get_args()
+                .map(|a| a.to_string_lossy().into_owned())
+                .collect())
+        };
+
+        // A `--name` is forwarded to the child, which sees a single engine and
+        // so takes a single `--name`.
+        assert!(child_args(&["-e", "a", "-n", "alpha"], 0)?.contains(&"--name=alpha".to_string()));
+
+        // Names are matched to engines by position, and survive being paired
+        // with per-engine flags.
+        let args = child_args(&["-e", "a", "-n", "alpha", "-e", "b", "-n", "beta"], 1)?;
+        assert!(args.contains(&"--name=beta".to_string()));
+        assert!(!args.contains(&"--name=alpha".to_string()));
+
+        // Without `--name` the child is passed none, and falls back to naming
+        // the engine by its path.
+        assert!(!child_args(&["-e", "a"], 0)?
+            .iter()
+            .any(|a| a.starts_with("--name")));
+
+        // Fewer names than engines: the unnamed engines get no `--name`.
+        assert!(child_args(&["-e", "a", "-n", "alpha", "-e", "b"], 0)?
+            .contains(&"--name=alpha".to_string()));
+        assert!(!child_args(&["-e", "a", "-n", "alpha", "-e", "b"], 1)?
+            .iter()
+            .any(|a| a.starts_with("--name")));
 
         Ok(())
     }
