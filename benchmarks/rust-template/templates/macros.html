@@ -1,0 +1,47 @@
+{% macro price(amount, currency, discount=0) -%}
+  {%- if discount > 0 -%}
+  <span class="price sale"><s>{{ "%.2f"|format(amount) }}</s> {{ "%.2f"|format(amount * (100 - discount) / 100) }} {{ currency }}</span>
+  {%- else -%}
+  <span class="price">{{ "%.2f"|format(amount) }} {{ currency }}</span>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro stars(rating) -%}
+  <span class="stars" title="{{ rating|round(1) }} out of 5">
+    {%- for i in range(5) -%}
+    {%- if rating >= i + 1 %}&#9733;{% elif rating >= i + 0.5 %}&#189;{% else %}&#9734;{% endif -%}
+    {%- endfor -%}
+  </span>
+{%- endmacro %}
+
+{% macro product_card(p, currency) -%}
+<article class="product{% if not p.in_stock %} sold-out{% endif %}" id="p-{{ p.id }}">
+  <h3><a href="/p/{{ p.slug }}">{{ p.name|e }}</a></h3>
+  <p class="brand">by {{ p.brand }}</p>
+  {{ price(p.price, currency, p.discount) }}
+  {{ stars(p.rating) }} <span class="reviews">{{ p.reviews|length }} review{{ "s" if p.reviews|length != 1 }}</span>
+  <p class="desc">{{ p.description|truncate(length=120)|e }}</p>
+  <ul class="tags">
+    {%- for tag in p.tags|sort %}
+    <li class="tag-{{ tag|lower|replace(" ", "-") }}">{{ tag }}</li>
+    {%- endfor %}
+  </ul>
+  {%- if p.reviews %}
+  <section class="top-reviews">
+    {%- for r in p.reviews|sort(attribute="helpful", reverse=true) %}
+    {%- if loop.index <= 3 %}
+    <blockquote class="{{ loop.cycle("odd", "even") }}">
+      {{ stars(r.rating) }} <cite>{{ r.author|e }}</cite>
+      <p>{{ r.text|wordcount }} words: {{ r.text|truncate(length=80)|e }}</p>
+    </blockquote>
+    {%- endif %}
+    {%- endfor %}
+  </section>
+  {%- endif %}
+  {%- if p.in_stock %}
+  <form method="post" action="/cart/add"><input type="hidden" name="id" value="{{ p.id }}"><button>Add to cart</button></form>
+  {%- else %}
+  <p class="notice">Out of stock</p>
+  {%- endif %}
+</article>
+{%- endmacro %}
