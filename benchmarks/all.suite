@@ -134,3 +134,6 @@ rust-wat/rust-wat.wasm
 rust-wasmprinter/rust-wasmprinter.wasm
 rust-template/rust-template.wasm
 hoot-earley-boyer/hoot-earley-boyer.wasm
+starlingmonkey/starlingmonkey-json.wasm
+starlingmonkey/starlingmonkey-markdown.wasm
+starlingmonkey/starlingmonkey-regex.wasm

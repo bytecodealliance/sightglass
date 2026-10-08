@@ -1,0 +1,12 @@
+package sightglass:starlingmonkey;
+
+// WASI 0.2.3 CLI command plus the sightglass timing hooks. Unlike StarlingMonkey's
+// stock host APIs, this omits `wasi:http`, which sightglass does not provide.
+world benchmark {
+  include wasi:cli/command@0.2.3;
+
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}

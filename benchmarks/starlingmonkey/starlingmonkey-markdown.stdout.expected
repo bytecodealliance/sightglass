@@ -1,0 +1,148 @@
+<hr>
+<p>title: CommonMark Spec
+author: John MacFarlane
+version: 0.29
+date: &#39;2019-04-06&#39;
+license: &#39;<a href="http://creativecommons.org/licenses/by-sa/4.0/">CC-BY-SA 4.0</a>&#39;
+...</p>
+<h1 id="introduction">Introduction</h1>
+<h2 id="what-is-markdown">What is Markdown?</h2>
+<p>Markdown is a plain text format for writing structured documents,
+based on conventions for indicating formatting in email
+and usenet posts.  It was developed by John Gruber (with
+help from Aaron Swartz) and released in 2004 in the form of a
+<a href="http://daringfireball.net/projects/markdown/syntax">syntax description</a>
+and a Perl script (<code>Markdown.pl</code>) for converting Markdown to
+HTML.  In the next decade, dozens of implementations were
+developed in many languages.  Some extended the original
+Markdown syntax with conventions for footnotes, tables, and
+other document elements.  Some allowed Markdown documents to be
+rendered in formats other than HTML.  Websites like Reddit,
+StackOverflow, and GitHub had millions of people using Markdown.
+And Markdown started to be used beyond the web, to author books,
+articles, slide shows, letters, and lecture notes.</p>
+<p>What distinguishes Markdown from many other lightweight markup
+syntaxes, which are often easier to write, is its readability.
+As Gruber writes:</p>
+<blockquote>
+<p>The overriding design goal for Markdown&#39;s formatting syntax is
+to make it as readable as possible. The idea is that a
+Markdown-formatted document should be publishable as-is, as
+plain text, without looking like it&#39;s been marked up with tags
+or formatting instructions.
+(<a href="http://daringfireball.net/projects/markdown/">http://daringfireball.net/projects/markdown/</a>)</p>
+</blockquote>
+<p>The point can be illustrated by comparing a sample of
+<a href="http://www.methods.co.nz/asciidoc/">AsciiDoc</a> with
+an equivalent sample of Markdown.  Here is a sample of
+AsciiDoc from the AsciiDoc manual:</p>
+<pre><code>1. List item one.
++
+List item one continued with a second paragraph followed by an
+Indented block.
++
+.................
+$ ls *.sh
+$ mv *.sh ~/tmp
+.................
++
+List item continued with a third paragraph.
+
+2. List item two continued with an open block.
++
+--
+This paragraph is part of the preceding list item.
+
+a. This list is nested and does not require explicit item
+continuation.
++
+This paragraph is part of the preceding list item.
+
+b. List item b.
+
+This paragraph belongs to item two of the outer list.
+--
+</code></pre>
+<p>And here is the equivalent in Markdown:</p>
+<pre><code>1.  List item one.
+
+    List item one continued with a second paragraph followed by an
+    Indented block.
+
+        $ ls *.sh
+        $ mv *.sh ~/tmp
+
+    List item continued with a third paragraph.
+
+2.  List item two continued with an open block.
+
+    This paragraph is part of the preceding list item.
+
+    1. This list is nested and does not require explicit item continuation.
+
+       This paragraph is part of the preceding list item.
+
+    2. List item b.
+
+    This paragraph belongs to item two of the outer list.
+</code></pre>
+<p>The AsciiDoc version is, arguably, easier to write. You don&#39;t need
+to worry about indentation.  But the Markdown version is much easier
+to read.  The nesting of list items is apparent to the eye in the
+source, not just in the processed document.</p>
+<h2 id="why-is-a-spec-needed">Why is a spec needed?</h2>
+<p>John Gruber&#39;s <a href="http://daringfireball.net/projects/markdown/syntax">canonical description of Markdown&#39;s
+syntax</a>
+does not specify the syntax unambiguously.  Here are some examples of
+questions it does not answer:</p>
+<ol>
+<li><p>How much indentation is needed for a sublist?  The spec says that
+continuation paragraphs need to be indented four spaces, but is
+not fully explicit about sublists.  It is natural to think that
+they, too, must be indented four spaces, but <code>Markdown.pl</code> does
+not require that.  This is hardly a &quot;corner case,&quot; and divergences
+between implementations on this issue often lead to surprises for
+users in real documents. (See <a href="http://article.gmane.org/gmane.text.markdown.general/1997">this comment by John
+Gruber</a>.)</p>
+</li>
+<li><p>Is a blank line needed before a block quote or heading?
+Most implementations do not require the blank line.  However,
+this can lead to unexpected results in hard-wrapped text, and
+also to ambiguities in parsing (note that some implementations
+put the heading inside the blockquote, while others do not).
+(John Gruber has also spoken <a href="http://article.gmane.org/gmane.text.markdown.general/2146">in favor of requiring the blank
+lines</a>.)</p>
+</li>
+<li><p>Is a blank line needed before an indented code block?
+(<code>Markdown.pl</code> requires it, but this is not mentioned in the
+documentation, and some implementations do not require it.)</p>
+<pre><code class="language-markdown">paragraph
+    code?
+</code></pre>
+</li>
+<li><p>What is the exact rule for determining when list items get
+wrapped in <code>&lt;p&gt;</code> tags?  Can a list be partially &quot;loose&quot; and partially
+&quot;tight&quot;?  What should we do with a list like this?</p>
+<pre><code class="language-markdown">1. one
+
+2. two
+3. three
+</code></pre>
+<p>Or this?</p>
+<pre><code class="language-markdown">1.  one
+    - a
+
+    - b
+2.  two
+</code></pre>
+<p>(There are some relevant comments by John Gruber
+<a href="http://article.gmane.org/gmane.text.markdown.general/2554">here</a>.)</p>
+</li>
+<li><p>Can list markers be indented?  Can ordered list markers be right-aligned?</p>
+<pre><code class="language-markdown"> 8. item 1
+ 9. item 2
+10. item 2a
+</code></pre>
+</li>
+</ol>
+All done!
