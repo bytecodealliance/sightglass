@@ -130,28 +130,30 @@
     )
   )
   (core instance $mem (instantiate $mem))
+  (alias core export $mem "memory" (core memory $memory))
+  (alias core export $mem "realloc" (core func $realloc))
 
   (core func $c_bench_start (canon lower (func $bench "start")))
   (core func $c_bench_end   (canon lower (func $bench "end")))
   (core func $c_getdirs
     (canon lower (func $preopens "get-directories")
-      (memory (core memory $mem "memory")) (realloc (core func $mem "realloc"))
+      (memory $memory) (realloc $realloc)
     )
   )
   (core func $c_open
     (canon lower (func $fs-types "[method]descriptor.open-at")
-      (memory (core memory $mem "memory"))
+      (memory $memory)
     )
   )
   (core func $c_read
     (canon lower (func $fs-types "[method]descriptor.read")
-      (memory (core memory $mem "memory")) (realloc (core func $mem "realloc"))
+      (memory $memory) (realloc $realloc)
     )
   )
   (core func $c_get_stdout (canon lower (func $stdout "get-stdout")))
   (core func $c_write
     (canon lower (func $streams "[method]output-stream.blocking-write-and-flush")
-      (memory (core memory $mem "memory"))
+      (memory $memory)
     )
   )
 
