@@ -1,5 +1,5 @@
+use crate::geomean::GEOMEAN;
 use crate::keys::KeyBuilder;
-use crate::sum_totals::SUM_TOTAL;
 use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
 use termcolor::WriteColor;
@@ -110,11 +110,11 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) 
     // TODO this sorting is not using `arch` which is not guaranteed to be the
     // same in result sets; potentially this could re-use `Key` functionality.
     //
-    // Our "Sum Total" results always come first, then we sort by phase,
+    // Our "Geomean" results always come first, then we sort by phase,
     // benchmark, event, and finally engine.
     summaries.sort_by(|x, y| {
-        (y.wasm == SUM_TOTAL)
-            .cmp(&(x.wasm == SUM_TOTAL))
+        (y.wasm == GEOMEAN)
+            .cmp(&(x.wasm == GEOMEAN))
             .then_with(|| x.phase.cmp(&y.phase))
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
@@ -273,7 +273,7 @@ mod tests {
     }
 
     #[test]
-    fn write_sorts_sum_total_first() {
+    fn write_sorts_geomean_first() {
         fn summary<'a>(wasm: &'a str) -> Summary<'a> {
             Summary {
                 arch: "x86".into(),
@@ -289,19 +289,19 @@ mod tests {
             }
         }
 
-        // "Aaa" sorts before "Sum Total" lexicographically, so this exercises
+        // "Aaa" sorts before "Geomean" lexicographically, so this exercises
         // the explicit total-first ordering rather than a sorting accident.
-        let summaries = vec![summary("Aaa"), summary("Sum Total"), summary("zzz")];
+        let summaries = vec![summary("Aaa"), summary("Geomean"), summary("zzz")];
         let mut out = termcolor::NoColor::new(Vec::new());
         write(summaries, &mut out).unwrap();
         let out = String::from_utf8(out.into_inner()).unwrap();
 
-        let total = out.find("Sum Total").unwrap();
+        let total = out.find("Geomean").unwrap();
         let aaa = out.find("Aaa").unwrap();
         let zzz = out.find("zzz").unwrap();
         assert!(
             total < aaa && total < zzz,
-            "Sum Total should be first:\n{out}"
+            "Geomean should be first:\n{out}"
         );
     }
 

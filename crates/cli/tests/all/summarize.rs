@@ -50,27 +50,19 @@ fn summarize_output_format_csv() {
         .stdout(predicate::str::contains("mean"));
 }
 
-/// Just like `sightglass-cli benchmark`, `summarize` reports a synthetic "Sum
-/// Total" benchmark that sums each sample's counts across all of the benchmarks
-/// in its input.
+/// Like `sightglass-cli benchmark`, `summarize` reports a synthetic "Geomean"
+/// benchmark aggregating each sample's counts across its input's benchmarks.
 #[test]
-fn summarize_sum_total() {
+fn summarize_geomean() {
     sightglass_cli()
         .args(["summarize", "-f", multi_engine_v38_json()])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Sum Total"));
+        .stdout(predicate::str::contains("Geomean"));
 }
 
-/// The "Sum Total" summary sums each sample's counts across the benchmarks, even
-/// though every benchmark in our test data was measured in its own processes.
-///
-/// Every benchmark has the same number of samples here, so the total's mean must
-/// be the sum of the benchmarks' means. Pooling the benchmarks' samples together
-/// instead of summing them would give roughly their average, i.e. a third of
-/// that.
-#[test]
-fn summarize_sum_total_sums_across_benchmarks() {
+/// Summarize our multi-engine test data, returning the parsed summaries.
+fn summaries_json() -> Vec<serde_json::Value> {
     let assert = sightglass_cli()
         .args([
             "summarize",
@@ -83,23 +75,95 @@ fn summarize_sum_total_sums_across_benchmarks() {
         .success();
 
     let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
-    let summaries: Vec<serde_json::Value> =
-        serde_json::from_str(stdout).unwrap_or_else(|e| panic!("stdout was not valid JSON: {e}"));
+    serde_json::from_str(stdout).unwrap_or_else(|e| panic!("stdout was not valid JSON: {e}"))
+}
+
+/// The "Geomean" summary aggregates across benchmarks, even though each was
+/// measured in its own processes.
+///
+/// This guards against pooling all the benchmarks' samples and summarizing
+/// those. The row's min and max give it away: aggregating one sample per
+/// benchmark keeps the range strictly inside the underlying samples', whereas a
+/// pooled summary reports the global extremes exactly. Means cannot make the
+/// distinction, since for Instantiation the pooled mean is nearer than the
+/// geomean's own Jensen gap (see `summarize_geomean_is_geomean_of_means`).
+#[test]
+fn summarize_geomean_across_benchmarks() {
+    let summaries = summaries_json();
 
     for phase in ["Compilation", "Instantiation", "Execution"] {
         let summaries: Vec<_> = summaries.iter().filter(|s| s["phase"] == phase).collect();
-        assert_eq!(summaries.len(), 4, "expected three benchmarks and a total");
+        assert_eq!(
+            summaries.len(),
+            4,
+            "expected three benchmarks and a geomean"
+        );
 
-        let total = summaries.iter().find(|s| s["wasm"] == "Sum Total").unwrap();
-        let expected: f64 = summaries
+        let geomean = summaries.iter().find(|s| s["wasm"] == "Geomean").unwrap();
+        let benchmarks: Vec<_> = summaries
             .iter()
-            .filter(|s| s["wasm"] != "Sum Total")
-            .map(|s| s["mean"].as_f64().unwrap())
-            .sum();
-        let actual = total["mean"].as_f64().unwrap();
+            .filter(|s| s["wasm"] != "Geomean")
+            .collect();
+
+        // A pooled summary would report exactly these.
+        let pooled_min = benchmarks
+            .iter()
+            .map(|s| s["min"].as_f64().unwrap())
+            .fold(f64::INFINITY, f64::min);
+        let pooled_max = benchmarks
+            .iter()
+            .map(|s| s["max"].as_f64().unwrap())
+            .fold(f64::NEG_INFINITY, f64::max);
+
+        let min = geomean["min"].as_f64().unwrap();
+        let max = geomean["max"].as_f64().unwrap();
         assert!(
-            (actual - expected).abs() < expected * 1e-9,
-            "{phase}: the total's mean is {actual}, but the benchmarks' means sum to {expected}"
+            pooled_min < min && max < pooled_max,
+            "{phase}: the geomean's range {min}..{max} is not strictly inside \
+             the benchmarks' samples' range {pooled_min}..{pooled_max}, which \
+             suggests the samples were pooled rather than aggregated across \
+             benchmarks"
+        );
+
+        // A central value, not a total: a sum would exceed every sample.
+        let mean = geomean["mean"].as_f64().unwrap();
+        assert!(
+            pooled_min < mean && mean < pooled_max,
+            "{phase}: the geomean's mean {mean} is outside the samples' range"
+        );
+    }
+}
+
+/// The "Geomean" row equals the geometric mean of the benchmarks' means, the
+/// conventional SPEC-style summary number.
+///
+/// The rows themselves are per-sample geomeans, whose raw average sits below
+/// that figure by an amount that grows with the engine's own noise. They are
+/// rescaled so this holds exactly; see the `Statistics` section on
+/// `sightglass_analysis::geomean::calculate`. The tolerance here is for `u64`
+/// rounding of each row, not for that gap.
+#[test]
+fn summarize_geomean_is_geomean_of_means() {
+    let summaries = summaries_json();
+
+    for phase in ["Compilation", "Instantiation", "Execution"] {
+        let summaries: Vec<_> = summaries.iter().filter(|s| s["phase"] == phase).collect();
+
+        let actual = summaries.iter().find(|s| s["wasm"] == "Geomean").unwrap()["mean"]
+            .as_f64()
+            .unwrap();
+
+        let means: Vec<f64> = summaries
+            .iter()
+            .filter(|s| s["wasm"] != "Geomean")
+            .map(|s| s["mean"].as_f64().unwrap())
+            .collect();
+        let expected = (means.iter().map(|m| m.ln()).sum::<f64>() / means.len() as f64).exp();
+
+        assert!(
+            (actual - expected).abs() < 1.0,
+            "{phase}: the geomean is {actual}, not the benchmarks' means' \
+             geometric mean {expected}"
         );
     }
 }
