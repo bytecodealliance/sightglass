@@ -1,7 +1,7 @@
 pub mod effect_size;
+pub mod geomean;
 pub mod keys;
 pub mod report_stats;
-pub mod sum_totals;
 pub mod summarize;
 
 use sightglass_data::Summary;
@@ -235,8 +235,8 @@ mod tests {
 
         // Our synthetic total is preserved.
         assert_eq!(
-            benchmark_label(crate::sum_totals::SUM_TOTAL),
-            crate::sum_totals::SUM_TOTAL
+            benchmark_label(crate::geomean::GEOMEAN),
+            crate::geomean::GEOMEAN
         );
     }
 }

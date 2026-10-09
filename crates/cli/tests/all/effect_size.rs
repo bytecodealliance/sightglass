@@ -34,11 +34,10 @@ fn effect_size_human_readable() {
         );
 }
 
-/// Just like `sightglass-cli benchmark`, `effect-size` compares a synthetic
-/// "Sum Total" benchmark that sums each sample's counts across all of the
-/// benchmarks in its input.
+/// Like `sightglass-cli benchmark`, `effect-size` compares a synthetic "Geomean"
+/// benchmark aggregating each sample's counts across its input's benchmarks.
 #[test]
-fn effect_size_sum_total() {
+fn effect_size_geomean() {
     sightglass_cli()
         .args([
             "effect-size",
@@ -49,7 +48,7 @@ fn effect_size_sum_total() {
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("Sum Total"));
+        .stdout(predicate::str::contains("Geomean"));
 }
 
 /// Compare the two engines in our test data, returning the parsed effect sizes.
@@ -77,7 +76,7 @@ fn effect_size_output_format_json() {
     let effects = effect_sizes_json();
 
     // Each of the three benchmarks in the input data is compared, as is our
-    // synthetic "Sum Total", and none of them are compared more than once.
+    // synthetic "Geomean", and none of them are compared more than once.
     let mut wasms: Vec<&str> = effects
         .iter()
         .filter(|e| e["phase"] == "Compilation")
@@ -87,7 +86,7 @@ fn effect_size_output_format_json() {
     assert_eq!(
         wasms,
         [
-            "Sum Total",
+            "Geomean",
             "benchmarks/bz2/benchmark.wasm",
             "benchmarks/pulldown-cmark/benchmark.wasm",
             "benchmarks/spidermonkey/benchmark.wasm",
@@ -95,35 +94,93 @@ fn effect_size_output_format_json() {
     );
 }
 
-/// The "Sum Total" comparison sums each sample's counts across the benchmarks,
-/// even though every benchmark in our test data was measured in its own
-/// processes.
+/// The "Geomean" comparison aggregates across benchmarks, even though each was
+/// measured in its own processes.
 ///
-/// Every benchmark has the same number of samples here, so each engine's mean
-/// total must be the sum of that engine's per-benchmark means. Pooling the
-/// benchmarks' samples together instead of summing them would give roughly their
-/// average, i.e. a third of that.
+/// Each engine's row must equal the geometric mean of that engine's
+/// per-benchmark means. That also rules out the bug this guards against,
+/// pooling all the samples and averaging them, which by AM-GM lands at or above
+/// that figure: it overshoots by 1.10x to 5.09x on this fixture.
 #[test]
-fn effect_size_sum_total_sums_across_benchmarks() {
+fn effect_size_geomean_across_benchmarks() {
     let effects = effect_sizes_json();
 
     for phase in ["Compilation", "Instantiation", "Execution"] {
         let effects: Vec<_> = effects.iter().filter(|e| e["phase"] == phase).collect();
-        assert_eq!(effects.len(), 4, "expected three benchmarks and a total");
+        assert_eq!(effects.len(), 4, "expected three benchmarks and a geomean");
 
-        let total = effects.iter().find(|e| e["wasm"] == "Sum Total").unwrap();
+        let geomean = effects.iter().find(|e| e["wasm"] == "Geomean").unwrap();
         for mean in ["a_mean", "b_mean"] {
-            let expected: f64 = effects
+            let means: Vec<f64> = effects
                 .iter()
-                .filter(|e| e["wasm"] != "Sum Total")
+                .filter(|e| e["wasm"] != "Geomean")
                 .map(|e| e[mean].as_f64().unwrap())
-                .sum();
-            let actual = total[mean].as_f64().unwrap();
+                .collect();
+            let expected = (means.iter().map(|m| m.ln()).sum::<f64>() / means.len() as f64).exp();
+            let actual = geomean[mean].as_f64().unwrap();
+
             assert!(
-                (actual - expected).abs() < expected * 1e-9,
-                "{phase} {mean}: the total is {actual}, but the benchmarks sum to {expected}"
+                (actual - expected).abs() < 1.0,
+                "{phase} {mean}: the geomean is {actual}, not the geometric mean \
+                 of the benchmarks' means {expected}"
             );
         }
+    }
+}
+
+/// A benchmark that only one engine measured is left out of the "Geomean"
+/// rows, with a warning, so the rows stay comparable.
+///
+/// Including it would let the row contradict every benchmark under it: dropping
+/// spidermonkey from one engine alone makes that engine's geomean omit the
+/// most expensive benchmark, which looks like a large speed up.
+#[test]
+fn effect_size_geomean_excludes_benchmarks_missing_from_an_engine() {
+    let dir = tempfile::TempDir::new().unwrap();
+    let input = dir.path().join("partial.json");
+
+    let mut measurements: Vec<serde_json::Value> =
+        serde_json::from_str(&std::fs::read_to_string(multi_engine_v38_json()).unwrap()).unwrap();
+    let epoch: Vec<serde_json::Value> =
+        serde_json::from_str(&std::fs::read_to_string(multi_engine_v38_epoch_json()).unwrap())
+            .unwrap();
+    measurements.extend(
+        epoch
+            .into_iter()
+            .filter(|m| !m["wasm"].as_str().unwrap().contains("spidermonkey")),
+    );
+    std::fs::write(&input, serde_json::to_string(&measurements).unwrap()).unwrap();
+
+    let assert = sightglass_cli()
+        .args([
+            "effect-size",
+            "-f",
+            input.to_str().unwrap(),
+            "--output-format",
+            "json",
+        ])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("spidermonkey"));
+
+    let stdout = std::str::from_utf8(&assert.get_output().stdout).unwrap();
+    let effects: Vec<serde_json::Value> = serde_json::from_str(stdout).unwrap();
+
+    let execution: Vec<_> = effects
+        .iter()
+        .filter(|e| e["phase"] == "Execution")
+        .collect();
+    let geomean = execution.iter().find(|e| e["wasm"] == "Geomean").unwrap();
+    let ratio = geomean["a_mean"].as_f64().unwrap() / geomean["b_mean"].as_f64().unwrap();
+
+    // Every remaining benchmark has engine B slower, so the row must agree.
+    for e in execution.iter().filter(|e| e["wasm"] != "Geomean") {
+        let r = e["a_mean"].as_f64().unwrap() / e["b_mean"].as_f64().unwrap();
+        assert!(
+            (ratio - r).abs() < 0.1,
+            "the geomean ratio {ratio} disagrees with {}'s {r}",
+            e["wasm"]
+        );
     }
 }
 

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use sightglass_analysis::{effect_size, sum_totals, summarize};
+use sightglass_analysis::{effect_size, geomean, summarize};
 use sightglass_data::Format;
 use std::{
     fs::File,
@@ -10,8 +10,8 @@ use std::{
 /// Calculate the effect size (and associated confidence interval) between the
 /// results for two different engines.
 ///
-/// In addition to the per-benchmark comparisons, a synthetic "Sum Total"
-/// benchmark is compared, summing each sample's counts across all benchmarks.
+/// In addition to the per-benchmark comparisons, a synthetic "Geomean" benchmark
+/// is compared, aggregating each sample's counts across all benchmarks.
 #[derive(Debug, Parser)]
 #[command(name = "effect-size")]
 pub struct EffectSizeCommand {
@@ -47,7 +47,7 @@ impl EffectSizeCommand {
             self.input_format.read(io::stdin())?
         };
 
-        sum_totals::add(&mut measurements);
+        geomean::add(&mut measurements);
 
         let effects = effect_size::calculate(self.significance_level, &measurements)?;
         if let Some(output_format) = &self.output_format {

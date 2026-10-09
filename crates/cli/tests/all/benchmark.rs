@@ -360,14 +360,12 @@ fn benchmark_common_and_per_engine_flags() {
         );
 }
 
-/// With multiple benchmarks and non-raw (summary) output, a "Sum Total" row is
-/// added that sums each sample's counts across the benchmarks.
-///
-/// Every benchmark is measured in its own subprocesses, so the totals have to
-/// sum samples that come from different processes; see
-/// `effect_size_sum_total_sums_across_benchmarks` for the arithmetic.
+/// With multiple benchmarks and non-raw output, a "Geomean" row aggregates each
+/// sample's counts across them. Each benchmark runs in its own subprocesses, so
+/// this aggregates across processes; see
+/// `effect_size_geomean_across_benchmarks` for the arithmetic.
 #[test]
-fn benchmark_sum_total() {
+fn benchmark_geomean() {
     sightglass_cli_benchmark()
         .arg("--processes")
         .arg("2")
@@ -378,7 +376,7 @@ fn benchmark_sum_total() {
         .arg(benchmark("pulldown-cmark"))
         .assert()
         .success()
-        .stdout(predicate::str::contains("Sum Total"));
+        .stdout(predicate::str::contains("Geomean"));
 }
 
 /// --output-file writes raw JSON to a file rather than stdout.
@@ -480,8 +478,8 @@ fn benchmark_saves_data_file() -> anyhow::Result<()> {
         );
     }
     assert!(
-        measurements.iter().all(|m| m.wasm != "Sum Total"),
-        "the data file should hold the recorded data, not our synthetic totals"
+        measurements.iter().all(|m| m.wasm != "Geomean"),
+        "the data file should hold the recorded data, not our synthetic geomeans"
     );
 
     // The whole point of saving the data: re-analyze it without re-benchmarking.
