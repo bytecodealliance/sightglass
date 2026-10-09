@@ -1,0 +1,273 @@
+# Cluster 0
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     101,363,632           101,582,280          48,603,529        150,185,809    shootout/shootout-heapsort.wasm
+#      99,506,086           102,688,903          69,534,500        172,223,403    shootout/shootout-gimli.wasm
+#     101,355,013           106,129,079          91,608,135        197,737,214    shootout/shootout-minicsv.wasm
+#     109,169,750           216,961,589          43,311,402        260,272,991    quicksort/benchmark.wasm
+#      95,312,792           231,187,266          59,984,454        291,171,720    shootout/shootout-xchacha20.wasm
+#      97,997,381           233,559,598          63,378,521        296,938,119    shootout/shootout-xblabla20.wasm
+#     109,823,391           255,221,540          73,053,760        328,275,300    shootout/shootout-seqhash.wasm
+#     110,137,187           531,675,274          69,939,900        601,615,174    blake3-scalar/benchmark.wasm
+#     109,365,259           775,678,164          57,904,654        833,582,818    bz2/benchmark.wasm
+#     244,910,668         1,879,645,251         220,536,638      2,100,181,889    blind-sig/benchmark.wasm
+shootout/shootout-heapsort.wasm
+
+# Cluster 1
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,330,654           301,880,349          49,234,790        351,115,139    libsodium/libsodium-core5.wasm
+#      99,330,654           301,880,654          49,234,834        351,115,488    libsodium/libsodium-core2.wasm
+#      99,337,130           304,558,810          50,972,955        355,531,765    libsodium/libsodium-core1.wasm
+#      99,858,645           316,563,561          53,341,018        369,904,579    libsodium/libsodium-keygen.wasm
+#      99,409,405           341,064,471          47,439,730        388,504,201    libsodium/libsodium-chacha20.wasm
+#      88,876,178           313,159,893          85,212,653        398,372,546    libsodium/libsodium-randombytes.wasm
+#      99,922,994           359,652,987          48,516,306        408,169,293    blake3-simd/benchmark.wasm
+#     111,862,968           401,270,382          61,383,670        462,654,052    meshoptimizer/benchmark.wasm
+#   5,196,074,374           643,289,639       3,749,840,930      4,393,130,569    libsodium/libsodium-pwhash_argon2i.wasm
+#   5,918,656,358           650,804,382       4,266,514,449      4,917,318,831    libsodium/libsodium-pwhash_argon2id.wasm
+libsodium/libsodium-core5.wasm
+
+# Cluster 2
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     109,760,185            52,501,034       4,959,450,062      5,011,951,096    cm-online-stats/cm-online-stats.wasm
+cm-online-stats/cm-online-stats.wasm
+
+# Cluster 3
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     108,281,362           487,718,522          65,034,130        552,752,652    hex-simd/benchmark.wasm
+hex-simd/benchmark.wasm
+
+# Cluster 4
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     112,968,453         1,166,305,425          78,790,331      1,245,095,756    rust-json/benchmark.wasm
+#     109,620,587         1,473,653,055          96,844,520      1,570,497,575    pulldown-cmark/benchmark.wasm
+#      82,950,579         1,962,246,535          56,677,167      2,018,923,702    intgemm-simd/benchmark.wasm
+#     101,612,201         1,972,820,359          55,033,661      2,027,854,020    gcc-loops/benchmark.wasm
+#     109,230,733         3,430,200,328          78,865,169      3,509,065,497    regex/benchmark.wasm
+#     109,338,080         4,067,547,192          70,743,945      4,138,291,137    rust-compression/benchmark.wasm
+#     459,060,963         8,216,876,992         283,727,394      8,500,604,386    sqlite3/sqlite3.wasm
+#     107,191,034        52,407,899,081          43,580,349     52,451,479,430    spidermonkey/spidermonkey-regex.wasm
+#     110,967,070        52,407,704,932          57,352,072     52,465,057,004    spidermonkey/spidermonkey-json.wasm
+#     288,601,375        52,406,939,810         210,141,973     52,617,081,783    spidermonkey/spidermonkey-markdown.wasm
+#   6,592,276,231        93,581,003,332       4,100,980,962     97,681,984,294    tract-onnx-image-classification/benchmark.wasm
+rust-json/benchmark.wasm
+
+# Cluster 5
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     110,730,850           604,555,493         320,159,163        924,714,656    kotlin-richards/kotlin-richards.wasm
+kotlin-richards/kotlin-richards.wasm
+
+# Cluster 6
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,922,382           335,013,906          52,455,052        387,468,958    libsodium/libsodium-hash3.wasm
+#      99,982,094           338,985,179          52,854,673        391,839,852    libsodium/libsodium-auth6.wasm
+#      99,968,743           341,378,560          56,896,863        398,275,423    libsodium/libsodium-auth2.wasm
+#      99,976,854           346,894,749          56,770,711        403,665,460    libsodium/libsodium-auth3.wasm
+#      98,710,690           353,824,241          63,192,175        417,016,416    libsodium/libsodium-aead_xchacha20poly1305.wasm
+#      94,094,384           363,939,906          56,252,232        420,192,138    libsodium/libsodium-secretbox_easy.wasm
+#      99,956,826           375,235,706          55,121,019        430,356,725    libsodium/libsodium-hash.wasm
+#      99,848,714           370,145,682          61,720,710        431,866,392    libsodium/libsodium-generichash2.wasm
+#     100,059,434           366,448,771          65,630,689        432,079,460    libsodium/libsodium-aead_chacha20poly1305.wasm
+#      99,876,844           378,302,227          59,799,252        438,101,479    libsodium/libsodium-generichash3.wasm
+#      99,640,129           385,621,066          57,863,207        443,484,273    libsodium/libsodium-kdf.wasm
+#     100,092,701           394,954,495          53,872,393        448,826,888    libsodium/libsodium-auth.wasm
+#     105,885,771           403,995,376          58,374,477        462,369,853    libsodium/libsodium-kdf_hkdf.wasm
+#     228,163,229           346,942,827         120,775,122        467,717,949    libsodium/libsodium-auth7.wasm
+#     204,657,544           327,572,188         189,701,812        517,274,000    libsodium/libsodium-sodium_utils.wasm
+#     137,779,549           415,552,474         114,576,341        530,128,815    libsodium/libsodium-aead_aegis128l.wasm
+#     153,051,297           419,773,390         124,230,526        544,003,916    libsodium/libsodium-aead_aegis256.wasm
+#     432,365,536           348,178,019         230,328,687        578,506,706    libsodium/libsodium-auth5.wasm
+#     852,396,468           321,530,406         443,641,722        765,172,128    libsodium/libsodium-verify1.wasm
+#     442,963,420           516,896,686         249,796,603        766,693,289    libsodium/libsodium-metamorphic.wasm
+libsodium/libsodium-hash3.wasm
+
+# Cluster 7
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,976,564           307,604,159          45,629,986        353,234,145    libsodium/libsodium-siphashx24.wasm
+#      99,946,912           308,147,247          48,490,276        356,637,523    libsodium/libsodium-shorthash.wasm
+#      99,492,346           304,755,130          60,938,879        365,694,009    libsodium/libsodium-core6.wasm
+#      99,492,346           304,763,687          60,934,275        365,697,962    libsodium/libsodium-core4.wasm
+#      99,781,058           320,081,973          56,596,281        376,678,254    libsodium/libsodium-stream3.wasm
+#      99,883,421           320,106,092          58,431,350        378,537,442    libsodium/libsodium-stream4.wasm
+#      99,911,266           328,485,562          73,569,190        402,054,752    libsodium/libsodium-onetimeauth.wasm
+#      99,957,237           346,447,769          63,137,507        409,585,276    libsodium/libsodium-secretbox2.wasm
+#     131,572,368           323,669,106          89,504,246        413,173,352    libsodium/libsodium-onetimeauth7.wasm
+#      99,945,171           349,855,008          63,593,631        413,448,639    libsodium/libsodium-secretbox.wasm
+#      98,142,004           362,996,802          63,001,118        425,997,920    libsodium/libsodium-codecs.wasm
+#     101,817,042           364,675,283          63,518,822        428,194,105    libsodium/libsodium-aead_chacha20poly13052.wasm
+#     140,258,738           346,361,836          87,369,683        433,731,519    libsodium/libsodium-secretbox7.wasm
+#      93,950,985           393,731,211          58,184,130        451,915,341    libsodium/libsodium-generichash.wasm
+#      98,401,338           407,608,315          60,955,246        468,563,561    libsodium/libsodium-secretstream_xchacha20poly1305.wasm
+#     422,713,298           347,780,703         284,897,544        632,678,247    libsodium/libsodium-secretbox8.wasm
+#   1,029,607,034           370,065,970         624,801,391        994,867,361    libsodium/libsodium-stream2.wasm
+#   1,122,093,377           379,063,745         663,200,504      1,042,264,249    libsodium/libsodium-stream.wasm
+#   1,401,937,427           375,210,704         889,214,443      1,264,425,147    libsodium/libsodium-pwhash_scrypt_ll.wasm
+#   1,635,767,276           357,871,948         996,241,975      1,354,113,923    libsodium/libsodium-core3.wasm
+#   1,757,465,482           367,290,906       1,468,363,764      1,835,654,670    libsodium/libsodium-secretbox_easy2.wasm
+#  21,225,502,592           469,095,248      13,463,133,704     13,932,228,952    libsodium/libsodium-pwhash_scrypt.wasm
+libsodium/libsodium-siphashx24.wasm
+
+# Cluster 8
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     100,580,015           336,833,521          99,717,705        436,551,226    shootout/shootout-keccak.wasm
+#      98,688,041           583,534,892          72,731,053        656,265,945    libsodium/libsodium-scalarmult7.wasm
+#     100,152,014           587,949,042          72,356,247        660,305,289    libsodium/libsodium-scalarmult2.wasm
+#      98,706,174           590,748,066          72,740,159        663,488,225    libsodium/libsodium-scalarmult5.wasm
+#      98,695,180           591,769,650          72,734,006        664,503,656    libsodium/libsodium-scalarmult6.wasm
+#     107,620,860           602,313,296          79,035,469        681,348,765    libsodium/libsodium-scalarmult.wasm
+#      99,666,518           617,659,668          71,794,031        689,453,699    libsodium/libsodium-box_seed.wasm
+#      99,274,064           631,784,674          73,097,827        704,882,501    libsodium/libsodium-box2.wasm
+#      99,153,256           636,829,616          73,033,953        709,863,569    libsodium/libsodium-box.wasm
+#      99,031,983           640,887,357          72,942,255        713,829,612    libsodium/libsodium-box_easy.wasm
+#     113,603,284           687,899,767          82,206,554        770,106,321    libsodium/libsodium-scalarmult_ristretto255.wasm
+#     114,690,545           691,947,192          84,236,574        776,183,766    libsodium/libsodium-kx.wasm
+#     292,894,875           590,746,683         215,534,076        806,280,759    libsodium/libsodium-scalarmult8.wasm
+#     105,120,283           741,685,827          77,100,448        818,786,275    libsodium/libsodium-box_seal.wasm
+#      95,906,446           796,768,069          69,626,391        866,394,460    libsodium/libsodium-scalarmult_ed25519.wasm
+#      92,610,216           813,613,273          68,647,934        882,261,207    shootout/shootout-ed25519.wasm
+#     316,791,825           779,169,353         232,699,594      1,011,868,947    libsodium/libsodium-xchacha20.wasm
+#     349,565,073           667,864,328       2,361,534,026      3,029,398,354    libsodium/libsodium-box_easy2.wasm
+#   4,171,774,992           895,010,687       3,022,140,939      3,917,151,626    libsodium/libsodium-ed25519_convert.wasm
+#   9,698,682,355           641,262,578       7,126,407,151      7,767,669,729    libsodium/libsodium-box7.wasm
+#  15,199,741,178           908,718,643      10,951,805,648     11,860,524,291    libsodium/libsodium-sign.wasm
+#  28,936,601,457           642,201,603      21,287,898,590     21,930,100,193    libsodium/libsodium-box8.wasm
+#  34,887,128,002         1,111,079,145      25,445,577,159     26,556,656,304    libsodium/libsodium-core_ed25519.wasm
+#  39,009,975,185           818,319,862      28,250,937,199     29,069,257,061    libsodium/libsodium-core_ristretto255.wasm
+shootout/shootout-keccak.wasm
+
+# Cluster 9
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     101,089,870         1,241,160,809          77,447,375      1,318,608,184    hashset/benchmark.wasm
+#     110,231,640         3,371,036,801         106,168,674      3,477,205,475    rust-html-rewriter/benchmark.wasm
+hashset/benchmark.wasm
+
+# Cluster 10
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     106,168,818           707,598,544          96,787,688        804,386,232    rust-protobuf/benchmark.wasm
+rust-protobuf/benchmark.wasm
+
+# Cluster 11
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      95,321,224           213,478,403          56,180,524        269,658,927    shootout/shootout-sieve.wasm
+#      97,699,996           223,876,086          49,087,412        272,963,498    shootout/shootout-base64.wasm
+#     100,221,599           220,658,226          53,627,965        274,286,191    shootout/shootout-ratelimit.wasm
+#     106,000,095           217,043,637          82,562,034        299,605,671    shootout/shootout-ctype.wasm
+#      99,975,064           214,081,326          87,136,270        301,217,596    shootout/shootout-random.wasm
+#      98,566,777           212,668,446         114,191,614        326,860,060    shootout/shootout-fib2.wasm
+#     103,037,297           215,872,978         122,107,565        337,980,543    shootout/shootout-ackermann.wasm
+shootout/shootout-sieve.wasm
+
+# Cluster 12
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     112,587,626           112,007,524          78,282,926        190,290,450    richards/benchmark.wasm
+#     109,946,684           215,016,662          45,077,401        260,094,063    shootout/shootout-nestedloop.wasm
+#     100,019,558           237,081,344         110,079,121        347,160,465    shootout/shootout-matrix.wasm
+richards/benchmark.wasm
+
+# Cluster 13
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,996,522           215,330,368       6,404,734,015      6,620,064,383    shootout/shootout-memmove.wasm
+shootout/shootout-memmove.wasm
+
+# Cluster 14
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,974,763           438,989,402             760,139        439,749,541    shootout/shootout-switch.wasm
+shootout/shootout-switch.wasm
+
+# Cluster 15
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     110,185,113            36,419,861      50,547,949,717     50,584,369,578    splay/splay.wasm
+splay/splay.wasm
+
+# Cluster 16
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     116,633,608         4,529,382,309         140,112,099      4,669,494,408    tinygo/tinygo-regex.wasm
+#     107,065,881         6,137,268,905         120,053,827      6,257,322,732    tinygo/tinygo-json.wasm
+tinygo/tinygo-regex.wasm
+
+# Cluster 17
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     102,940,778            25,036,072          59,431,580         84,467,652    wat-bytecode-interp/wat-bytecode-interp.wasm
+wat-bytecode-interp/wat-bytecode-interp.wasm
+
+# Cluster 18
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,559,692           572,406,589         668,530,629      1,240,937,218    dart-deltablue/dart-deltablue.wasm
+dart-deltablue/dart-deltablue.wasm
+
+# Cluster 19
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      85,737,512           275,775,491         191,479,370        467,254,861    java-navier-stokes/java-navier-stokes.wasm
+java-navier-stokes/java-navier-stokes.wasm
+
+# Cluster 20
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     101,013,832         5,941,908,763         232,506,634      6,174,415,397    dotnet-raytracer/dotnet-raytracer.wasm
+dotnet-raytracer/dotnet-raytracer.wasm
+
+# Cluster 21
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#      99,120,670         1,486,481,915         475,059,134      1,961,541,049    ocaml-raytrace/ocaml-raytrace.wasm
+ocaml-raytrace/ocaml-raytrace.wasm
+
+# Cluster 22
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     104,741,496         2,970,515,329         146,234,332      3,116,749,661    rust-wasmprinter/rust-wasmprinter.wasm
+#     114,704,852         3,324,420,598         105,292,215      3,429,712,813    rust-wat/rust-wat.wasm
+#     109,984,292         4,209,120,864          95,232,885      4,304,353,749    rust-template/rust-template.wasm
+#     100,371,854        76,272,225,734          37,266,661     76,309,492,395    starlingmonkey/starlingmonkey-markdown.wasm
+#     100,250,196        76,276,122,387          40,716,510     76,316,838,897    starlingmonkey/starlingmonkey-regex.wasm
+#      98,153,183        76,273,518,549          62,494,677     76,336,013,226    starlingmonkey/starlingmonkey-json.wasm
+rust-wasmprinter/rust-wasmprinter.wasm
+
+# Cluster 23
+#
+#    Dynamic Wasm    Compilation Native    Execution Native    Combined Native    Benchmark
+# ----------------------------------------------------------------------------------------------------------------------
+#     111,649,596         8,783,001,886       1,661,422,324     10,444,424,210    hoot-earley-boyer/hoot-earley-boyer.wasm
+hoot-earley-boyer/hoot-earley-boyer.wasm

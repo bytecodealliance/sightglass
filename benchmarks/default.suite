@@ -1,8 +1,1 @@
-# These benchmarks are the default Sightglass benchmarks to run when no others
-# are specified. Other benchmarks in the repository are valuable, but running
-# all benchmarks could take quite some time. This list is a compromise between
-# picking representative real-world benchmarks and measurement time.
-
-bz2/benchmark.wasm
-pulldown-cmark/benchmark.wasm
-spidermonkey/spidermonkey-markdown.wasm
+pca-20-min.suite
