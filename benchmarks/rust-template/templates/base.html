@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="{{ site.locale|default("en") }}">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}{{ site.name }}{% endblock %}</title>
+  {%- for sheet in site.stylesheets %}
+  <link rel="stylesheet" href="{{ site.static_url }}/{{ sheet }}">
+  {%- endfor %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  {% include "nav.html" %}
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <p>&copy; {{ site.year }} {{ site.name|e }}. {{ site.tagline|truncate(length=60) }}</p>
+    <ul class="footer-links">
+      {%- for link in site.footer_links %}
+      <li><a href="{{ link.url }}"{% if link.external %} rel="noopener" target="_blank"{% endif %}>{{ link.title }}</a></li>
+      {%- endfor %}
+    </ul>
+  </footer>
+</body>
+</html>

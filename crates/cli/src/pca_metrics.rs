@@ -255,6 +255,7 @@ struct PcaMetrics<'a> {
     static_numeric_float_inst_ratio: f64,
     static_vector_inst_ratio: f64,
     static_select_inst_ratio: f64,
+    static_control_cast_inst_ratio: f64,
 
     // Dynamic instruction mix.
     dynamic_total_inst_count: f64,
@@ -284,10 +285,13 @@ struct PcaMetrics<'a> {
     dynamic_numeric_float_inst_ratio: f64,
     dynamic_vector_inst_ratio: f64,
     dynamic_select_inst_ratio: f64,
+    dynamic_control_cast_inst_ratio: f64,
 
-    // Callgrind-based dynamic ratios.
+    // Callgrind-based native counts.
     compilation_native_instructions: u64,
     execution_native_instructions: u64,
+
+    // Callgrind-based dynamic ratios.
     wasm_insts_per_native_inst: f64,
     conditional_branch_misses: f64,
     conditional_branches: f64,
@@ -355,6 +359,7 @@ impl<'a> PcaMetrics<'a> {
             static_numeric_float_inst_ratio: s(Category::NumericFloat),
             static_vector_inst_ratio: s(Category::Vector),
             static_select_inst_ratio: s(Category::Select),
+            static_control_cast_inst_ratio: s(Category::ControlCast),
 
             dynamic_total_inst_count: c.total_dynamic_insts as f64,
             dynamic_unreachable_inst_ratio: d(Category::Unreachable),
@@ -383,6 +388,7 @@ impl<'a> PcaMetrics<'a> {
             dynamic_numeric_float_inst_ratio: d(Category::NumericFloat),
             dynamic_vector_inst_ratio: d(Category::Vector),
             dynamic_select_inst_ratio: d(Category::Select),
+            dynamic_control_cast_inst_ratio: d(Category::ControlCast),
 
             compilation_native_instructions: c.compilation_native_instructions,
             execution_native_instructions: c.execution_native_instructions,

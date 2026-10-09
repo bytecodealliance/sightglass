@@ -1,0 +1,11 @@
+package sightglass:deltablue;
+
+// Only the `bench` timing hooks need describing; `wasm-tools component new`
+// takes the WASI imports and the `wasi:cli/run` export from the preview1
+// command adapter.
+world deltablue {
+  import bench: interface {
+    start: func();
+    end: func();
+  }
+}

@@ -125,3 +125,15 @@ richards/benchmark.wasm
 gcc-loops/benchmark.wasm
 quicksort/benchmark.wasm
 hashset/benchmark.wasm
+wat-bytecode-interp/wat-bytecode-interp.wasm
+dart-deltablue/dart-deltablue.wasm
+java-navier-stokes/java-navier-stokes.wasm
+dotnet-raytracer/dotnet-raytracer.wasm
+ocaml-raytrace/ocaml-raytrace.wasm
+rust-wat/rust-wat.wasm
+rust-wasmprinter/rust-wasmprinter.wasm
+rust-template/rust-template.wasm
+hoot-earley-boyer/hoot-earley-boyer.wasm
+starlingmonkey/starlingmonkey-json.wasm
+starlingmonkey/starlingmonkey-markdown.wasm
+starlingmonkey/starlingmonkey-regex.wasm

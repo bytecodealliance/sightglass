@@ -1,0 +1,393 @@
+This file is a concatenation of [Learn X in Y minutes](https://github.com/adambard/learnxinyminutes-docs) for testing purposes.
+
+It is published under the original project license ([Creative Commons Attribution-ShareAlike 3.0 Unported](http://creativecommons.org/licenses/by-sa/3.0/deed.en_US)).
+
+------
+category: tool
+tool: amd
+contributors:
+    - ["Frederik Ring", "https://github.com/m90"]
+filename: learnamd.js
+---
+
+## Getting Started with AMD
+
+The **Asynchronous Module Definition** API specifies a mechanism for defining
+JavaScript modules such that the module and its dependencies can be asynchronously
+loaded. This is particularly well suited for the browser environment where
+synchronous loading of modules incurs performance, usability, debugging, and
+cross-domain access problems.
+
+### Basic concept
+```javascript
+// The basic AMD API consists of nothing but two methods: `define` and `require`
+// and is all about module definition and consumption:
+// `define(id?, dependencies?, factory)` defines a module
+// `require(dependencies, callback)` imports a set of dependencies and
+// consumes them in the passed callback
+
+// Let's start by using define to define a new named module
+// that has no dependencies. We'll do so by passing a name
+// and a factory function to define:
+define('awesomeAMD', function(){
+  var isAMDAwesome = function(){
+    return true;
+  };
+  // The return value of a module's factory function is
+  // what other modules or require calls will receive when
+  // requiring our `awesomeAMD` module.
+  // The exported value can be anything, (constructor) functions,
+  // objects, primitives, even undefined (although that won't help too much).
+  return isAMDAwesome;
+});
+
+// Now, let's define another module that depends upon our `awesomeAMD` module.
+// Notice that there's an additional argument defining our
+// module's dependencies now:
+define('loudmouth', ['awesomeAMD'], function(awesomeAMD){
+  // dependencies will be passed to the factory's arguments
+  // in the order they are specified
+  var tellEveryone = function(){
+    if (awesomeAMD()){
+      alert('This is sOoOo rad!');
+    } else {
+      alert('Pretty dull, isn\'t it?');
+    }
+  };
+  return tellEveryone;
+});
+
+// As we do know how to use define now, let's use `require` to
+// kick off our program. `require`'s signature is `(arrayOfDependencies, callback)`.
+require(['loudmouth'], function(loudmouth){
+  loudmouth();
+});
+
+// To make this tutorial run code, let's implement a very basic
+// (non-asynchronous) version of AMD right here on the spot:
+function define(name, deps, factory){
+  // notice how modules without dependencies are handled
+  define[name] = require(factory ? deps : [], factory || deps);
+}
+
+function require(deps, callback){
+  var args = [];
+  // first let's retrieve all the dependencies needed
+  // by the require call
+  for (var i = 0; i < deps.length; i++){
+    args[i] = define[deps[i]];
+  }
+  // satisfy all the callback's dependencies
+  return callback.apply(null, args);
+}
+// you can see this code in action here: http://jsfiddle.net/qap949pd/
+```
+
+### Real-world usage with require.js
+
+In contrast to the introductory example, `require.js` (the most popular AMD library) actually implements the **A** in **AMD**, enabling you to load modules and their dependencies asynchronously via XHR:
+
+```javascript
+/* file: app/main.js */
+require(['modules/someClass'], function(SomeClass){
+  // the callback is deferred until the dependency is loaded
+  var thing = new SomeClass();
+});
+console.log('So here we are, waiting!'); // this will run first
+```
+
+By convention, you usually store one module in one file. `require.js` can resolve module names based on file paths, so you don't have to name your modules, but can simply reference them using their location. In the example `someClass` is assumed to be in the `modules` folder, relative to your configuration's `baseUrl`:
+
+* app/
+  * main.js
+  * modules/
+    * someClass.js
+    * someHelpers.js
+    * ...
+  * daos/
+    * things.js
+    * ...
+
+This means we can define `someClass` without specifying a module id:
+
+```javascript
+/* file: app/modules/someClass.js */
+define(['daos/things', 'modules/someHelpers'], function(thingsDao, helpers){
+  // module definition, of course, will also happen asynchronously
+  function SomeClass(){
+    this.method = function(){/**/};
+    // ...
+  }
+  return SomeClass;
+});
+```
+To alter the default path mapping behavior use `requirejs.config(configObj)` in your `main.js`:
+
+```javascript
+/* file: main.js */
+requirejs.config({
+  baseUrl : 'app',
+  paths : {
+    // you can also load modules from other locations
+    jquery : '//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min',
+    coolLibFromBower : '../bower_components/cool-lib/coollib'
+  }
+});
+require(['jquery', 'coolLibFromBower', 'modules/someHelpers'], function($, coolLib, helpers){
+  // a `main` file needs to call require at least once,
+  // otherwise no code will ever run
+  coolLib.doFancyStuffWith(helpers.transform($('#foo')));
+});
+```
+`require.js`-based apps will usually have a single entry point (`main.js`) that is passed to the `require.js` script tag as a data-attribute. It will be automatically loaded and executed on pageload:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>A hundred script tags? Never again!</title>
+</head>
+<body>
+  <script src="require.js" data-main="app/main"></script>
+</body>
+</html>
+```
+
+### Optimizing a whole project using r.js
+
+Many people prefer using AMD for sane code organization during development, but still want to ship a single script file in production instead of performing hundreds of XHRs on page load.
+
+`require.js` comes with a script called `r.js` (that you will probably run in node.js, although Rhino is supported too) that can analyse your project's dependency graph, and build a single file containing all your modules (properly named), minified and ready for consumption.
+
+Install it using `npm`:
+```shell
+$ npm install requirejs -g
+```
+
+Now you can feed it with a configuration file:
+```shell
+$ r.js -o app.build.js
+```
+
+For our above example the configuration might look like:
+```javascript
+/* file : app.build.js */
+({
+  name : 'main', // name of the entry point
+  out : 'main-built.js', // name of the file to write the output to
+  baseUrl : 'app',
+  paths : {
+    // `empty:` tells r.js that this should still be loaded from the CDN, using
+    // the location specified in `main.js`
+    jquery : 'empty:',
+    coolLibFromBower : '../bower_components/cool-lib/coollib'
+  }
+})
+```
+
+To use the built file in production, simply swap `data-main`:
+```html
+<script src="require.js" data-main="app/main-built"></script>
+```
+
+An incredibly detailed [overview of build options](https://github.com/jrburke/r.js/blob/master/build/example.build.js) is available in the GitHub repo.
+
+### Topics not covered in this tutorial
+* [Loader plugins / transforms](http://requirejs.org/docs/plugins.html)
+* [CommonJS style loading and exporting](http://requirejs.org/docs/commonjs.html)
+* [Advanced configuration](http://requirejs.org/docs/api.html#config)
+* [Shim configuration (loading non-AMD modules)](http://requirejs.org/docs/api.html#config-shim)
+* [CSS loading and optimizing with require.js](http://requirejs.org/docs/optimization.html#onecss)
+* [Using almond.js for builds](https://github.com/jrburke/almond)
+
+### Further reading:
+
+* [Official Spec](https://github.com/amdjs/amdjs-api/wiki/AMD)
+* [Why AMD?](http://requirejs.org/docs/whyamd.html)
+* [Universal Module Definition](https://github.com/umdjs/umd)
+
+### Implementations:
+
+* [require.js](http://requirejs.org)
+* [dojo toolkit](http://dojotoolkit.org/documentation/tutorials/1.9/modules/)
+* [cujo.js](http://cujojs.com/)
+* [curl.js](https://github.com/cujojs/curl)
+* [lsjs](https://github.com/zazl/lsjs)
+* [mmd](https://github.com/alexlawrence/mmd)
+---
+category: tool
+tool: AngularJS
+contributors:
+    - ["Walter Cordero", "http://waltercordero.com"]
+filename: learnangular.html
+---
+
+## AngularJS Tutorial.
+
+AngularJS version 1.0 was released in 2012.
+Miško Hevery, a Google employee, started to work with AngularJS in 2009.
+The idea turned out very well, and the project is now officially supported by Google.
+
+AngularJS is a JavaScript framework. It can be added to an HTML page with a "script" tag.
+AngularJS extends HTML attributes with Directives, and binds data to HTML with Expressions.
+
+##What You Should Already Know
+
+Before you study AngularJS, you should have a basic understanding of:
+
+- HTML
+- CSS
+- JavaScript
+
+```html
+// AngularJS is a JavaScript framework. It is a library written in JavaScript.
+// AngularJS is distributed as a JavaScript file, and can be added to a web page with a script tag:
+// <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+
+///////////////////////////////////
+// AngularJS Extends HTML
+
+//AngularJS extends HTML with ng-directives.
+//The ng-app directive defines an AngularJS application.
+//The ng-model directive binds the value of HTML controls (input, select, textarea) to application data.
+//The ng-bind directive binds application data to the HTML view.
+<!DOCTYPE html>
+<html>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+  <body>
+    <div ng-app="">
+      <p>Name: <input type="text" ng-model="name"></p>
+      <p ng-bind="name"></p>
+    </div>
+  </body>
+</html>
+
+/*
+  * Example explained:
+  * AngularJS starts automatically when the web page has loaded.
+  * The ng-app directive tells AngularJS that the <div> element is the "owner" of an AngularJS application.
+  * The ng-model directive binds the value of the input field to the application variable name.
+  * The ng-bind directive binds the innerHTML of the <p> element to the application variable name.
+*/
+<tag> Here are content to be interpreted </tag>
+
+///////////////////////////////////
+// AngularJS Expressions
+
+// AngularJS expressions are written inside double braces: {{ expression }}.
+// AngularJS expressions binds data to HTML the same way as the ng-bind directive.
+// AngularJS will "output" data exactly where the expression is written.
+// AngularJS expressions are much like JavaScript expressions: They can contain literals, operators, and variables.
+// Example {{ 5 + 5 }} or {{ firstName + " " + lastName }}
+<!DOCTYPE html>
+<html>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+  <body>
+    <div ng-app="">
+      <p>My first expression: {{ 5 + 5 }}</p>
+    </div>
+  </body>
+</html>
+
+//If you remove the ng-app directive, HTML will display the expression as it is, without solving it:
+<!DOCTYPE html>
+<html>
+  <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+  <body>
+    <div>
+      <p>My first expression: {{ 5 + 5 }}</p>
+    </div>
+  </body>
+</html>
+
+// AngularJS expressions bind AngularJS data to HTML the same way as the ng-bind directive.
+<!DOCTYPE html>
+<html>
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+  <body>
+    <div ng-app="">
+      <p>Name: <input type="text" ng-model="name"></p>
+      <p>{{name}}</p>
+    </div>
+  </body>
+</html>
+
+// AngularJS numbers are like JavaScript numbers:
+<div ng-app="" ng-init="quantity=1;cost=5">
+  <p>Total in dollar: {{ quantity * cost }}</p>
+</div>
+
+//AngularJS strings are like JavaScript strings:
+<div ng-app="" ng-init="firstName='John';lastName='Doe'">
+  <p>The name is <span ng-bind="firstName + ' ' + lastName"></span></p>
+</div>
+
+//AngularJS objects are like JavaScript objects:
+<div ng-app="" ng-init="person={firstName:'John',lastName:'Doe'}">
+  <p>The name is {{ person.lastName }}</p>
+</div>
+
+//AngularJS arrays are like JavaScript arrays:
+<div ng-app="" ng-init="points=[1,15,19,2,40]">
+  <p>The third result is {{ points[2] }}</p>
+</div>
+
+// Like JavaScript expressions, AngularJS expressions can contain literals, operators, and variables.
+// Unlike JavaScript expressions, AngularJS expressions can be written inside HTML.
+// AngularJS expressions do not support conditionals, loops, and exceptions, while JavaScript expressions do.
+// AngularJS expressions support filters, while JavaScript expressions do not.
+
+///////////////////////////////////
+// AngularJS Directives
+
+
+//AngularJS directives are extended HTML attributes with the prefix ng-.
+//The ng-app directive initializes an AngularJS application.
+//The ng-init directive initializes application data.
+//The ng-model directive binds the value of HTML controls (input, select, textarea) to application data.
+<div ng-app="" ng-init="firstName='John'">
+  <p>Name: <input type="text" ng-model="firstName"></p>
+  <p>You wrote: {{ firstName }}</p>
+</div>
+
+//Using ng-init is not very common. You will learn how to initialize data in the chapter about controllers.
+
+//The ng-repeat directive repeats an HTML element:
+<div ng-app="" ng-init="names=['Jani','Hege','Kai']">
+  <ul>
+    <li ng-repeat="x in names">
+      {{ x }}
+    </li>
+  </ul>
+</div>
+
+//The ng-repeat directive used on an array of objects:
+<div ng-app="" ng-init="names=[
+{name:'Jani',country:'Norway'},
+{name:'Hege',country:'Sweden'},
+{name:'Kai',country:'Denmark'}]">
+  <ul>
+    <li ng-repeat="x  in names">
+      {{ x.name + ', ' + x.country }}
+    </li>
+  </ul>
+</div>
+
+// AngularJS is perfect for database CRUD (Create Read Update Delete) applications.
+// Just imagine if these objects were records from a database.
+
+// The ng-app directive defines the root element of an AngularJS application.
+// The ng-app directive will auto-bootstrap (automatically initialize) the application when a web page is loaded.
+// Later you will learn how ng-app can have a value (like ng-app="myModule"), to connect code modules.
+
+// The ng-init directive defines initial values for an AngularJS application.
+// Normally, you will not use ng-init. You will use a controller or module instead.
+// You will learn more about controllers and modules later.
+
+//The ng-model directive binds the value of HTML controls (input, select, textarea) to application data.
+//The ng-model directive can also:
+//Provide type validation for application data (number, email, required).
+//Provide status for application data (invalid, dirty, touched, error).
+//Provide CSS classes for HTML elements.
+//Bind HTML elements to HTML forms.
+

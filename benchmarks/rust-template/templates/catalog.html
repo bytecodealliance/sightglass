@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}{{ page_title }} | {{ super() }}{% endblock %}
+{% block body_class %}catalog{% endblock %}
+{% block content %}
+<h1>{{ page_title }}</h1>
+{% set in_stock = products|selectattr("in_stock")|list %}
+<p class="summary">Showing {{ products|length }} products, {{ in_stock|length }} in stock, average rating {{ (products|map(attribute="rating")|sum / products|length)|round(2) }}.</p>
+{% for brand, group in products|groupby("brand") %}
+<section class="brand-group">
+  <h2>{{ brand }} <small>({{ group|length }})</small></h2>
+  <div class="grid">
+    {%- for p in group|sort(attribute="price") %}
+    {{ m.product_card(p, site.currency) }}
+    {%- endfor %}
+  </div>
+</section>
+{% endfor %}
+<aside class="deals">
+  <h2>Today's deals</h2>
+  <ol>
+    {%- for p in products|selectattr("discount", "gt", 0)|sort(attribute="discount", reverse=true) %}
+    {%- if loop.index <= 10 %}
+    <li><a href="/p/{{ p.slug }}">{{ p.name }}</a> {{ m.price(p.price, site.currency, p.discount) }} <em>-{{ p.discount }}%</em></li>
+    {%- endif %}
+    {%- endfor %}
+  </ol>
+</aside>
+{% endblock %}

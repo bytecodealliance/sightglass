@@ -174,3 +174,42 @@ fn pca_metrics_outputs_callgrind_columns() {
             .unwrap_or_else(|_| panic!("column `{name}` should be a raw instruction count"));
     }
 }
+
+/// Without `--fuel`, `pca-metrics` collects real Callgrind counts, so both native
+/// instruction columns must be nonzero.
+#[test]
+#[cfg(all(target_os = "linux", feature = "callgrind"))]
+fn pca_metrics_collects_callgrind_native_instructions() {
+    let assert = sightglass_cli()
+        .arg("pca-metrics")
+        .arg("--engine")
+        .arg(test_engine())
+        .arg(benchmark("noop"))
+        .assert()
+        .success();
+
+    let stdout = &assert.get_output().stdout;
+    let mut reader = csv::Reader::from_reader(stdout.as_slice());
+    let headers = reader
+        .headers()
+        .expect("output should have a CSV header")
+        .clone();
+    let row = reader
+        .records()
+        .next()
+        .expect("output should contain a benchmark row")
+        .expect("benchmark row should parse");
+    for name in [
+        "compilation_native_instructions",
+        "execution_native_instructions",
+    ] {
+        let index = headers
+            .iter()
+            .position(|header| header == name)
+            .unwrap_or_else(|| panic!("missing `{name}` column"));
+        let count: u64 = row[index]
+            .parse()
+            .unwrap_or_else(|_| panic!("column `{name}` should be a raw instruction count"));
+        assert!(count > 0, "column `{name}` should be nonzero, got {count}");
+    }
+}

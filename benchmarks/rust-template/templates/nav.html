@@ -1,0 +1,13 @@
+<nav>
+  <a class="logo" href="/">{{ site.name|upper }}</a>
+  <ul>
+    {%- for cat in categories %}
+    <li{% if cat.slug == current_category %} class="active"{% endif %}><a href="/c/{{ cat.slug }}">{{ cat.name|title }}</a> <span class="count">({{ cat.product_count }})</span></li>
+    {%- endfor %}
+  </ul>
+  {%- if user %}
+  <div class="account">Signed in as <strong>{{ user.display_name|e }}</strong>{% if user.cart|length > 0 %} | <a href="/cart">Cart ({{ user.cart|length }} items, {{ "%.2f"|format(user.cart|map(attribute="price")|sum) }} {{ site.currency }})</a>{% endif %}</div>
+  {%- else %}
+  <div class="account"><a href="/login">Sign in</a></div>
+  {%- endif %}
+</nav>
