@@ -139,7 +139,7 @@ fn summarize_geomean_across_benchmarks() {
 ///
 /// The rows themselves are per-sample geomeans, whose raw average sits below
 /// that figure by an amount that grows with the engine's own noise. They are
-/// rescaled so this holds exactly; see the `Statistics` section on
+/// rescaled so this holds exactly; see
 /// `sightglass_analysis::geomean::calculate`. The tolerance here is for `u64`
 /// rounding of each row, not for that gap.
 #[test]

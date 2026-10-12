@@ -43,39 +43,16 @@ type SharedBenchmarks<'a> = BTreeMap<(Cow<'a, str>, Phase, Cow<'a, str>), BTreeS
 /// already in `measurements` are ignored, so they are never aggregated a second
 /// time. A group holding fewer than two benchmarks produces no row at all.
 ///
-/// # Statistics
-///
-/// These are ordinary per-sample measurements, so summaries and the Welch's
-/// t-test in [`crate::effect_size`] apply unchanged, on the same number of
-/// samples. What the aggregate buys is lower variance: in log space it is
-/// `(1/B^2) * sum(Var(log X_b))` over `B` benchmarks, so the coefficient of
-/// variation is roughly the benchmarks' average CV over `sqrt(B)`. That is why
-/// the geomean can show a significant difference when no individual benchmark
-/// does, and unlike a sum's, the shrink does not depend on scale.
-///
 /// The rows are rescaled so that their arithmetic mean, which is what the
 /// analyses consume, equals the geometric mean of the benchmarks' mean counts.
-/// Without this the mean of the raw per-sample geomeans sits below that figure
-/// by about `exp(-(1/2)(1/B - 1/B^2) * sum_b var_b)`, a gap that grows with the
-/// engine's own noise and does not cancel between two engines: a merely noisier
-/// engine would be reported as faster. Rescaling is a constant factor per group,
-/// so it moves the mean without touching the relative spread the confidence
-/// interval is built from.
+/// Without that, the raw per-sample geomeans average below that figure by a gap
+/// that grows with the engine's own noise and does not cancel between two
+/// engines, so a merely noisier engine would be reported as faster.
 ///
-/// The flip side of equal weighting is that a small, noisy benchmark contributes
-/// as much variance as a large one, so this row's relative confidence interval
-/// can be wide. That is correct for an equally-weighted aggregate.
-///
-/// Two caveats. A geomean is approximately log-normal rather than normal,
-/// bending Welch's normality assumption, though at the coefficients of variation
-/// we see the two are indistinguishable. And which of a benchmark's samples are
-/// aggregated with which is arbitrary: it does not bias the mean, but the spread
-/// of the rows, and so the width of the confidence interval, does depend on it.
-/// Pairing by sorted `(process, iteration)` keeps that choice deterministic.
-/// Deliberately pairing like with like, by sorting each benchmark's counts,
-/// would be worse than arbitrary: it correlates benchmarks that are independent,
-/// inflating the variance from `(1/B^2) * sum_b var_b` to `(1/B^2) *
-/// (sum_b sd_b)^2` and forfeiting the `sqrt(B)` reduction above.
+/// Emitting synthetic rows is what lets summaries and the `effect_size`
+/// analysis treat this aggregate as an ordinary benchmark. Computing the
+/// geomean and its confidence interval directly in log space would not need
+/// rescaling, but would not be able to reuse our existing analysis pipeline.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
     // We cannot simply group by `process` and `iteration`: with `--processes N`
     // each (engine, benchmark) pair gets its own subprocesses, so no two
@@ -123,7 +100,7 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
             .collect();
 
         // Rescale so the rows average to the geometric mean of the benchmarks'
-        // mean counts. See the `Statistics` section above.
+        // mean counts. See the `calculate` doc comment.
         let target = geomean(
             counts
                 .iter()
