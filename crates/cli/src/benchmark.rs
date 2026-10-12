@@ -2,7 +2,7 @@ use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_analysis::sum_totals::SUM_TOTAL;
+use sightglass_analysis::geomean::GEOMEAN;
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
@@ -964,11 +964,9 @@ impl BenchmarkCommand {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
         } else {
-            // Augment the measurements with "Sum Total" measurements that sum
-            // each sample's counts across all benchmarks, so that the analysis
-            // reports totals in addition to per-benchmark results.
+            // Report an aggregate alongside the per-benchmark results.
             let mut measurements = measurements.to_vec();
-            sightglass_analysis::sum_totals::add(&mut measurements);
+            sightglass_analysis::geomean::add(&mut measurements);
 
             // Compare engine configurations against each other, unless there is
             // only one of them (a single engine with a single set of flags) or
@@ -999,12 +997,12 @@ impl BenchmarkCommand {
         let mut effect_sizes =
             sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
 
-        // By default, hide statistically insignificant results. Our "Sum Total"
+        // By default, hide statistically insignificant results. Our "Geomean"
         // results are always kept, even when they are insignificant.
         let mut hidden = 0;
         if !self.show_insignificant {
             let before = effect_sizes.len();
-            effect_sizes.retain(|e| e.is_significant() || e.wasm == SUM_TOTAL);
+            effect_sizes.retain(|e| e.is_significant() || e.wasm == GEOMEAN);
             hidden = before - effect_sizes.len();
         }
 
@@ -1462,7 +1460,7 @@ execution
     #[test]
     fn effect_sizes_filter_insignificant_by_default() -> Result<()> {
         // Two engines with identical measurements, so no result is significant.
-        // Include a synthetic "Sum Total" benchmark alongside a regular one.
+        // Include a synthetic "Geomean" benchmark alongside a regular one.
         let m = |engine: &'static str, wasm: &'static str, count: u64| Measurement {
             arch: "x86".into(),
             engine: sightglass_data::Engine {
@@ -1477,7 +1475,7 @@ execution
             count,
         };
         let mut measurements = vec![];
-        for wasm in ["bench.wasm", "Sum Total"] {
+        for wasm in ["bench.wasm", "Geomean"] {
             for count in [100, 101, 102, 103, 104] {
                 measurements.push(m("a", wasm, count));
                 measurements.push(m("b", wasm, count));
@@ -1485,14 +1483,14 @@ execution
         }
 
         // By default, the insignificant benchmark is hidden and reported by
-        // count, but the (also insignificant) "Sum Total" is kept.
+        // count, but the (also insignificant) "Geomean" is kept.
         let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
         let mut output = NoColor::new(Vec::new());
         command.display_effect_sizes(&measurements, &mut output)?;
         let actual = String::from_utf8(output.into_inner())?;
         assert!(
-            actual.contains("Sum Total"),
-            "the Sum Total comparison should be kept:\n{actual}"
+            actual.contains("Geomean"),
+            "the Geomean comparison should be kept:\n{actual}"
         );
         assert!(
             !actual.contains("bench"),

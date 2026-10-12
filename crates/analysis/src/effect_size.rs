@@ -1,5 +1,5 @@
+use crate::geomean::GEOMEAN;
 use crate::keys::KeyBuilder;
-use crate::sum_totals::SUM_TOTAL;
 use anyhow::Result;
 use sightglass_data::{EffectSize, Engine, Measurement, Phase, Summary};
 use std::collections::BTreeSet;
@@ -99,12 +99,12 @@ pub fn write(
     significance_level: f64,
     output_file: &mut dyn WriteColor,
 ) -> Result<()> {
-    // Sort the effect sizes so that our "Sum Total" results come first, then we
+    // Sort the effect sizes so that our "Geomean" results come first, then we
     // focus on statistically significant results before insignificant results
     // and larger relative effect sizes before smaller relative effect sizes.
     effect_sizes.sort_by(|x, y| {
-        (y.wasm == SUM_TOTAL)
-            .cmp(&(x.wasm == SUM_TOTAL))
+        (y.wasm == GEOMEAN)
+            .cmp(&(x.wasm == GEOMEAN))
             .then_with(|| y.is_significant().cmp(&x.is_significant()))
             .then_with(|| {
                 let x_speedup = x.a_speed_up_over_b().0.max(x.b_speed_up_over_a().0);
@@ -311,7 +311,7 @@ mod tests {
     }
 
     #[test]
-    fn write_sorts_sum_total_first() -> Result<()> {
+    fn write_sorts_geomean_first() -> Result<()> {
         fn pair<'a>(wasm: &'a str) -> (EffectSize<'a>, Vec<Summary<'a>>) {
             let a = Engine {
                 name: "a".into(),
@@ -348,19 +348,19 @@ mod tests {
             (effect_size, vec![summary(a, 100.0), summary(b, 200.0)])
         }
 
-        // "Aaa" sorts before "Sum Total" and is passed first, so this exercises
+        // "Aaa" sorts before "Geomean" and is passed first, so this exercises
         // the explicit total-first ordering rather than a sorting accident.
         let (es_aaa, mut summaries) = pair("Aaa");
-        let (es_total, mut total_summaries) = pair("Sum Total");
+        let (es_total, mut total_summaries) = pair("Geomean");
         summaries.append(&mut total_summaries);
 
         let mut out = termcolor::NoColor::new(Vec::new());
         write(vec![es_aaa, es_total], &summaries, 0.01, &mut out)?;
         let out = String::from_utf8(out.into_inner())?;
 
-        let total = out.find("Sum Total").unwrap();
+        let total = out.find("Geomean").unwrap();
         let aaa = out.find("Aaa").unwrap();
-        assert!(total < aaa, "Sum Total should be first:\n{out}");
+        assert!(total < aaa, "Geomean should be first:\n{out}");
         Ok(())
     }
 }
