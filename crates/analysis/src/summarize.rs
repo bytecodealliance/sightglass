@@ -1,4 +1,4 @@
-use crate::geomean::GEOMEAN;
+use crate::geomean::{Geomean, GEOMEAN};
 use crate::keys::KeyBuilder;
 use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
@@ -105,17 +105,20 @@ fn median(numbers: &mut [u64]) -> u64 {
     numbers[numbers.len() / 2]
 }
 
-/// Write a vector of [Summary] structures to the passed `output_file` in human-readable form.
-pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) -> Result<()> {
+/// Write a vector of [Summary] structures to the passed `output_file` in
+/// human-readable form, led by the suite `geomeans`.
+pub fn write(
+    mut summaries: Vec<Summary<'_>>,
+    geomeans: &[Geomean<'_>],
+    output_file: &mut dyn WriteColor,
+) -> Result<()> {
+    write_geomeans(geomeans, output_file)?;
+
     // TODO this sorting is not using `arch` which is not guaranteed to be the
     // same in result sets; potentially this could re-use `Key` functionality.
-    //
-    // Our "Geomean" results always come first, then we sort by phase,
-    // benchmark, event, and finally engine.
     summaries.sort_by(|x, y| {
-        (y.wasm == GEOMEAN)
-            .cmp(&(x.wasm == GEOMEAN))
-            .then_with(|| x.phase.cmp(&y.phase))
+        x.phase
+            .cmp(&y.phase)
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
             .then_with(|| x.engine.cmp(&y.engine))
@@ -171,6 +174,71 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) 
     Ok(())
 }
 
+/// Write the suite `geomeans` as a leading section, nested by phase and event
+/// like the per-benchmark summaries that follow. A no-op if there are none.
+fn write_geomeans(geomeans: &[Geomean<'_>], output_file: &mut dyn WriteColor) -> Result<()> {
+    if geomeans.is_empty() {
+        return Ok(());
+    }
+
+    let mut geomeans: Vec<&Geomean<'_>> = geomeans.iter().collect();
+    geomeans.sort_by(|x, y| {
+        x.phase
+            .cmp(&y.phase)
+            .then_with(|| x.event.cmp(&y.event))
+            .then_with(|| x.engine.cmp(&y.engine))
+    });
+
+    crate::write_in(output_file, &crate::benchmark_spec(), GEOMEAN)?;
+    writeln!(output_file)?;
+
+    let mut last_phase = None;
+    let mut last_event = None;
+    let mut rows: Vec<Vec<String>> = vec![];
+
+    for geomean in geomeans {
+        if last_phase != Some(geomean.phase) {
+            flush_geomean_table(output_file, &mut rows)?;
+            last_phase = Some(geomean.phase);
+            last_event = None;
+            write!(output_file, "    ")?;
+            crate::write_in(
+                output_file,
+                &crate::phase_spec(),
+                &geomean.phase.to_string(),
+            )?;
+            writeln!(output_file)?;
+        }
+
+        if last_event.as_ref() != Some(&geomean.event) {
+            flush_geomean_table(output_file, &mut rows)?;
+            last_event = Some(geomean.event.clone());
+            write!(output_file, "        ")?;
+            crate::write_in(output_file, &crate::event_spec(), &geomean.event)?;
+            writeln!(output_file)?;
+        }
+
+        rows.push(crate::geomean_row(geomean, geomean.engine.to_string()));
+    }
+    flush_geomean_table(output_file, &mut rows)?;
+
+    writeln!(output_file)?;
+    Ok(())
+}
+
+/// Render any buffered geomean `rows` as a table, then clear them. A no-op if
+/// there are no rows.
+fn flush_geomean_table(
+    output_file: &mut dyn WriteColor,
+    rows: &mut Vec<Vec<String>>,
+) -> Result<()> {
+    if !rows.is_empty() {
+        crate::write_geomean_table(output_file, "            ", rows)?;
+        rows.clear();
+    }
+    Ok(())
+}
+
 /// Render any buffered statistics `rows` as a table, then clear them. A no-op if
 /// there are no rows.
 fn flush_stats_table(output_file: &mut dyn WriteColor, rows: &mut Vec<Vec<String>>) -> Result<()> {
@@ -184,6 +252,7 @@ fn flush_stats_table(output_file: &mut dyn WriteColor, rows: &mut Vec<Vec<String
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geomean::Geomean;
     use sightglass_data::{Engine, Phase};
 
     #[test]
@@ -267,7 +336,7 @@ mod tests {
     }
 
     #[test]
-    fn write_sorts_geomean_first() {
+    fn write_puts_the_geomean_first() {
         fn summary<'a>(wasm: &'a str) -> Summary<'a> {
             Summary {
                 arch: "x86".into(),
@@ -283,20 +352,52 @@ mod tests {
             }
         }
 
-        // "Aaa" sorts before "Geomean" lexicographically, so this exercises
-        // the explicit total-first ordering rather than a sorting accident.
-        let summaries = vec![summary("Aaa"), summary("Geomean"), summary("zzz")];
+        // "Aaa" sorts before "Geomean" lexicographically and is passed first, so
+        // this exercises the explicit ordering rather than a sorting accident.
+        let summaries = vec![summary("Aaa"), summary("zzz")];
+        let geomeans = vec![Geomean {
+            arch: "x86".into(),
+            engine: "e".into(),
+            phase: Phase::Compilation,
+            event: "cycles".into(),
+            geomean: 2.0,
+            benchmarks: 2,
+        }];
         let mut out = termcolor::NoColor::new(Vec::new());
-        write(summaries, &mut out).unwrap();
+        write(summaries, &geomeans, &mut out).unwrap();
         let out = String::from_utf8(out.into_inner()).unwrap();
 
-        let total = out.find("Geomean").unwrap();
+        let geomean = out.find("Geomean").unwrap();
         let aaa = out.find("Aaa").unwrap();
         let zzz = out.find("zzz").unwrap();
         assert!(
-            total < aaa && total < zzz,
-            "Geomean should be first:\n{out}"
+            geomean < aaa && geomean < zzz,
+            "the geomean should be first:\n{out}"
         );
+    }
+
+    #[test]
+    fn write_omits_the_geomean_section_when_there_is_none() {
+        // A single benchmark has no geomean, and its section should not appear
+        // empty.
+        let summaries = vec![Summary {
+            arch: "x86".into(),
+            engine: "e".into(),
+            wasm: "only.wasm".into(),
+            phase: Phase::Compilation,
+            event: "cycles".into(),
+            min: 1,
+            max: 3,
+            median: 2,
+            mean: 2.0,
+            mean_deviation: 0.0,
+        }];
+        let mut out = termcolor::NoColor::new(Vec::new());
+        write(summaries, &[], &mut out).unwrap();
+        let out = String::from_utf8(out.into_inner()).unwrap();
+
+        assert!(!out.contains("Geomean"), "{out}");
+        assert!(out.starts_with("compilation"), "{out}");
     }
 
     #[test]

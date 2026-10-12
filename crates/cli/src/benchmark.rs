@@ -2,7 +2,6 @@ use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_analysis::geomean::GEOMEAN;
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
@@ -920,17 +919,13 @@ impl BenchmarkCommand {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
         } else {
-            // Report an aggregate alongside the per-benchmark results.
-            let mut measurements = measurements.to_vec();
-            sightglass_analysis::geomean::add(&mut measurements);
-
             // Compare engine configurations against each other, unless there is
             // only one of them (a single engine with a single set of flags) or
             // the user explicitly asked for summaries.
             if self.summary || self.engine_flag_pairs()?.len() == 1 {
-                display_summaries(&measurements, output_file)?;
+                display_summaries(measurements, output_file)?;
             } else {
-                self.display_effect_sizes(&measurements, output_file)?;
+                self.display_effect_sizes(measurements, output_file)?;
             }
         }
         Ok(())
@@ -953,18 +948,21 @@ impl BenchmarkCommand {
         let mut effect_sizes =
             sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
 
-        // By default, hide statistically insignificant results. Our "Geomean"
-        // results are always kept, even when they are insignificant.
+        // By default, hide statistically insignificant per-benchmark results.
+        // The suite geomean is always shown, even when it is insignificant.
         let mut hidden = 0;
         if !self.show_insignificant {
             let before = effect_sizes.len();
-            effect_sizes.retain(|e| e.is_significant() || e.wasm == GEOMEAN);
+            effect_sizes.retain(|e| e.is_significant());
             hidden = before - effect_sizes.len();
         }
 
+        let geomeans =
+            sightglass_analysis::geomean::effect_size(self.significance_level, &measurements);
         let summaries = sightglass_analysis::summarize::calculate(&measurements);
         sightglass_analysis::effect_size::write(
             effect_sizes,
+            &geomeans,
             &summaries,
             self.significance_level,
             output_file,
@@ -1134,7 +1132,8 @@ fn display_summaries(
     output_file: &mut dyn WriteColor,
 ) -> Result<()> {
     let summaries = sightglass_analysis::summarize::calculate(measurements);
-    sightglass_analysis::summarize::write(summaries, output_file)
+    let geomeans = sightglass_analysis::geomean::summarize(measurements);
+    sightglass_analysis::summarize::write(summaries, &geomeans, output_file)
 }
 
 /// Parse a `--color` value into a `ColorChoice`.
@@ -1411,7 +1410,7 @@ execution
     #[test]
     fn effect_sizes_filter_insignificant_by_default() -> Result<()> {
         // Two engines with identical measurements, so no result is significant.
-        // Include a synthetic "Geomean" benchmark alongside a regular one.
+        // Two benchmarks, so there is also a geomean to compare.
         let m = |engine: &'static str, wasm: &'static str, count: u64| Measurement {
             arch: "x86".into(),
             engine: sightglass_data::Engine {
@@ -1424,29 +1423,29 @@ execution
             count,
         };
         let mut measurements = vec![];
-        for wasm in ["bench.wasm", "Geomean"] {
+        for wasm in ["first.wasm", "second.wasm"] {
             for count in [100, 101, 102, 103, 104] {
                 measurements.push(m("a", wasm, count));
                 measurements.push(m("b", wasm, count));
             }
         }
 
-        // By default, the insignificant benchmark is hidden and reported by
-        // count, but the (also insignificant) "Geomean" is kept.
+        // By default, the insignificant benchmarks are hidden and reported by
+        // count, but the (also insignificant) geomean is kept.
         let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
         let mut output = NoColor::new(Vec::new());
         command.display_effect_sizes(&measurements, &mut output)?;
         let actual = String::from_utf8(output.into_inner())?;
         assert!(
             actual.contains("Geomean"),
-            "the Geomean comparison should be kept:\n{actual}"
+            "the geomean comparison should be kept:\n{actual}"
         );
         assert!(
-            !actual.contains("bench"),
-            "the insignificant benchmark should be hidden:\n{actual}"
+            !actual.contains("first") && !actual.contains("second"),
+            "the insignificant benchmarks should be hidden:\n{actual}"
         );
         assert!(
-            actual.contains("1 statistically insignificant result(s) hidden."),
+            actual.contains("2 statistically insignificant result(s) hidden."),
             "expected the hidden-count message:\n{actual}"
         );
         assert!(actual.contains("--show-insignificant"));

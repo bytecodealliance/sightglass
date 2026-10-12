@@ -10,8 +10,9 @@ use std::{
 /// Calculate the effect size (and associated confidence interval) between the
 /// results for two different engines.
 ///
-/// In addition to the per-benchmark comparisons, a synthetic "Geomean" benchmark
-/// is compared, aggregating each sample's counts across all benchmarks.
+/// Human-readable output is led by a comparison of the engines' suite geomeans,
+/// which says whether the suite as a whole changed. Structured output holds the
+/// per-benchmark comparisons alone.
 #[derive(Debug, Parser)]
 #[command(name = "effect-size")]
 pub struct EffectSizeCommand {
@@ -36,7 +37,7 @@ pub struct EffectSizeCommand {
 
 impl EffectSizeCommand {
     pub fn execute(&self) -> Result<()> {
-        let mut measurements = if let Some(files) = self.input_file.as_ref() {
+        let measurements = if let Some(files) = self.input_file.as_ref() {
             let mut ms = Vec::new();
             for file in files {
                 let reader = BufReader::new(File::open(file)?);
@@ -47,15 +48,15 @@ impl EffectSizeCommand {
             self.input_format.read(io::stdin())?
         };
 
-        geomean::add(&mut measurements);
-
         let effects = effect_size::calculate(self.significance_level, &measurements)?;
         if let Some(output_format) = &self.output_format {
             output_format.write(&effects, io::stdout())
         } else {
+            let geomeans = geomean::effect_size(self.significance_level, &measurements);
             let summaries = summarize::calculate(&measurements);
             effect_size::write(
                 effects,
+                &geomeans,
                 &summaries,
                 self.significance_level,
                 &mut crate::stdout_writer(),

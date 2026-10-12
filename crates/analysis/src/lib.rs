@@ -4,6 +4,7 @@ pub mod keys;
 pub mod report_stats;
 pub mod summarize;
 
+use geomean::Geomean;
 use sightglass_data::Summary;
 use std::io;
 use termcolor::{Color, ColorSpec, WriteColor};
@@ -11,6 +12,10 @@ use termcolor::{Color, ColorSpec, WriteColor};
 /// The column headers for the min/max/mean/median/engine statistics table shared
 /// by [`summarize::write`] and [`effect_size::write`].
 pub(crate) const STATS_HEADERS: [&str; 5] = ["Min", "Max", "Mean", "Median", "Engine"];
+
+/// The column headers for the geomean table shared by [`summarize::write`] and
+/// [`effect_size::write`].
+pub(crate) const GEOMEAN_HEADERS: [&str; 3] = ["Geomean", "Benchmarks", "Engine"];
 
 fn fg(color: Color) -> ColorSpec {
     let mut spec = ColorSpec::new();
@@ -78,6 +83,39 @@ pub(crate) fn summary_row(summary: &Summary<'_>, engine: String) -> Vec<String> 
         summary.median.to_string(),
         engine,
     ]
+}
+
+/// Build a geomean-table row (matching [`GEOMEAN_HEADERS`]) from a [`Geomean`]
+/// and an engine label.
+pub(crate) fn geomean_row(geomean: &Geomean<'_>, engine: String) -> Vec<String> {
+    vec![
+        format!("{:.2}", geomean.geomean),
+        geomean.benchmarks.to_string(),
+        engine,
+    ]
+}
+
+/// Render the geomean `rows` as a colored table.
+pub(crate) fn write_geomean_table(
+    output: &mut dyn WriteColor,
+    indent: &str,
+    rows: &[Vec<String>],
+) -> io::Result<()> {
+    let dimmed = {
+        let mut spec = ColorSpec::new();
+        spec.set_dimmed(true);
+        spec
+    };
+    // One spec per column: Geomean (plain), Benchmarks (dimmed), Engine (blue).
+    let column_specs = [ColorSpec::new(), dimmed, engine_spec()];
+    write_table(
+        output,
+        indent,
+        &GEOMEAN_HEADERS,
+        &orange(),
+        &column_specs,
+        rows,
+    )
 }
 
 /// Render the min/max/mean/median/engine statistics `rows` as a colored table.
@@ -231,12 +269,6 @@ mod tests {
         assert_eq!(
             benchmark_label("../../benchmarks/noop/benchmark.wasm"),
             "noop"
-        );
-
-        // Our synthetic total is preserved.
-        assert_eq!(
-            benchmark_label(crate::geomean::GEOMEAN),
-            crate::geomean::GEOMEAN
         );
     }
 }
