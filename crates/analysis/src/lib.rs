@@ -1,6 +1,7 @@
 pub mod effect_size;
 pub mod geomean;
 pub mod keys;
+pub mod mann_whitney;
 pub mod report_stats;
 pub mod summarize;
 
