@@ -32,7 +32,7 @@ impl ReportConfig {
         Self {
             primary_event: "cycles".to_string(),
             target_phase: Phase::Execution,
-            significance_level: 0.05,
+            significance_level: 0.01,
             baseline_engine: baseline_engine.into(),
         }
     }

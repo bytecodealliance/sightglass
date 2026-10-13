@@ -52,9 +52,13 @@ fn mean_deviation(numbers: &[u64]) -> f64 {
         / numbers.len() as f64
 }
 
-/// Calculate the standard deviation of a slice of numbers.
+/// Calculate the sample standard deviation of a slice of numbers.
+///
+/// This divides by `n - 1` rather than `n`, matching the sample variance that
+/// the significance tests use. Fewer than two numbers have no sample
+/// deviation, which is reported as zero.
 pub fn std_deviation(numbers: &[u64]) -> f64 {
-    if numbers.is_empty() {
+    if numbers.len() < 2 {
         return 0.0;
     }
     let mean = mean(numbers);
@@ -65,7 +69,7 @@ pub fn std_deviation(numbers: &[u64]) -> f64 {
             diff * diff
         })
         .sum::<f64>()
-        / numbers.len() as f64;
+        / (numbers.len() - 1) as f64;
     variance.sqrt()
 }
 
@@ -98,11 +102,12 @@ pub fn coefficient_of_variation(numbers: &[u64]) -> f64 {
 }
 
 /// Returns the median value of a group.
-fn median(numbers: &mut [u64]) -> u64 {
+///
+/// An even-length group's median interpolates between the two middle values,
+/// agreeing with [`percentile_from_sorted`] at the 50th percentile.
+fn median(numbers: &mut [u64]) -> f64 {
     numbers.sort();
-    // Note this index is *the* right one for odd lengths (the median value among 2p+1 values is at
-    // index p), and *a* right one for even lengths.
-    numbers[numbers.len() / 2]
+    percentile_from_sorted(numbers, 50.0)
 }
 
 /// Write a vector of [Summary] structures to the passed `output_file` in
@@ -280,7 +285,7 @@ mod tests {
                 event: "cycles".into(),
                 mean: 1.0,
                 min: 0,
-                median: 1,
+                median: 1.0,
                 max: 2,
                 mean_deviation: 2f64 / 3f64,
             }]
@@ -346,7 +351,7 @@ mod tests {
                 event: "cycles".into(),
                 min: 1,
                 max: 3,
-                median: 2,
+                median: 2.0,
                 mean: 2.0,
                 mean_deviation: 0.0,
             }
@@ -388,7 +393,7 @@ mod tests {
             event: "cycles".into(),
             min: 1,
             max: 3,
-            median: 2,
+            median: 2.0,
             mean: 2.0,
             mean_deviation: 0.0,
         }];
@@ -402,9 +407,29 @@ mod tests {
 
     #[test]
     fn test_std_deviation() {
+        // The sample deviation, dividing by `n - 1`. The population deviation
+        // of these numbers is exactly 2.0, so this also pins down which of the
+        // two we compute.
         let numbers = vec![2, 4, 4, 4, 5, 5, 7, 9];
         let std_dev = std_deviation(&numbers);
-        assert!((std_dev - 2.0).abs() < 0.1);
+        assert!((std_dev - 2.138_089_935_299_395).abs() < 1e-12, "{std_dev}");
+
+        // One number has no sample deviation.
+        assert_eq!(std_deviation(&[42]), 0.0);
+        assert_eq!(std_deviation(&[]), 0.0);
+    }
+
+    #[test]
+    fn median_interpolates_like_the_50th_percentile() {
+        // The two functions disagreed on even-length input: this one returned
+        // the upper middle element, 6, where the percentile interpolated.
+        let mut numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        assert_eq!(median(&mut numbers), 5.5);
+        assert_eq!(median(&mut numbers), percentile_from_sorted(&numbers, 50.0));
+
+        // Odd lengths have an exact middle either way.
+        let mut numbers = vec![3, 1, 2];
+        assert_eq!(median(&mut numbers), 2.0);
     }
 
     #[test]

@@ -35,8 +35,8 @@ pub struct ReportCommand {
     #[arg(short = 'b', long = "baseline-engine")]
     baseline_engine: Option<String>,
 
-    /// Significance level for statistical tests (default: 0.05 for 95% confidence)
-    #[arg(long = "significance-level", default_value = "0.05")]
+    /// Significance level for statistical tests (default: 0.01 for 99% confidence)
+    #[arg(long = "significance-level", default_value = "0.01")]
     significance_level: f64,
 
     /// Primary event to analyze (default: cycles)

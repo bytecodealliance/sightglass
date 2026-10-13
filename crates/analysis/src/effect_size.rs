@@ -110,7 +110,7 @@ pub fn write(
         y.is_significant().cmp(&x.is_significant()).then_with(|| {
             let x_speedup = x.a_speed_up_over_b().0.max(x.b_speed_up_over_a().0);
             let y_speedup = y.a_speed_up_over_b().0.max(y.b_speed_up_over_a().0);
-            y_speedup.partial_cmp(&x_speedup).unwrap()
+            y_speedup.total_cmp(&x_speedup)
         })
     });
 
@@ -459,7 +459,7 @@ mod tests {
             event: "cycles".into(),
             min: mean as u64,
             max: mean as u64,
-            median: mean as u64,
+            median: mean,
             mean,
             mean_deviation: 0.0,
         };

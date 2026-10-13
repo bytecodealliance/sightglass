@@ -80,7 +80,7 @@ pub(crate) fn summary_row(summary: &Summary<'_>, engine: String) -> Vec<String> 
         summary.min.to_string(),
         summary.max.to_string(),
         format!("{:.2}", summary.mean),
-        summary.median.to_string(),
+        format!("{:.2}", summary.median),
         engine,
     ]
 }

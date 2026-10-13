@@ -259,7 +259,7 @@ pub struct Summary<'a> {
     pub max: u64,
 
     /// The median value of the `count` field.
-    pub median: u64,
+    pub median: f64,
 
     /// The arithmetic mean of the `count` field.
     pub mean: f64,
@@ -282,7 +282,7 @@ struct SummaryWire<'a> {
     pub event: Cow<'a, str>,
     pub min: u64,
     pub max: u64,
-    pub median: u64,
+    pub median: f64,
     pub mean: f64,
     pub mean_deviation: f64,
 }
