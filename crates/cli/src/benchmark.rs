@@ -1764,9 +1764,8 @@ execution
 
 compilation :: cycles :: pulldown-cmark
 
-    Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
-
     old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌───────────┬────────────┬──────────────┬──────────────┬────────────────┐
     │ Min       │ Max        │ Mean         │ Median       │ Engine         │
@@ -1778,9 +1777,8 @@ compilation :: cycles :: pulldown-cmark
 
 compilation :: nanoseconds :: pulldown-cmark
 
-    Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
-
     old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌───────────┬───────────┬──────────────┬──────────────┬────────────────┐
     │ Min       │ Max       │ Mean         │ Median       │ Engine         │
@@ -1792,9 +1790,8 @@ compilation :: nanoseconds :: pulldown-cmark
 
 execution :: nanoseconds :: pulldown-cmark
 
-    Δ = 467229.61 ± 57708.35 (confidence = 95%)
-
-    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+    new_backend.so is 1.14x to 1.15x faster than old_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌─────────┬─────────┬────────────┬────────────┬────────────────┐
     │ Min     │ Max     │ Mean       │ Median     │ Engine         │
@@ -1806,9 +1803,8 @@ execution :: nanoseconds :: pulldown-cmark
 
 execution :: cycles :: pulldown-cmark
 
-    Δ = 1356859.60 ± 167590.00 (confidence = 95%)
-
-    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
+    new_backend.so is 1.14x to 1.15x faster than old_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌──────────┬──────────┬─────────────┬─────────────┬────────────────┐
     │ Min      │ Max      │ Mean        │ Median      │ Engine         │
@@ -1820,7 +1816,8 @@ execution :: cycles :: pulldown-cmark
 
 instantiation :: cycles :: pulldown-cmark
 
-    No difference in performance.
+    old_backend.so is 1.05x to 1.07x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌────────┬────────┬───────────┬───────────┬────────────────┐
     │ Min    │ Max    │ Mean      │ Median    │ Engine         │
@@ -1832,7 +1829,8 @@ instantiation :: cycles :: pulldown-cmark
 
 instantiation :: nanoseconds :: pulldown-cmark
 
-    No difference in performance.
+    old_backend.so is 1.05x to 1.07x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
     ┌───────┬────────┬──────────┬──────────┬────────────────┐
     │ Min   │ Max    │ Mean     │ Median   │ Engine         │

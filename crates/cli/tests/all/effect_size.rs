@@ -28,7 +28,7 @@ fn effect_size_human_readable() {
         .success()
         .stdout(
             predicate::str::contains("cycles").and(
-                predicate::str::contains("Δ = ")
+                predicate::str::contains("faster than")
                     .or(predicate::str::contains("No difference in performance.")),
             ),
         );

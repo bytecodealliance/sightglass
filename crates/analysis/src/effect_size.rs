@@ -1,5 +1,7 @@
 use crate::geomean::{GeomeanEffectSize, GEOMEAN};
 use crate::keys::KeyBuilder;
+use crate::mann_whitney;
+use crate::summarize::{mean, percentile_from_sorted};
 use anyhow::Result;
 use sightglass_data::{EffectSize, Engine, Measurement, Phase, Summary};
 use std::collections::BTreeSet;
@@ -59,36 +61,50 @@ pub fn calculate<'a>(
         // this group of measurements.
         for (i, engine_a) in engines.iter().enumerate() {
             for engine_b in &engines[i + 1..] {
-                let a: behrens_fisher::Stats = key_measurements
-                    .iter()
-                    .filter(|m| &m.engine == *engine_a)
-                    .map(|m| m.count as f64)
-                    .collect();
-                let b: behrens_fisher::Stats = key_measurements
-                    .iter()
-                    .filter(|m| &m.engine == *engine_b)
-                    .map(|m| m.count as f64)
-                    .collect();
+                let counts = |engine: &Engine<'_>| -> Vec<u64> {
+                    key_measurements
+                        .iter()
+                        .filter(|m| &m.engine == engine)
+                        .map(|m| m.count)
+                        .collect()
+                };
+                let a = counts(engine_a);
+                let b = counts(engine_b);
 
-                let ci = behrens_fisher::confidence_interval(1.0 - significance_level, a, b)
-                    .unwrap_or(0.0);
+                let Some(comparison) = mann_whitney::compare(significance_level, &a, &b) else {
+                    continue;
+                };
+
                 results.push(EffectSize {
                     arch: key.arch.clone().unwrap(),
                     wasm: key.wasm.clone().unwrap(),
                     phase: key.phase.unwrap(),
                     event: key.event.clone().unwrap(),
                     a_engine: (*engine_a).clone(),
-                    a_mean: a.mean,
+                    a_mean: mean(&a),
+                    a_median: median(&a),
+                    a_samples: a.len(),
                     b_engine: (*engine_b).clone(),
-                    b_mean: b.mean,
+                    b_mean: mean(&b),
+                    b_median: median(&b),
+                    b_samples: b.len(),
                     significance_level,
-                    half_width_confidence_interval: ci,
+                    ratio: comparison.ratio,
+                    confidence_interval: comparison.confidence_interval,
+                    p_value: comparison.p_value,
                 });
             }
         }
     }
 
     Ok(results)
+}
+
+/// The median of `counts`.
+fn median(counts: &[u64]) -> f64 {
+    let mut sorted = counts.to_vec();
+    sorted.sort();
+    percentile_from_sorted(&sorted, 50.0)
 }
 
 /// Write a vector of [EffectSize] structures to the passed `output_file` in
@@ -160,63 +176,6 @@ pub fn write(
         let (a_eng_label, b_eng_label) =
             effect_size.a_engine.relative_labels(&effect_size.b_engine);
 
-        if effect_size.is_significant() {
-            write!(output_file, "    ")?;
-            crate::write_in(output_file, &crate::orange(), "Δ")?;
-            write!(
-                output_file,
-                " = {:.2} ± {:.2} ",
-                (effect_size.b_mean - effect_size.a_mean).abs(),
-                effect_size.half_width_confidence_interval.abs(),
-            )?;
-            crate::write_in(
-                output_file,
-                &crate::stats_parenthetical_spec(),
-                &format!("(confidence = {}%)", (1.0 - significance_level) * 100.0,),
-            )?;
-            writeln!(output_file)?;
-            writeln!(output_file)?;
-
-            // Whichever engine has the smaller mean is the faster one.
-            let (faster, slower, ratio, ratio_ci) = if effect_size.a_mean < effect_size.b_mean {
-                (
-                    &a_eng_label,
-                    &b_eng_label,
-                    effect_size.b_mean / effect_size.a_mean,
-                    effect_size.half_width_confidence_interval / effect_size.a_mean,
-                )
-            } else {
-                (
-                    &b_eng_label,
-                    &a_eng_label,
-                    effect_size.a_mean / effect_size.b_mean,
-                    effect_size.half_width_confidence_interval / effect_size.b_mean,
-                )
-            };
-
-            write!(output_file, "    ")?;
-            crate::write_in(output_file, &bold_engine, faster)?;
-            crate::write_in(output_file, &bold, " is ")?;
-            crate::write_in(
-                output_file,
-                &bold_ratio,
-                &format!("{:.2}x", ratio - ratio_ci),
-            )?;
-            crate::write_in(output_file, &bold, " to ")?;
-            crate::write_in(
-                output_file,
-                &bold_ratio,
-                &format!("{:.2}x", ratio + ratio_ci),
-            )?;
-            crate::write_in(output_file, &bold, " faster than ")?;
-            crate::write_in(output_file, &bold_engine, slower)?;
-            crate::write_in(output_file, &bold, "!")?;
-            writeln!(output_file)?;
-        } else {
-            writeln!(output_file, "    No difference in performance.")?;
-        }
-        writeln!(output_file)?;
-
         let get_summary = |engine: &Engine, wasm: &str, phase: Phase, event: &str| {
             // TODO this sorting is not using `arch` which is not guaranteed to be the same in
             // result sets; potentially this could re-use `Key` functionality.
@@ -240,6 +199,72 @@ pub fn write(
             effect_size.phase,
             &effect_size.event,
         );
+
+        match effect_size.confidence_interval {
+            // `ratio` is b's counts over a's, so a is the faster engine when it
+            // exceeds 1. Inverting the ratio inverts its interval's bounds too.
+            Some((low, high)) if effect_size.is_significant() => {
+                let (faster, slower, low, high) = if effect_size.ratio > 1.0 {
+                    (&a_eng_label, &b_eng_label, low, high)
+                } else {
+                    (&b_eng_label, &a_eng_label, 1.0 / high, 1.0 / low)
+                };
+
+                write!(output_file, "    ")?;
+                crate::write_in(output_file, &bold_engine, faster)?;
+                crate::write_in(output_file, &bold, " is ")?;
+                crate::write_in(output_file, &bold_ratio, &format_ratio(low, high, low))?;
+                crate::write_in(output_file, &bold, " to ")?;
+                crate::write_in(output_file, &bold_ratio, &format_ratio(low, high, high))?;
+                crate::write_in(output_file, &bold, " faster than ")?;
+                crate::write_in(output_file, &bold_engine, slower)?;
+                crate::write_in(output_file, &bold, "!")?;
+                writeln!(output_file)?;
+
+                write!(output_file, "    ")?;
+                crate::write_in(
+                    output_file,
+                    &crate::stats_parenthetical_spec(),
+                    &format!(
+                        "(confidence = {}%, p {})",
+                        (1.0 - significance_level) * 100.0,
+                        format_p_value(effect_size.p_value),
+                    ),
+                )?;
+                writeln!(output_file)?;
+            }
+            Some(_) => writeln!(output_file, "    No difference in performance.")?,
+
+            // Three different things leave us without an interval, and they
+            // call for different responses from the reader: more samples fixes
+            // the first, and nothing fixes the other two.
+            None if a_summary.min == 0 || b_summary.min == 0 => writeln!(
+                output_file,
+                "    No confidence interval: a count of zero has no ratio.",
+            )?,
+            None => {
+                let floor = mann_whitney::smallest_attainable_p_value(
+                    effect_size.a_samples,
+                    effect_size.b_samples,
+                );
+                if floor > significance_level {
+                    writeln!(
+                        output_file,
+                        "    Not enough samples to compare: no difference between {} \
+                         and {} samples can reach p < {significance_level}, only \
+                         p < {floor:.4}.",
+                        effect_size.a_samples, effect_size.b_samples,
+                    )?
+                } else {
+                    writeln!(
+                        output_file,
+                        "    No confidence interval: these counts are too alike to \
+                         rank apart, so no ratio is ruled out.",
+                    )?
+                }
+            }
+        }
+        writeln!(output_file)?;
 
         let rows = vec![
             crate::summary_row(a_summary, a_eng_label),
@@ -349,6 +374,15 @@ fn write_geomeans(
     Ok(())
 }
 
+/// Format a p-value, which is often far below the precision worth printing.
+fn format_p_value(p: f64) -> String {
+    if p < 0.0001 {
+        "< 0.0001".to_string()
+    } else {
+        format!("= {p:.4}")
+    }
+}
+
 /// Format one bound of a speed up ratio, with just enough precision to tell the
 /// interval's two bounds apart.
 ///
@@ -418,6 +452,61 @@ mod tests {
         Ok(())
     }
 
+    /// Samples too few to reach the significance level however they fall get
+    /// no interval and are not significant.
+    #[test]
+    fn too_few_samples_are_not_significant() -> Result<()> {
+        let mut measurements = vec![];
+        for (engine, count) in [("a", 100), ("b", 99)] {
+            for _ in 0..3 {
+                measurements.push(measurement(engine, count));
+            }
+        }
+
+        let effect_sizes = calculate(0.01, &measurements)?;
+        assert_eq!(effect_sizes.len(), 1);
+
+        let e = &effect_sizes[0];
+        assert_eq!(e.confidence_interval, None);
+        assert!(!e.is_significant());
+
+        // Three samples each cannot beat `2 / C(6, 3)`.
+        assert!(e.p_value >= 0.1, "{}", e.p_value);
+
+        Ok(())
+    }
+
+    /// A comparison with plenty of well-separated samples is significant, and
+    /// its interval excludes 1.
+    #[test]
+    fn a_clear_difference_is_significant() -> Result<()> {
+        let mut measurements = vec![];
+        for (engine, base) in [("a", 100), ("b", 200)] {
+            for i in 0..10 {
+                measurements.push(measurement(engine, base + i));
+            }
+        }
+
+        let effect_sizes = calculate(0.01, &measurements)?;
+        let e = &effect_sizes[0];
+
+        assert!(e.is_significant(), "p = {}", e.p_value);
+        assert!((e.ratio - 2.0).abs() < 0.1, "{}", e.ratio);
+
+        let (low, high) = e.confidence_interval.unwrap();
+        assert!(low > 1.0, "the interval should exclude 1: {low} to {high}");
+
+        // `a` is the faster engine, and inverting the ratio swaps the
+        // interval's bounds.
+        let (ratio, interval) = e.a_speed_up_over_b();
+        assert!(ratio < 1.0, "{ratio}");
+        let (low_inverted, high_inverted) = interval.unwrap();
+        assert!((low_inverted - 1.0 / high).abs() < 1e-12);
+        assert!((high_inverted - 1.0 / low).abs() < 1e-12);
+
+        Ok(())
+    }
+
     #[test]
     fn effect_size_requires_at_least_two_engines() {
         let measurements = vec![measurement("only", 1), measurement("only", 2)];
@@ -446,10 +535,16 @@ mod tests {
             event: "cycles".into(),
             a_engine: a.clone(),
             a_mean: 100.0,
+            a_median: 100.0,
+            a_samples: 10,
             b_engine: b.clone(),
             b_mean: 200.0,
+            b_median: 200.0,
+            b_samples: 10,
             significance_level: 0.01,
-            half_width_confidence_interval: 1.0,
+            ratio: 2.0,
+            confidence_interval: Some((1.9, 2.1)),
+            p_value: 0.0001,
         };
         let summary = |engine: Engine<'a>, mean: f64| Summary {
             arch: "x86".into(),
@@ -537,6 +632,44 @@ mod tests {
         let geomean_block = &out[..out.find("Aaa").unwrap()];
         assert!(geomean_block.contains("No confidence interval"), "{out}");
         assert!(!geomean_block.contains("faster than"), "{out}");
+        Ok(())
+    }
+
+    /// A comparison with no interval has three possible causes, and the
+    /// message has to name the right one: only the first is fixed by running
+    /// more iterations.
+    #[test]
+    fn write_tells_apart_the_reasons_for_a_missing_interval() -> Result<()> {
+        let message = |samples: usize, zero_count: bool| -> Result<String> {
+            let (mut effect_size, mut summaries) = pair("Aaa");
+            effect_size.confidence_interval = None;
+            effect_size.a_samples = samples;
+            effect_size.b_samples = samples;
+            if zero_count {
+                summaries[0].min = 0;
+            }
+
+            let mut out = termcolor::NoColor::new(Vec::new());
+            write(vec![effect_size], &[], &summaries, 0.01, &mut out)?;
+            Ok(String::from_utf8(out.into_inner())?)
+        };
+
+        // Three samples of each engine cannot reach 1% however they fall, and
+        // more iterations is the answer.
+        let out = message(3, false)?;
+        assert!(out.contains("Not enough samples to compare"), "{out}");
+        assert!(out.contains("only p < 0.1000"), "{out}");
+
+        // Twenty can, so when they still bound nothing it is because the counts
+        // are too alike to rank apart, and more iterations will not help.
+        let out = message(20, false)?;
+        assert!(out.contains("too alike to rank apart"), "{out}");
+        assert!(!out.contains("Not enough samples"), "{out}");
+
+        // A zero count has no ratio at any sample size, which outranks both.
+        let out = message(20, true)?;
+        assert!(out.contains("a count of zero has no ratio"), "{out}");
+        assert!(!out.contains("Not enough samples"), "{out}");
         Ok(())
     }
 

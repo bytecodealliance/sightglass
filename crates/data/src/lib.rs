@@ -366,6 +366,12 @@ pub struct EffectSize<'a> {
     /// The first engine's result's arithmetic mean of the `count` field.
     pub a_mean: f64,
 
+    /// The first engine's result's median of the `count` field.
+    pub a_median: f64,
+
+    /// How many samples the first engine contributed.
+    pub a_samples: usize,
+
     /// The second engine being compared.
     ///
     /// This is the file path of the wasmtime benchmark API shared library used
@@ -375,18 +381,32 @@ pub struct EffectSize<'a> {
     /// The second engine's result's arithmetic mean of the `count` field.
     pub b_mean: f64,
 
+    /// The second engine's result's median of the `count` field.
+    pub b_median: f64,
+
+    /// How many samples the second engine contributed.
+    pub b_samples: usize,
+
     /// The significance level for the confidence interval.
     ///
     /// This is always between 0.0 and 1.0. Typical values are 0.01 and 0.05
     /// which correspond to 99% confidence and 95% confidence respectively.
     pub significance_level: f64,
 
-    /// The half-width confidence interval, i.e. the `i` in
+    /// How much larger `b`'s counts are than `a`'s: the median of the ratios
+    /// between every pair of their samples.
+    pub ratio: f64,
+
+    /// The confidence interval for `ratio`, as `(low, high)`.
     ///
-    /// ```text
-    /// b_mean - a_mean ± i
-    /// ```
-    pub half_width_confidence_interval: f64,
+    /// This is `None` when the samples cannot support an interval, as when
+    /// there are too few of them to reach `significance_level` however they
+    /// fall.
+    pub confidence_interval: Option<(f64, f64)>,
+
+    /// The probability of counts at least this far apart when the two engines
+    /// do not differ.
+    pub p_value: f64,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -398,33 +418,44 @@ struct EffectSizeWire<'a> {
     a_engine: Cow<'a, str>,               // a_engine.name
     a_engine_flags: Option<Cow<'a, str>>, // a_engine.flags
     a_mean: f64,
+    a_median: f64,
+    a_samples: usize,
     b_engine: Cow<'a, str>,
     b_engine_flags: Option<Cow<'a, str>>,
     b_mean: f64,
+    b_median: f64,
+    b_samples: usize,
     significance_level: f64,
-    half_width_confidence_interval: f64,
+    ratio: f64,
+    // Flattened into two columns, since `csv` cannot serialize a tuple field.
+    confidence_interval_low: Option<f64>,
+    confidence_interval_high: Option<f64>,
+    p_value: f64,
 }
 
 impl EffectSize<'_> {
-    /// Is the difference between `self.a_mean` and `self.b_mean` statistically
-    /// significant?
+    /// Did the two engines' counts differ by more than measurement noise?
+    ///
+    /// Samples too few to reach `significance_level` however they fall are not
+    /// significant, rather than being treated as a difference with no
+    /// uncertainty.
     pub fn is_significant(&self) -> bool {
-        (self.a_mean - self.b_mean).abs() > self.half_width_confidence_interval.abs()
+        self.confidence_interval.is_some() && self.p_value <= self.significance_level
     }
 
-    /// Return `b`'s speedup over `a` and the speedup's confidence interval.
-    pub fn b_speed_up_over_a(&self) -> (f64, f64) {
-        (
-            self.b_mean / self.a_mean,
-            self.half_width_confidence_interval / self.a_mean,
-        )
+    /// Return `b`'s speed up over `a` and the speed up's confidence interval.
+    pub fn b_speed_up_over_a(&self) -> (f64, Option<(f64, f64)>) {
+        (self.ratio, self.confidence_interval)
     }
 
     /// Return `a`'s speed up over `b` and the speed up's confidence interval.
-    pub fn a_speed_up_over_b(&self) -> (f64, f64) {
+    ///
+    /// Inverting a ratio swaps which end of its interval is which.
+    pub fn a_speed_up_over_b(&self) -> (f64, Option<(f64, f64)>) {
         (
-            self.a_mean / self.b_mean,
-            self.half_width_confidence_interval / self.b_mean,
+            1.0 / self.ratio,
+            self.confidence_interval
+                .map(|(low, high)| (1.0 / high, 1.0 / low)),
         )
     }
 }
@@ -445,9 +476,16 @@ impl<'a> Serialize for EffectSize<'a> {
             b_engine: self.b_engine.name.clone(),
             b_engine_flags: self.b_engine.flags.clone(),
             a_mean: self.a_mean,
+            a_median: self.a_median,
+            a_samples: self.a_samples,
             b_mean: self.b_mean,
+            b_median: self.b_median,
+            b_samples: self.b_samples,
             significance_level: self.significance_level,
-            half_width_confidence_interval: self.half_width_confidence_interval,
+            ratio: self.ratio,
+            confidence_interval_low: self.confidence_interval.map(|(low, _)| low),
+            confidence_interval_high: self.confidence_interval.map(|(_, high)| high),
+            p_value: self.p_value,
         };
         wire.serialize(serializer)
     }
@@ -473,9 +511,17 @@ impl<'a, 'de> Deserialize<'de> for EffectSize<'a> {
             phase: wire.phase,
             event: wire.event,
             a_mean: wire.a_mean,
+            a_median: wire.a_median,
+            a_samples: wire.a_samples,
             b_mean: wire.b_mean,
+            b_median: wire.b_median,
+            b_samples: wire.b_samples,
             significance_level: wire.significance_level,
-            half_width_confidence_interval: wire.half_width_confidence_interval,
+            ratio: wire.ratio,
+            confidence_interval: wire
+                .confidence_interval_low
+                .zip(wire.confidence_interval_high),
+            p_value: wire.p_value,
         })
     }
 }
