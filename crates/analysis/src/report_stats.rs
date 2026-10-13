@@ -1,3 +1,4 @@
+use crate::mann_whitney;
 use crate::summarize::{
     coefficient_of_variation, mean, percent_change, percentile_from_sorted, std_deviation,
 };
@@ -65,11 +66,21 @@ impl ReportConfig {
 pub struct RelativeStats {
     pub median_delta_pct: f64,
     pub mean_delta_pct: f64,
+
+    /// Whether the two engines' counts differ by more than measurement noise.
     pub is_significant: bool,
+
     pub effect_size_mean_diff: f64,
+
+    /// How much larger these counts are than the baseline's: the median of the
+    /// ratios between every pair of their samples.
     pub speedup_ratio: f64,
-    pub confidence_interval_half_width: Option<f64>,
-    pub speedup_confidence_interval: Option<f64>,
+
+    /// The confidence interval for `speedup_ratio`, as `(low, high)`, or `None`
+    /// when the samples cannot support one.
+    pub speedup_confidence_interval: Option<(f64, f64)>,
+
+    pub p_value: f64,
 }
 
 /// Statistics calculated for a benchmark grouped by prefix.
@@ -223,51 +234,20 @@ fn calculate_stats_for_measurements(
         let median_delta_pct = percent_change(median, baseline_median);
         let mean_delta_pct = percent_change(mean, baseline_mean);
 
-        // Always calculate basic relative metrics
         let effect_size_mean_diff = mean - baseline_mean;
-        let speedup_ratio = if baseline_mean > 0.0 {
-            mean / baseline_mean
-        } else {
-            1.0
-        };
 
-        // Use behrens-fisher for statistical significance
-        let current_stats: behrens_fisher::Stats = measurements.iter().map(|&c| c as f64).collect();
-        let baseline_stats: behrens_fisher::Stats =
-            baseline_measurements.iter().map(|&c| c as f64).collect();
+        let comparison =
+            mann_whitney::compare(significance_level, baseline_measurements, measurements);
 
-        if let Ok(ci) = behrens_fisher::confidence_interval(
-            1.0 - significance_level,
-            current_stats,
-            baseline_stats,
-        ) {
-            let is_significant = effect_size_mean_diff.abs() > ci.abs();
-            let speedup_confidence_interval = if baseline_mean > 0.0 {
-                ci / baseline_mean
-            } else {
-                0.0
-            };
-
-            Some(RelativeStats {
-                median_delta_pct,
-                mean_delta_pct,
-                is_significant,
-                effect_size_mean_diff,
-                speedup_ratio,
-                confidence_interval_half_width: Some(ci),
-                speedup_confidence_interval: Some(speedup_confidence_interval),
-            })
-        } else {
-            Some(RelativeStats {
-                median_delta_pct,
-                mean_delta_pct,
-                is_significant: false,
-                effect_size_mean_diff,
-                speedup_ratio,
-                confidence_interval_half_width: None,
-                speedup_confidence_interval: None,
-            })
-        }
+        comparison.map(|c| RelativeStats {
+            median_delta_pct,
+            mean_delta_pct,
+            is_significant: c.confidence_interval.is_some() && c.p_value <= significance_level,
+            effect_size_mean_diff,
+            speedup_ratio: c.ratio,
+            speedup_confidence_interval: c.confidence_interval,
+            p_value: c.p_value,
+        })
     } else {
         None
     };
@@ -289,6 +269,7 @@ fn calculate_stats_for_measurements(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sightglass_data::Measurement;
 
     #[test]
     fn test_calculate_stats_for_measurements() {
@@ -331,6 +312,40 @@ mod tests {
         let rel = stats.relative_stats.unwrap();
         assert_eq!(rel.mean_delta_pct, 10.0);
         assert_eq!(rel.median_delta_pct, 10.0);
+    }
+
+    /// A benchmark whose engines differ by more than noise is called
+    /// significant, and one whose engines agree is not.
+    #[test]
+    fn significance_follows_the_test() {
+        let mut measurements = vec![];
+        for i in 0..2 {
+            let wasm = format!("benchmarks/b{i}/benchmark.wasm");
+            // The first benchmark regresses; the second does not move.
+            let shift = if i == 0 { 20 } else { 0 };
+            for (engine, base) in [("base", 100), ("other", 100 + shift)] {
+                for j in 0..6 {
+                    measurements.push(Measurement {
+                        arch: "x86_64".into(),
+                        engine: engine.into(),
+                        wasm: wasm.clone().into(),
+                        phase: Phase::Execution,
+                        event: "cycles".into(),
+                        count: base + j as u64,
+                    });
+                }
+            }
+        }
+
+        let config = ReportConfig::new("base").with_significance_level(0.01);
+        let results = calculate_benchmark_stats(&measurements, &config).unwrap();
+
+        let differing = results["b0"]["other"].relative_stats.as_ref().unwrap();
+        assert!(differing.p_value <= 0.01, "{}", differing.p_value);
+        assert!(differing.is_significant);
+
+        let same = results["b1"]["other"].relative_stats.as_ref().unwrap();
+        assert!(!same.is_significant, "p = {}", same.p_value);
     }
 
     #[test]

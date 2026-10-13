@@ -329,10 +329,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="confidence-col">
-                                    {% if rel.confidence_interval_half_width %}
-                                        ±{{ rel.confidence_interval_half_width|cyclefmt }} cycles
+                                    {% if rel.speedup_confidence_interval %}
+                                        {{ rel.speedup_confidence_interval[0]|round(3) }}x to {{ rel.speedup_confidence_interval[1]|round(3) }}x
                                     {% else %}
-                                        —
+                                        &mdash;
                                     {% endif %}
                                 </td>
                                 <td class="cv-col{% if pstats.cv > 5 %} high-cv{% endif %}">{{ pstats.cv|floatfmt }}%</td>
