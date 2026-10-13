@@ -91,6 +91,20 @@ pub fn percentile_from_sorted(sorted_numbers: &[u64], p: f64) -> f64 {
     }
 }
 
+/// The percent change of `value` against `baseline`.
+///
+/// This is the plain percent change, `(value - baseline) / baseline`, not the
+/// symmetric difference: `report_stats` has an explicit baseline engine, so the
+/// two values are not interchangeable. A baseline of zero has no percent change
+/// and is reported as zero.
+pub fn percent_change(value: f64, baseline: f64) -> f64 {
+    if baseline == 0.0 {
+        0.0
+    } else {
+        (value - baseline) / baseline * 100.0
+    }
+}
+
 /// Calculate the coefficient of variation (CV) as a percentage.
 pub fn coefficient_of_variation(numbers: &[u64]) -> f64 {
     let mean_val = mean(numbers);

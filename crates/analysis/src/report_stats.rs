@@ -1,4 +1,6 @@
-use crate::summarize::{coefficient_of_variation, mean, percentile_from_sorted, std_deviation};
+use crate::summarize::{
+    coefficient_of_variation, mean, percent_change, percentile_from_sorted, std_deviation,
+};
 use sightglass_data::{extract_benchmark_name, Measurement, Phase};
 use std::collections::HashMap;
 use thiserror::Error;
@@ -61,7 +63,7 @@ impl ReportConfig {
 /// Statistics relative to a baseline measurement
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct RelativeStats {
-    pub p25_delta_pct: f64,
+    pub median_delta_pct: f64,
     pub mean_delta_pct: f64,
     pub is_significant: bool,
     pub effect_size_mean_diff: f64,
@@ -217,9 +219,9 @@ fn calculate_stats_for_measurements(
         let baseline_mean = crate::summarize::mean(baseline_measurements);
         let mut baseline_sorted = baseline_measurements.to_vec();
         baseline_sorted.sort();
-        let baseline_p25 = percentile_from_sorted(&baseline_sorted, 25.0);
-        let p25_delta_pct = (p25 - baseline_p25) / (p25 + baseline_p25) * 100.0;
-        let mean_delta_pct = (mean - baseline_mean) / (mean + baseline_mean) * 100.0;
+        let baseline_median = percentile_from_sorted(&baseline_sorted, 50.0);
+        let median_delta_pct = percent_change(median, baseline_median);
+        let mean_delta_pct = percent_change(mean, baseline_mean);
 
         // Always calculate basic relative metrics
         let effect_size_mean_diff = mean - baseline_mean;
@@ -247,7 +249,7 @@ fn calculate_stats_for_measurements(
             };
 
             Some(RelativeStats {
-                p25_delta_pct,
+                median_delta_pct,
                 mean_delta_pct,
                 is_significant,
                 effect_size_mean_diff,
@@ -257,7 +259,7 @@ fn calculate_stats_for_measurements(
             })
         } else {
             Some(RelativeStats {
-                p25_delta_pct,
+                median_delta_pct,
                 mean_delta_pct,
                 is_significant: false,
                 effect_size_mean_diff,
@@ -316,6 +318,19 @@ mod tests {
         assert!(rel.mean_delta_pct > 0.0); // Should be positive (measurements higher than baseline)
         assert!(rel.speedup_ratio > 1.0); // Should be > 1 since measurements are higher than baseline
         assert!(rel.effect_size_mean_diff > 0.0); // Should be positive mean difference
+    }
+
+    /// A 10% regression reports 10%.
+    #[test]
+    fn delta_percentages_are_relative_to_the_baseline() {
+        let baseline = vec![100, 100, 100, 100, 100];
+        let measurements = vec![110, 110, 110, 110, 110];
+        let stats = calculate_stats_for_measurements(&measurements, Some(&baseline), 0.05)
+            .expect("Should calculate stats successfully");
+
+        let rel = stats.relative_stats.unwrap();
+        assert_eq!(rel.mean_delta_pct, 10.0);
+        assert_eq!(rel.median_delta_pct, 10.0);
     }
 
     #[test]
