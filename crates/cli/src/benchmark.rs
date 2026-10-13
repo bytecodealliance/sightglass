@@ -607,6 +607,13 @@ impl BenchmarkCommand {
                     Box::new(MultiMeasure::new(self.measures.iter().map(|m| m.build())))
                 };
 
+                // Compilation is just a means to an end for these phases, so
+                // let the engine cache it rather than measure it.
+                let post_compilation_phase = matches!(
+                    self.benchmark_phase,
+                    Some(Phase::Instantiation | Phase::Execution)
+                );
+
                 // Create the bench API engine and cache it for reuse across all
                 // iterations of this benchmark.
                 let engine = Engine::new(
@@ -618,13 +625,14 @@ impl BenchmarkCommand {
                     &mut measurements,
                     &mut measure,
                     engine_flags,
+                    post_compilation_phase,
                 );
                 let mut engine = Some(engine);
 
                 // And if we are benchmarking just a post-compilation phase,
                 // then eagerly compile the Wasm module for reuse.
                 let mut module = None;
-                if let Some(Phase::Instantiation | Phase::Execution) = self.benchmark_phase {
+                if post_compilation_phase {
                     module = Some(engine.take().unwrap().compile(&bytes));
                 }
 
