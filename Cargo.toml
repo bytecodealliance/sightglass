@@ -34,7 +34,6 @@ exclude = [
     "benchmarks/shootout-xblabla20",
     "benchmarks/shootout-xchacha20",
     "benchmarks/tract-onnx-image-classification",
-    "engines/native/libengine",
 ]
 
 # Always build Wasmtime and Cranelift in release mode to avoid slow Wasm

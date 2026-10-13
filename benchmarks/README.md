@@ -180,28 +180,3 @@ whose bodies are empty on Wasm cannot be scaled up.
 
 `noop` executes 0 instructions by design and is intended for measuring harness
 overhead.
-
-## Compatibility Requirements for Native Execution
-
-Sightglass can also measure the performance of a subset of benchmarks compiled
-to native code (i.e., not WebAssembly). To compile these benchmarks without
-changing their source code, this involves a delicate interface with the [native
-engine] with some additional requirements beyond the [Minimal Technical
-Requirements] noted above:
-
-[native engine]: ../engines/native
-[Minimal Technical Requirements]: #minimal-technical-requirements
-
-* Generate an ELF shared library linked to the [native engine] shared library to
-  provide definitions for `bench_start` and `bench_end`.
-
-* Rename the `main` function to `native_entry`. For C- and C++-based source this
-  can be done with a simple define directive passed to `cc` (e.g.,
-  `-Dmain=native_entry`).
-
-* Provide reproducible builds via a `Dockerfile.native` file (see
-  [`build-native.sh`](./build-native.sh)).
-
-Note that support for native execution is optional: adding a WebAssembly
-benchmark does not imply the need to support its native equivalent &mdash; CI
-will not fail if it is not included.
