@@ -76,8 +76,7 @@ jobs:
         cargo run benchmark \
         --engine=artifacts/wasmtime-main/libengine.so \
         --engine-flags "-Wgc -Wfunction-references -Wexceptions" \
-        --processes=4 \
-        --iterations-per-process=1 \
+        --iters=4 \
         -- "${PARTITION_SUITE}"
 
   check:

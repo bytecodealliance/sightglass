@@ -260,8 +260,6 @@ mod tests {
                 flags: None,
             },
             wasm: "bench.wasm".into(),
-            process: 0,
-            iteration: 0,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,

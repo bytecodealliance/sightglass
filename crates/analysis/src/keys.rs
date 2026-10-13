@@ -135,8 +135,6 @@ mod tests {
             arch: "x86".into(),
             engine: "wasmtime".into(),
             wasm: "bench.wasm".into(),
-            process: 42,
-            iteration: 0,
             phase: Phase::Compilation,
             event: "cycles".into(),
             count: 42,

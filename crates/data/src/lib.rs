@@ -127,13 +127,6 @@ pub struct Measurement<'a> {
     /// The file path of the Wasm benchmark program.
     pub wasm: Cow<'a, str>,
 
-    /// The id of the process within which this measurement was taken.
-    pub process: u32,
-
-    /// This measurement was the `n`th measurement of this phase taken within a
-    /// process.
-    pub iteration: u32,
-
     /// The phase in a Wasm program's lifecycle that was measured: compilation,
     /// instantiation, or execution.
     pub phase: Phase,
@@ -156,8 +149,6 @@ struct MeasurementWire<'a> {
     engine: Cow<'a, str>,               // engine.name
     engine_flags: Option<Cow<'a, str>>, // engine.flags
     wasm: Cow<'a, str>,
-    process: u32,
-    iteration: u32,
     phase: Phase,
     event: Cow<'a, str>,
     count: u64,
@@ -174,8 +165,6 @@ impl<'a> Serialize for Measurement<'a> {
             engine: self.engine.name.clone(),
             engine_flags: self.engine.flags.clone(),
             wasm: self.wasm.clone(),
-            process: self.process,
-            iteration: self.iteration,
             phase: self.phase,
             event: self.event.clone(),
             count: self.count,
@@ -197,8 +186,6 @@ impl<'a, 'de> Deserialize<'de> for Measurement<'a> {
                 flags: wire.engine_flags,
             },
             wasm: wire.wasm,
-            process: wire.process,
-            iteration: wire.iteration,
             phase: wire.phase,
             event: wire.event,
             count: wire.count,
@@ -543,8 +530,6 @@ mod tests {
                 flags: Some("-Wfoo=bar".into()),
             },
             wasm: "benchmark.wasm".into(),
-            process: 101,
-            iteration: 1,
             phase: Phase::Execution,
             event: "instructions".into(),
             count: 5000,

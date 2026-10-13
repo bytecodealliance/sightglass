@@ -5,10 +5,25 @@ use std::path::Path;
 use std::ptr;
 use std::{cell::UnsafeCell, ffi::c_void};
 
+/// The version of `WasmBenchConfig` we are built against.
+///
+/// NB: Keep this in sync with `WASM_BENCH_CONFIG_VERSION` in
+/// `wasmtime-bench-api`!
+const WASM_BENCH_CONFIG_VERSION: u32 = 1;
+
 /// NB: Keep this in sync with the version defined in
 /// `wasmtime-bench-api`!
+///
+/// This is passed to the engine by pointer, with `version` naming the fields we
+/// know about and `size` describing how much of it we actually allocated, so new
+/// fields may only ever be appended to the end. An engine that does not know
+/// about a field we added will see its own checks fail and fall back to a
+/// default, rather than read past our allocation.
 #[repr(C)]
 struct WasmBenchConfig {
+    version: u32,
+    size: usize,
+
     working_dir_ptr: *const u8,
     working_dir_len: usize,
 
@@ -35,12 +50,16 @@ struct WasmBenchConfig {
 
     execution_flags_ptr: *const u8,
     execution_flags_len: usize,
+
+    cache: bool,
 }
 
 /// An shared library that implements our in-process benchmarking API.
 pub struct BenchApi<'a> {
-    wasm_bench_create:
-        libloading::Symbol<'a, unsafe extern "C" fn(WasmBenchConfig, *mut *mut c_void) -> i32>,
+    wasm_bench_create: libloading::Symbol<
+        'a,
+        unsafe extern "C" fn(*const WasmBenchConfig, *mut *mut c_void) -> i32,
+    >,
     wasm_bench_free: libloading::Symbol<'a, unsafe extern "C" fn(*const c_void)>,
     wasm_bench_compile:
         libloading::Symbol<'a, unsafe extern "C" fn(*const c_void, *const u8, usize) -> i32>,
@@ -76,6 +95,9 @@ pub struct Engine<'a, 'b, 'c, M> {
 
 impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
     /// Construct a new engine from the given `BenchApi`.
+    ///
+    /// `cache` asks the engine to enable its compilation cache. Leave it off
+    /// when compilation is being measured.
     // NB: take a mutable reference to the `BenchApi` so that no one else can
     // call its API methods out of order.
     #[allow(clippy::too_many_arguments)]
@@ -88,6 +110,7 @@ impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
         measurements: &'a mut Measurements<'c>,
         measure: &'a mut M,
         execution_flags: Option<&'a str>,
+        cache: bool,
     ) -> Self
     where
         M: Measure,
@@ -101,6 +124,8 @@ impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
         let measurement_data = Box::into_raw(measurement_data);
 
         let config = WasmBenchConfig {
+            version: WASM_BENCH_CONFIG_VERSION,
+            size: std::mem::size_of::<WasmBenchConfig>(),
             working_dir_ptr: working_dir.as_ptr(),
             working_dir_len: working_dir.len(),
             stdout_path_ptr: stdout_path.as_ptr(),
@@ -120,11 +145,12 @@ impl<'a, 'b, 'c, M> Engine<'a, 'b, 'c, M> {
             execution_end: Self::execution_end,
             execution_flags_ptr: execution_flags.as_ref().map_or(ptr::null(), |p| p.as_ptr()),
             execution_flags_len: execution_flags.as_ref().map_or(0, |p| p.len()),
+            cache,
         };
 
         let mut engine = ptr::null_mut();
         unsafe {
-            let result = (bench_api.wasm_bench_create)(config, &mut engine);
+            let result = (bench_api.wasm_bench_create)(&config, &mut engine);
             assert_eq!(result, 0);
             assert!(!engine.is_null());
         };

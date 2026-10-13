@@ -20,13 +20,6 @@ pub struct UploadMeasurement<'a> {
     /// relies on `upload` to insert the data for this ID.
     pub benchmark: Cow<'a, str>,
 
-    /// The id of the process within which this measurement was taken.
-    pub process: u32,
-
-    /// This measurement was the `n`th measurement of this phase taken within a
-    /// process.
-    pub iteration: u32,
-
     /// The phase in a Wasm program's lifecycle that was measured: compilation,
     /// instantiation, or execution.
     pub phase: Phase,
@@ -59,8 +52,6 @@ impl<'a> UploadMeasurement<'a> {
             machine: Cow::Borrowed(machine),
             engine: Cow::Borrowed(engine),
             benchmark: Cow::Borrowed(benchmark),
-            process: measurement.process,
-            iteration: measurement.iteration,
             phase: measurement.phase,
             event: Cow::Borrowed(measurement.event.as_ref()),
             count: measurement.count,

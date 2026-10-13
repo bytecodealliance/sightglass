@@ -9,18 +9,12 @@ use std::collections::{BTreeMap, BTreeSet};
 /// [`calculate`].
 pub const GEOMEAN: &str = "Geomean";
 
-/// The `process` given to the synthetic measurements produced by `calculate`.
-///
-/// A geomean aggregates samples from many processes, so it belongs to none.
-const GEOMEAN_PROCESS: u32 = 0;
-
 /// The fields measurements must agree on to be aggregated: we aggregate across
 /// benchmarks, never across architectures, engines, phases, or events.
 type GroupKey<'a> = (Cow<'a, str>, Engine<'a>, Phase, Cow<'a, str>);
 
-/// One benchmark's `(process, iteration, count)` samples within a group, which
-/// sort deterministically.
-type Samples = Vec<(u32, u32, u64)>;
+/// One benchmark's samples within a group, which sort deterministically.
+type Samples = Vec<u64>;
 
 /// The benchmarks of a group, by name.
 type Benchmarks<'a> = BTreeMap<Cow<'a, str>, Samples>;
@@ -31,7 +25,7 @@ type SharedBenchmarks<'a> = BTreeMap<(Cow<'a, str>, Phase, Cow<'a, str>), BTreeS
 /// Take the geometric mean of measurement `count`s across all benchmarks,
 /// producing new "Geomean" measurements: one per sample index, each aggregating
 /// the `i`th sample of every benchmark. A benchmark's `i`th sample is its `i`th
-/// measurement in order of process and iteration.
+/// smallest count, since its samples are otherwise unordered.
 ///
 /// A geometric mean weights every benchmark equally, where a sum is dominated by
 /// whichever has the largest counts: spidermonkey's millions of cycles drown out
@@ -54,10 +48,9 @@ type SharedBenchmarks<'a> = BTreeMap<(Cow<'a, str>, Phase, Cow<'a, str>), BTreeS
 /// geomean and its confidence interval directly in log space would not need
 /// rescaling, but would not be able to reuse our existing analysis pipeline.
 pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
-    // We cannot simply group by `process` and `iteration`: with `--processes N`
-    // each (engine, benchmark) pair gets its own subprocesses, so no two
-    // benchmarks ever share a process id and such groups would hold a single
-    // benchmark's sample.
+    // Samples carry nothing that pairs one benchmark's with another's: each is
+    // taken in its own process, so we group by everything but the benchmark and
+    // line the samples up by sorted order below.
     let mut groups: BTreeMap<GroupKey<'a>, Benchmarks<'a>> = BTreeMap::new();
     for m in measurements.iter().filter(|m| m.wasm != GEOMEAN) {
         groups
@@ -65,7 +58,7 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
             .or_default()
             .entry(m.wasm.clone())
             .or_default()
-            .push((m.process, m.iteration, m.count));
+            .push(m.count);
     }
 
     let shared = shared_benchmarks(&groups);
@@ -83,7 +76,7 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
             // `i`th of each.
             .map(|(_, mut samples)| {
                 samples.sort_unstable();
-                samples.into_iter().map(|(_, _, count)| count).collect()
+                samples
             })
             .collect();
 
@@ -111,12 +104,10 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Measurement<'a>> {
             _ => 1.0,
         };
 
-        geomeans.extend(per_sample.iter().enumerate().map(|(i, g)| Measurement {
+        geomeans.extend(per_sample.iter().map(|g| Measurement {
             arch: arch.clone(),
             engine: engine.clone(),
             wasm: GEOMEAN.into(),
-            process: GEOMEAN_PROCESS,
-            iteration: i as u32,
             phase,
             event: event.clone(),
             count: (g * scale).round() as u64,
@@ -228,12 +219,7 @@ pub fn add<'a>(measurements: &mut Vec<Measurement<'a>>) {
 mod tests {
     use super::*;
 
-    fn measurement(
-        wasm: &'static str,
-        process: u32,
-        iteration: u32,
-        count: u64,
-    ) -> Measurement<'static> {
+    fn measurement(wasm: &'static str, count: u64) -> Measurement<'static> {
         Measurement {
             arch: "x86_64".into(),
             engine: Engine {
@@ -241,8 +227,6 @@ mod tests {
                 flags: None,
             },
             wasm: wasm.into(),
-            process,
-            iteration,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,
@@ -308,12 +292,12 @@ mod tests {
 
     #[test]
     fn geomeans_counts_across_benchmarks() {
-        // Two benchmarks over two iterations of one process.
+        // Two benchmarks, each sampled by two processes.
         let measurements = vec![
-            measurement("a.wasm", 7, 0, 10),
-            measurement("b.wasm", 7, 0, 1000),
-            measurement("a.wasm", 7, 1, 20),
-            measurement("b.wasm", 7, 1, 2000),
+            measurement("a.wasm", 10),
+            measurement("b.wasm", 1000),
+            measurement("a.wasm", 20),
+            measurement("b.wasm", 2000),
         ];
 
         let geomeans = calculate(&measurements);
@@ -324,24 +308,22 @@ mod tests {
             assert_eq!(g.event, "cycles");
         }
 
-        let mut by_iteration: Vec<_> = geomeans.iter().map(|g| (g.iteration, g.count)).collect();
-        by_iteration.sort();
-        assert_eq!(by_iteration, vec![(0, 100), (1, 200)]);
+        assert_eq!(counts(&geomeans), vec![100, 200]);
     }
 
     #[test]
     fn geomeans_across_benchmarks_measured_in_different_processes() {
-        // With `--processes N` no two benchmarks share a process id, but the
-        // geomeans must still aggregate across them.
+        // Each sample comes from its own process, and no two benchmarks share
+        // one, but the geomeans must still aggregate across them.
         let measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("a.wasm", 1, 1, 20),
-            measurement("a.wasm", 2, 0, 30),
-            measurement("a.wasm", 2, 1, 40),
-            measurement("b.wasm", 3, 0, 1000),
-            measurement("b.wasm", 3, 1, 2000),
-            measurement("b.wasm", 4, 0, 3000),
-            measurement("b.wasm", 4, 1, 4000),
+            measurement("a.wasm", 10),
+            measurement("a.wasm", 20),
+            measurement("a.wasm", 30),
+            measurement("a.wasm", 40),
+            measurement("b.wasm", 1000),
+            measurement("b.wasm", 2000),
+            measurement("b.wasm", 3000),
+            measurement("b.wasm", 4000),
         ];
 
         // One geomean per sample, rather than one per benchmark per sample...
@@ -363,10 +345,10 @@ mod tests {
         // `b.wasm` was measured once, so only one sample covers every benchmark.
         // Aggregating `a.wasm`'s extra samples alone would leave `b.wasm` out.
         let measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("a.wasm", 1, 1, 20),
-            measurement("a.wasm", 1, 2, 30),
-            measurement("b.wasm", 2, 0, 1000),
+            measurement("a.wasm", 10),
+            measurement("a.wasm", 20),
+            measurement("a.wasm", 30),
+            measurement("b.wasm", 1000),
         ];
 
         let geomeans = calculate(&measurements);
@@ -385,12 +367,12 @@ mod tests {
         };
 
         let measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("b.wasm", 2, 0, 1000),
-            compilation(measurement("a.wasm", 1, 0, 40)),
-            compilation(measurement("b.wasm", 2, 0, 4000)),
-            nanoseconds(measurement("a.wasm", 1, 0, 90)),
-            nanoseconds(measurement("b.wasm", 2, 0, 9000)),
+            measurement("a.wasm", 10),
+            measurement("b.wasm", 1000),
+            compilation(measurement("a.wasm", 40)),
+            compilation(measurement("b.wasm", 4000)),
+            nanoseconds(measurement("a.wasm", 90)),
+            nanoseconds(measurement("b.wasm", 9000)),
         ];
 
         let geomeans = calculate(&measurements);
@@ -402,10 +384,10 @@ mod tests {
         // Without rescaling the rows average below this, by an amount that grows
         // with the engine's own noise.
         let measurements = vec![
-            measurement("a.wasm", 1, 0, 100),
-            measurement("a.wasm", 1, 1, 10_000),
-            measurement("b.wasm", 2, 0, 500),
-            measurement("b.wasm", 2, 1, 500),
+            measurement("a.wasm", 100),
+            measurement("a.wasm", 10_000),
+            measurement("b.wasm", 500),
+            measurement("b.wasm", 500),
         ];
 
         let geomeans = calculate(&measurements);
@@ -423,24 +405,20 @@ mod tests {
         // around it, and its two benchmarks swing opposite ways. Averaging the
         // raw per-sample geomeans would put `noisy` at ~624, which
         // `effect_size` would report as 60% faster than `steady`.
-        let engine = |name: &'static str, wasm: &'static str, i: u32, count: u64| Measurement {
+        let engine = |name: &'static str, wasm: &'static str, count: u64| Measurement {
             engine: Engine {
                 name: name.into(),
                 flags: None,
             },
-            ..measurement(wasm, 1, i, count)
+            ..measurement(wasm, count)
         };
 
         let mut measurements = vec![];
-        for (i, (a, b)) in [(100u64, 1900u64), (1900, 100), (1000, 1000)]
-            .iter()
-            .enumerate()
-        {
-            let i = i as u32;
-            measurements.push(engine("noisy", "a.wasm", i, *a));
-            measurements.push(engine("noisy", "b.wasm", i, *b));
-            measurements.push(engine("steady", "a.wasm", i, 1000));
-            measurements.push(engine("steady", "b.wasm", i, 1000));
+        for (a, b) in [(100u64, 1900u64), (1900, 100), (1000, 1000)] {
+            measurements.push(engine("noisy", "a.wasm", a));
+            measurements.push(engine("noisy", "b.wasm", b));
+            measurements.push(engine("steady", "a.wasm", 1000));
+            measurements.push(engine("steady", "b.wasm", 1000));
         }
 
         let geomeans = calculate(&measurements);
@@ -472,7 +450,7 @@ mod tests {
                 name: name.into(),
                 flags: None,
             },
-            ..measurement(wasm, 1, 0, count)
+            ..measurement(wasm, count)
         };
 
         let measurements = vec![
@@ -495,19 +473,13 @@ mod tests {
     fn a_single_benchmark_produces_no_row() {
         // The geomean of one benchmark is that benchmark, which would appear
         // twice under two names and skew the insignificance count.
-        let measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("a.wasm", 1, 1, 20),
-        ];
+        let measurements = vec![measurement("a.wasm", 10), measurement("a.wasm", 20)];
         assert!(calculate(&measurements).is_empty());
     }
 
     #[test]
     fn add_appends_geomeans_to_the_measurements() {
-        let mut measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("b.wasm", 2, 0, 1000),
-        ];
+        let mut measurements = vec![measurement("a.wasm", 10), measurement("b.wasm", 1000)];
         add(&mut measurements);
 
         assert_eq!(measurements.len(), 3);
@@ -523,10 +495,7 @@ mod tests {
     fn add_is_idempotent() {
         // Existing geomeans are recomputed rather than folded in, so analyzing
         // already-augmented measurements doesn't aggregate them twice.
-        let mut measurements = vec![
-            measurement("a.wasm", 1, 0, 10),
-            measurement("b.wasm", 2, 0, 1000),
-        ];
+        let mut measurements = vec![measurement("a.wasm", 10), measurement("b.wasm", 1000)];
         add(&mut measurements);
         let once = measurements.clone();
         add(&mut measurements);

@@ -31,10 +31,8 @@ fn benchmark_output_format_requires_raw() {
 fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--benchmark-phase")
         .arg("compilation")
         .arg(benchmark("noop"))
@@ -51,10 +49,8 @@ fn benchmark_phase_compilation() {
 fn benchmark_phase_instantiation() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--benchmark-phase")
         .arg("instantiation")
         .arg(benchmark("noop"))
@@ -72,10 +68,8 @@ fn benchmark_phase_instantiation() {
 fn benchmark_phase_execution() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--benchmark-phase")
         .arg("execution")
         .arg(benchmark("noop"))
@@ -93,10 +87,8 @@ fn benchmark_phase_execution() {
 fn benchmark_json() {
     let assert = sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
-        .arg("2")
-        .arg("--iterations-per-process")
-        .arg("2")
+        .arg("--iters")
+        .arg("4")
         .arg("--output-format")
         .arg("json")
         .arg("--")
@@ -121,10 +113,8 @@ fn benchmark_json() {
 fn benchmark_csv() {
     let assert = sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
-        .arg("2")
-        .arg("--iterations-per-process")
-        .arg("2")
+        .arg("--iters")
+        .arg("4")
         .arg("--output-format")
         .arg("csv")
         .arg("--")
@@ -140,13 +130,11 @@ fn benchmark_csv() {
 
     assert
         .stdout(
-            predicate::str::starts_with(
-                "arch,engine,engine_flags,wasm,process,iteration,phase,event,count\n",
-            )
-            .and(predicate::str::contains(benchmark("noop")))
-            .and(predicate::str::contains("Compilation"))
-            .and(predicate::str::contains("Instantiation"))
-            .and(predicate::str::contains("Execution")),
+            predicate::str::starts_with("arch,engine,engine_flags,wasm,phase,event,count\n")
+                .and(predicate::str::contains(benchmark("noop")))
+                .and(predicate::str::contains("Compilation"))
+                .and(predicate::str::contains("Instantiation"))
+                .and(predicate::str::contains("Execution")),
         )
         .success();
 }
@@ -154,9 +142,7 @@ fn benchmark_csv() {
 #[test]
 fn benchmark_summary() {
     sightglass_cli_benchmark()
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("3")
         .arg("--")
         .arg(benchmark("noop"))
@@ -194,9 +180,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg(&test_engine)
         .arg("--engine")
         .arg(&alt_engine_path)
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("200")
         // The two engines are identical copies, so their differences are not
         // significant; show them anyway to exercise the output format.
@@ -254,9 +238,7 @@ fn benchmark_single_engine_multiple_flags() {
         .arg("-W fuel=99999999")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -285,9 +267,7 @@ fn benchmark_multiple_engines_common_flags() {
         .arg(&alt)
         .arg("--engine-flags-common")
         .arg("-W fuel=99999999")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -312,9 +292,7 @@ fn benchmark_multiple_engines_multiple_flags() {
         .arg("-W fuel=99999999")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -343,9 +321,7 @@ fn benchmark_common_and_per_engine_flags() {
         .arg("")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -367,10 +343,8 @@ fn benchmark_common_and_per_engine_flags() {
 #[test]
 fn benchmark_geomean() {
     sightglass_cli_benchmark()
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--")
         .arg(benchmark("noop"))
         .arg(benchmark("pulldown-cmark"))
@@ -386,9 +360,7 @@ fn benchmark_output_file() -> anyhow::Result<()> {
     let out = dir.path().join("out.json");
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("1")
         .arg("--output-file")
         .arg(&out)
@@ -409,9 +381,7 @@ fn benchmark_output_file() -> anyhow::Result<()> {
 fn benchmark_name_override() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("1")
         .arg("--name")
         .arg("my-custom-engine")
@@ -427,9 +397,7 @@ fn benchmark_name_override() {
 fn benchmark_measure_noop() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("1")
         .arg("--measure")
         .arg("time")
@@ -450,9 +418,7 @@ fn benchmark_saves_data_file() -> anyhow::Result<()> {
 
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("2")
         .arg("--")
         .arg(benchmark("noop"))
@@ -505,10 +471,8 @@ fn benchmark_saves_data_file_from_subprocesses() -> anyhow::Result<()> {
 
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--")
         .arg(benchmark("noop"))
         .assert()
@@ -520,11 +484,15 @@ fn benchmark_saves_data_file_from_subprocesses() -> anyhow::Result<()> {
         !measurements.is_empty(),
         "the data file has no measurements"
     );
-    assert!(
-        measurements
-            .iter()
-            .any(|m| m.process != measurements[0].process),
-        "expected measurements from more than one process: {measurements:?}"
+    // Each process contributes one sample per (phase, event), so the parent
+    // collected both subprocesses' data rather than just the last one's.
+    let samples = measurements
+        .iter()
+        .filter(|m| m.phase == Phase::Execution && m.event == measurements[0].event)
+        .count();
+    assert_eq!(
+        samples, 2,
+        "expected one sample from each of the two processes: {measurements:?}"
     );
 
     Ok(())
@@ -546,9 +514,7 @@ fn benchmark_rotates_data_file() -> anyhow::Result<()> {
     let run = || {
         sightglass_cli_benchmark()
             .env(DATA_DIR_ENV_VAR, dir.path())
-            .arg("--processes")
-            .arg("1")
-            .arg("--iterations-per-process")
+            .arg("--iters")
             .arg("1")
             .arg("--")
             .arg(benchmark("noop"))
@@ -587,9 +553,7 @@ fn benchmark_raw_does_not_save_data_file() -> anyhow::Result<()> {
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
         .arg("--raw")
-        .arg("--processes")
-        .arg("1")
-        .arg("--iterations-per-process")
+        .arg("--iters")
         .arg("1")
         .arg("--")
         .arg(benchmark("noop"))

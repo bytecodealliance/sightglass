@@ -23,5 +23,5 @@ fi
 
 # Benchmark each Wasm file.
 $SIGHTGLASS benchmark --engine $ENGINE \
-    --processes 1 --iterations-per-process 3 \
+    --iters 3 \
     $SUITE

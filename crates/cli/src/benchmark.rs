@@ -17,8 +17,7 @@ use std::{
 };
 use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
-const DEFAULT_PROCESSES: usize = 10;
-const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
+const DEFAULT_ITERATIONS: usize = 100;
 
 const DATA_FILE: &str = "sightglass-data.csv";
 const OLD_DATA_FILE: &str = "sightglass-data.old.csv";
@@ -30,8 +29,7 @@ mod callgrind {
     use sightglass_recorder::measure::callgrind::CALLGRIND_OUT_DIR_ENV_VAR;
     use tempfile::TempDir;
 
-    const DEFAULT_CALLGRIND_PROCESSES: usize = 3;
-    const DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS: usize = 1;
+    const DEFAULT_CALLGRIND_ITERATIONS: usize = 3;
 
     // 64KiB, 8-way associative, 64B line size.
     const CACHE_MODEL_I1: &str = "65536,8,64";
@@ -54,19 +52,11 @@ mod callgrind {
     }
 
     impl BenchmarkCommand {
-        pub(super) fn default_processes(&self) -> usize {
+        pub(super) fn default_iterations(&self) -> usize {
             if self.uses_callgrind() {
-                DEFAULT_CALLGRIND_PROCESSES
+                DEFAULT_CALLGRIND_ITERATIONS
             } else {
-                DEFAULT_PROCESSES
-            }
-        }
-
-        pub(super) fn default_iterations_per_process(&self) -> usize {
-            if self.uses_callgrind() {
-                DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS
-            } else {
-                DEFAULT_ITERATIONS_PER_PROCESS
+                DEFAULT_ITERATIONS
             }
         }
 
@@ -133,7 +123,6 @@ mod callgrind {
                 engine_flags,
                 wasm,
                 1,
-                self.iterations_per_process(),
                 Format::Json,
             );
 
@@ -183,12 +172,8 @@ mod callgrind {
     use super::*;
 
     impl BenchmarkCommand {
-        pub(super) fn default_processes(&self) -> usize {
-            DEFAULT_PROCESSES
-        }
-
-        pub(super) fn default_iterations_per_process(&self) -> usize {
-            DEFAULT_ITERATIONS_PER_PROCESS
+        pub(super) fn default_iterations(&self) -> usize {
+            DEFAULT_ITERATIONS
         }
 
         pub(super) fn validate_callgrind(&self) -> Result<()> {
@@ -213,9 +198,6 @@ mod callgrind {
 }
 
 /// Measure compilation, instantiation, and execution of a Wasm file.
-///
-/// The total number of samples taken for each Wasm benchmark is `PROCESSES *
-/// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(Parser, Debug)]
 pub struct BenchmarkCommand {
     /// The path to the file(s) to benchmark. This accepts one or more:
@@ -306,12 +288,17 @@ pub struct BenchmarkCommand {
     )]
     engine_flags_common: Option<String>,
 
-    /// How many processes should we use for each Wasm benchmark?
+    /// How many times should we run each benchmark?
     ///
-    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
-    /// default is `3`.
-    #[arg(long = "processes", value_name = "PROCESSES")]
-    processes: Option<usize>,
+    /// Defaults to `100`, unless using the `callgrind` measure, in which case
+    /// the default is `3`.
+    #[arg(
+        short = 'i',
+        long = "iters",
+        alias = "iterations",
+        value_name = "ITERATIONS"
+    )]
+    iterations: Option<usize>,
 
     /// Override the "engine" name; this is useful if running experiments that might
     /// not have a differentiating engine name (e.g. if customizing the flags).
@@ -320,16 +307,6 @@ pub struct BenchmarkCommand {
     /// match the order of the engines specified.
     #[arg(long = "name", short = 'n')]
     names: Option<Vec<String>>,
-
-    /// How many times should we run a benchmark in a single process?
-    ///
-    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
-    /// default is `1`.
-    #[arg(
-        long = "iterations-per-process",
-        value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
-    )]
-    iterations_per_process: Option<usize>,
 
     /// Output raw data, rather than the summarized, human-readable analysis
     /// results.
@@ -389,9 +366,9 @@ pub struct BenchmarkCommand {
     ///
     /// If no measures are specified, the "cycles" measure is used.
     ///
-    /// `callgrind` defaults to fewer processes and iterations per process
-    /// because it runs the benchmarking processes under Valgrind, which is
-    /// slower but also more deterministic and less noisy.
+    /// `callgrind` defaults to fewer samples because it runs the benchmarking
+    /// processes under Valgrind, which is slower but also more deterministic
+    /// and less noisy.
     #[arg(long = "measure", short = 'm', action = clap::ArgAction::Append)]
     measures: Vec<MeasureType>,
 
@@ -428,8 +405,8 @@ pub struct BenchmarkCommand {
     #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 
-    /// Pin all benchmark iterations in a process to a single core. See
-    /// `cpu_affinity` in the `sightglass-recorder` crate for more information.
+    /// Pin each benchmark subprocess to a single core. See `cpu_affinity` in
+    /// the `sightglass-recorder` crate for more information.
     #[arg(long)]
     pin: bool,
 
@@ -441,10 +418,9 @@ pub struct BenchmarkCommand {
 
 impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
-        anyhow::ensure!(self.processes() > 0, "processes must be greater than zero");
         anyhow::ensure!(
-            self.iterations_per_process() > 0,
-            "iterations-per-process must be greater than zero"
+            self.iterations() > 0,
+            "iterations must be greater than zero"
         );
         anyhow::ensure!(
             !self.engines.is_empty(),
@@ -463,10 +439,10 @@ impl BenchmarkCommand {
             );
         }
 
-        if self.processes() == 1 {
+        if self.iterations() == 1 {
             self.execute_in_current_process()
         } else {
-            self.execute_in_multiple_processes()
+            self.execute_in_one_process_per_iteration()
         }
     }
 
@@ -478,13 +454,8 @@ impl BenchmarkCommand {
         Ok(())
     }
 
-    fn processes(&self) -> usize {
-        self.processes.unwrap_or_else(|| self.default_processes())
-    }
-
-    fn iterations_per_process(&self) -> usize {
-        self.iterations_per_process
-            .unwrap_or_else(|| self.default_iterations_per_process())
+    fn iterations(&self) -> usize {
+        self.iterations.unwrap_or_else(|| self.default_iterations())
     }
 
     /// Pair each engine with the flags it should be configured with.
@@ -607,6 +578,13 @@ impl BenchmarkCommand {
                     Box::new(MultiMeasure::new(self.measures.iter().map(|m| m.build())))
                 };
 
+                // Compilation is just a means to an end for these phases, so
+                // let the engine cache it rather than measure it.
+                let post_compilation_phase = matches!(
+                    self.benchmark_phase,
+                    Some(Phase::Instantiation | Phase::Execution)
+                );
+
                 // Create the bench API engine and cache it for reuse across all
                 // iterations of this benchmark.
                 let engine = Engine::new(
@@ -618,70 +596,58 @@ impl BenchmarkCommand {
                     &mut measurements,
                     &mut measure,
                     engine_flags,
+                    post_compilation_phase,
                 );
                 let mut engine = Some(engine);
 
                 // And if we are benchmarking just a post-compilation phase,
                 // then eagerly compile the Wasm module for reuse.
                 let mut module = None;
-                if let Some(Phase::Instantiation | Phase::Execution) = self.benchmark_phase {
+                if post_compilation_phase {
                     module = Some(engine.take().unwrap().compile(&bytes));
                 }
 
-                // Run the benchmark (compilation, instantiation, and execution) several times in
-                // this process.
-                for _ in 0..self.iterations_per_process() {
-                    match self.benchmark_phase {
-                        None => {
-                            let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
-                            engine = Some(new_engine);
-                        }
-                        Some(Phase::Compilation) => {
-                            let new_engine =
-                                benchmark::compilation(engine.take().unwrap(), &bytes)?;
-                            engine = Some(new_engine);
-                        }
-                        Some(Phase::Instantiation) => {
-                            let new_module = benchmark::instantiation(module.take().unwrap())?;
-                            module = Some(new_module);
-                        }
-                        Some(Phase::Execution) => {
-                            let new_module = benchmark::execution(module.take().unwrap())?;
-                            module = Some(new_module);
+                // Run the benchmark!
+                match self.benchmark_phase {
+                    None => {
+                        let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
+                        engine = Some(new_engine);
+                    }
+                    Some(Phase::Compilation) => {
+                        let new_engine = benchmark::compilation(engine.take().unwrap(), &bytes)?;
+                        engine = Some(new_engine);
+                    }
+                    Some(Phase::Instantiation) => {
+                        let new_module = benchmark::instantiation(module.take().unwrap())?;
+                        module = Some(new_module);
+                    }
+                    Some(Phase::Execution) => {
+                        let new_module = benchmark::execution(module.take().unwrap())?;
+                        module = Some(new_module);
+                    }
+                }
+
+                // Ensure that its output matches our expectations.
+                match self.check_output(Path::new(wasm_file), &stdout, &stderr) {
+                    Ok(()) => {
+                        if !self.keep_logs {
+                            let _ = fs::remove_file(&stdout);
+                            let _ = fs::remove_file(&stderr);
+                        } else {
+                            log::info!(
+                                "Kept log files: {} and {}",
+                                stdout.display(),
+                                stderr.display()
+                            );
                         }
                     }
-
-                    let check_result = self.check_output(Path::new(wasm_file), &stdout, &stderr);
-
-                    // Handle log cleanup based on success/failure and --keep-logs flag
-                    match check_result {
-                        Ok(()) => {
-                            if !self.keep_logs {
-                                let _ = fs::remove_file(&stdout);
-                                let _ = fs::remove_file(&stderr);
-                            } else {
-                                log::info!(
-                                    "Kept log files: {} and {}",
-                                    stdout.display(),
-                                    stderr.display()
-                                );
-                            }
-                        }
-                        Err(e) => {
-                            // Failure: keep logs and inform user
-                            eprintln!("Benchmark output check failed. Log files preserved:");
-                            eprintln!("  stdout: {}", stdout.display());
-                            eprintln!("  stderr: {}", stderr.display());
-                            return Err(e);
-                        }
+                    Err(e) => {
+                        // Failure: keep logs and inform user
+                        eprintln!("Benchmark output check failed. Log files preserved:");
+                        eprintln!("  stdout: {}", stdout.display());
+                        eprintln!("  stderr: {}", stderr.display());
+                        return Err(e);
                     }
-
-                    engine
-                        .as_mut()
-                        .map(|e| e.measurements())
-                        .or_else(|| module.as_mut().map(|m| m.measurements()))
-                        .unwrap()
-                        .next_iteration();
                 }
 
                 drop((engine, module));
@@ -748,9 +714,9 @@ impl BenchmarkCommand {
         Ok(())
     }
 
-    /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
-    /// run the `execute_in_current_process` function above.
-    fn execute_in_multiple_processes(&self) -> Result<()> {
+    /// Execute the benchmark(s) by spawning one process per iteration. Each of the spawned
+    /// processes will run the `execute_in_current_process` function above.
+    fn execute_in_one_process_per_iteration(&self) -> Result<()> {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
         self.execute_in_subprocesses("iterations", |engine, name, flags, wasm| {
@@ -772,18 +738,13 @@ impl BenchmarkCommand {
                 flags,
                 wasm,
                 1,
-                self.iterations_per_process(),
                 Format::Json,
             );
             Ok(prepared)
         })
     }
 
-    fn execute_in_subprocesses<F>(
-        &self,
-        iteration_label: &str,
-        mut prepare_command: F,
-    ) -> Result<()>
+    fn execute_in_subprocesses<F>(&self, label: &str, mut prepare_command: F) -> Result<()>
     where
         F: FnMut(&Path, Option<&str>, Option<&str>, &Path) -> Result<PreparedCommand>,
     {
@@ -791,16 +752,11 @@ impl BenchmarkCommand {
 
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
-            "\nRunning {} total {} ({} engines * {} benchmarks * {} processes * {} iterations per process)",
-            self.engines.len()
-                * wasm_files.len()
-                * self.processes()
-                * self.iterations_per_process(),
-            iteration_label,
+            "\nRunning {} total {label} ({} engines * {} benchmarks * {} iterations)",
+            self.engines.len() * wasm_files.len() * self.iterations(),
             self.engines.len(),
             wasm_files.len(),
-            self.processes(),
-            self.iterations_per_process()
+            self.iterations(),
         );
         eprint!("\n[Done] [Elapsed    ] [Est. Rem.  ]");
 
@@ -821,7 +777,7 @@ impl BenchmarkCommand {
 
             let name = self.engine_name_override(i);
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), name, flags.clone(), wasm, self.processes()));
+                choices.push((engine.clone(), name, flags.clone(), wasm, self.iterations()));
             }
         }
 
@@ -829,12 +785,12 @@ impl BenchmarkCommand {
         let mut measurements = vec![];
 
         let mut i = 0;
-        let n = choices.len() * self.processes();
+        let n = choices.len() * self.iterations();
         let start = std::time::Instant::now();
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, name, flags, wasm, procs_left) = &mut choices[index];
+            let (engine, name, flags, wasm, iters_left) = &mut choices[index];
             let mut prepared = prepare_command(engine, *name, flags.as_deref(), wasm)?;
             let output = prepared
                 .command
@@ -861,9 +817,9 @@ impl BenchmarkCommand {
                 let elapsed_mins = elapsed / 60 % 60;
                 let elapsed_secs = elapsed % 60;
 
-                let secs_per_proc = (elapsed as f64) / (i as f64);
-                let procs_left = n - i;
-                let eta = (procs_left as f64) * secs_per_proc;
+                let secs_per_iter = (elapsed as f64) / (i as f64);
+                let iters_left = n - i;
+                let eta = (iters_left as f64) * secs_per_iter;
                 let eta = eta.round() as u64;
                 let eta_hours = eta / 60 / 60;
                 let eta_mins = eta / 60 % 60;
@@ -885,8 +841,8 @@ impl BenchmarkCommand {
                     .context(prepared.result_context)?,
             );
 
-            *procs_left -= 1;
-            if *procs_left == 0 {
+            *iters_left -= 1;
+            if *iters_left == 0 {
                 choices.swap_remove(index);
             }
         }
@@ -1053,16 +1009,13 @@ impl BenchmarkCommand {
         engine_name: Option<&str>,
         engine_flags: Option<&str>,
         wasm: &Path,
-        processes: usize,
-        iterations_per_process: usize,
+        iterations: usize,
         output_format: Format,
     ) {
         command
             .arg("benchmark")
-            .arg("--processes")
-            .arg(processes.to_string())
-            .arg("--iterations-per-process")
-            .arg(iterations_per_process.to_string())
+            .arg("--iters")
+            .arg(iterations.to_string())
             .arg("--engine")
             .arg(engine)
             .args(
@@ -1252,8 +1205,6 @@ mod tests {
                 flags: Some("-Ccompiler=winch".into()),
             },
             wasm: "benchmarks/noop/benchmark.wasm".into(),
-            process: 0,
-            iteration: 0,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,
@@ -1468,8 +1419,6 @@ execution
                 flags: None,
             },
             wasm: wasm.into(),
-            process: 0,
-            iteration: 0,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,
@@ -1674,7 +1623,6 @@ execution
                 flags.as_deref(),
                 Path::new("dummy.wasm"),
                 1,
-                1,
                 Format::Json,
             );
 
@@ -1706,6 +1654,38 @@ execution
         assert!(!child_args(&["-e", "a", "-n", "alpha", "-e", "b"], 1)?
             .iter()
             .any(|a| a.starts_with("--name")));
+
+        Ok(())
+    }
+
+    /// The parent spawns children by name, so the iteration count it forwards
+    /// must be a flag the child actually parses. Renaming the flag on only one
+    /// side of that handoff would leave every child running the default number
+    /// of iterations instead.
+    #[test]
+    fn child_args_forward_a_parsable_iteration_count() -> Result<()> {
+        let mut child = Command::new("sightglass-cli");
+        let command = BenchmarkCommand::try_parse_from(["benchmark", "-e", "a", "dummy.wasm"])?;
+        command.add_benchmark_child_args(
+            &mut child,
+            Path::new("a"),
+            None,
+            None,
+            Path::new("dummy.wasm"),
+            7,
+            Format::Json,
+        );
+        let args: Vec<String> = child
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+
+        // Round-trip the child's argv back through the parser, rather than
+        // asserting on the flag's spelling: that is what the child does.
+        let child_command = BenchmarkCommand::try_parse_from(
+            std::iter::once("sightglass-cli".to_string()).chain(args),
+        )?;
+        assert_eq!(child_command.iterations(), 7);
 
         Ok(())
     }
@@ -1876,9 +1856,8 @@ instantiation :: nanoseconds :: pulldown-cmark
             engines: vec!["/tmp/engine.so".into()],
             engine_flags: vec![],
             engine_flags_common: None,
-            processes: None,
+            iterations: None,
             names: None,
-            iterations_per_process: None,
             raw: false,
             output_format: Format::Json,
             output_file: None,
