@@ -3,8 +3,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "cycles",
         "count": 823537015
@@ -13,8 +11,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 283581244
@@ -23,8 +19,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 229974
@@ -33,8 +27,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 79190
@@ -43,8 +35,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "cycles",
         "count": 10568945
@@ -53,8 +43,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3639368
@@ -63,8 +51,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "cycles",
         "count": 725850172
@@ -73,8 +59,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 249943222
@@ -83,8 +67,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 186145
@@ -93,8 +75,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 64098
@@ -103,8 +83,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "cycles",
         "count": 10352359
@@ -113,8 +91,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3564787
@@ -123,8 +99,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "cycles",
         "count": 717014335
@@ -133,8 +107,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 246900641
@@ -143,8 +115,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 221862
@@ -153,8 +123,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 76397
@@ -163,8 +131,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "cycles",
         "count": 13146295
@@ -173,8 +139,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4526867
@@ -183,8 +147,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "cycles",
         "count": 696450758
@@ -193,8 +155,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 239819667
@@ -203,8 +163,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 222545
@@ -213,8 +171,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 76632
@@ -223,8 +179,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "cycles",
         "count": 14105089
@@ -233,8 +187,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4857023
@@ -243,8 +195,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "cycles",
         "count": 770424624
@@ -253,8 +203,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 265292233
@@ -263,8 +211,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 222285
@@ -273,8 +219,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 76542
@@ -283,8 +227,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "cycles",
         "count": 13478493
@@ -293,8 +235,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4641258
@@ -303,8 +243,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "cycles",
         "count": 747883580
@@ -313,8 +251,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 257530326
@@ -323,8 +259,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 229928
@@ -333,8 +267,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 79174
@@ -343,8 +275,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "cycles",
         "count": 13067011
@@ -353,8 +283,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4499566
@@ -363,8 +291,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "cycles",
         "count": 719764856
@@ -373,8 +299,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 247847771
@@ -383,8 +307,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 220817
@@ -393,8 +315,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 76037
@@ -403,8 +323,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "cycles",
         "count": 13165343
@@ -413,8 +331,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4533426
@@ -423,8 +339,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "cycles",
         "count": 724176897
@@ -433,8 +347,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 249367037
@@ -443,8 +355,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 187606
@@ -453,8 +363,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 64601
@@ -463,8 +371,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "cycles",
         "count": 10334150
@@ -473,8 +379,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3558517
@@ -483,8 +387,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "cycles",
         "count": 709162050
@@ -493,8 +395,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 244196743
@@ -503,8 +403,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 213551
@@ -513,8 +411,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73535
@@ -523,8 +419,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "cycles",
         "count": 11036541
@@ -533,8 +427,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3800382
@@ -543,8 +435,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "cycles",
         "count": 769841609
@@ -553,8 +443,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 265091474
@@ -563,8 +451,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 199983
@@ -573,8 +459,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 68863
@@ -583,8 +467,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "cycles",
         "count": 14169904
@@ -593,8 +475,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4879342
@@ -603,8 +483,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "cycles",
         "count": 796284592
@@ -613,8 +491,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 274198271
@@ -623,8 +499,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 200618
@@ -633,8 +507,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 69082
@@ -643,8 +515,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "cycles",
         "count": 10443941
@@ -653,8 +523,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3596340
@@ -663,8 +531,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "cycles",
         "count": 704156210
@@ -673,8 +539,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 242474132
@@ -683,8 +547,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 308810
@@ -693,8 +555,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 106337
@@ -703,8 +563,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "cycles",
         "count": 12631959
@@ -713,8 +571,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4349778
@@ -723,8 +579,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "cycles",
         "count": 710530529
@@ -733,8 +587,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 244669110
@@ -743,8 +595,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 205107
@@ -753,8 +603,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 70627
@@ -763,8 +611,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "cycles",
         "count": 10497934
@@ -773,8 +619,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3614932
@@ -783,8 +627,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "cycles",
         "count": 713916404
@@ -793,8 +635,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 245835027
@@ -803,8 +643,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 204956
@@ -813,8 +651,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 70575
@@ -823,8 +659,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "cycles",
         "count": 10950820
@@ -833,8 +667,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3770882
@@ -843,8 +675,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "cycles",
         "count": 700420814
@@ -853,8 +683,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 241187860
@@ -863,8 +691,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 229555
@@ -873,8 +699,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 79046
@@ -883,8 +707,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "cycles",
         "count": 10328193
@@ -893,8 +715,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3556483
@@ -903,8 +723,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "cycles",
         "count": 688475571
@@ -913,8 +731,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 237074550
@@ -923,8 +739,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 213468
@@ -933,8 +747,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73507
@@ -943,8 +755,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "cycles",
         "count": 10819299
@@ -953,8 +763,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3725593
@@ -963,8 +771,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "cycles",
         "count": 703972809
@@ -973,8 +779,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 242410979
@@ -983,8 +787,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 200003
@@ -993,8 +795,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 68870
@@ -1003,8 +803,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "cycles",
         "count": 10580849
@@ -1013,8 +811,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3643484
@@ -1023,8 +819,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "cycles",
         "count": 704191749
@@ -1033,8 +827,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 242486370
@@ -1043,8 +835,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 214545
@@ -1053,8 +843,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73877
@@ -1063,8 +851,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "cycles",
         "count": 10826782
@@ -1073,8 +859,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3728170
@@ -1083,8 +867,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "cycles",
         "count": 694132097
@@ -1093,8 +875,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 239022358
@@ -1103,8 +883,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 210056
@@ -1113,8 +891,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 72332
@@ -1123,8 +899,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "cycles",
         "count": 10688469
@@ -1133,8 +907,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3680543
@@ -1143,8 +915,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "cycles",
         "count": 692382117
@@ -1153,8 +923,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 238419758
@@ -1163,8 +931,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 213872
@@ -1173,8 +939,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73646
@@ -1183,8 +947,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "cycles",
         "count": 10529789
@@ -1193,8 +955,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_2.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3625902
@@ -1203,8 +963,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "cycles",
         "count": 810605868
@@ -1213,8 +971,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 279126753
@@ -1223,8 +979,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 203474
@@ -1233,8 +987,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 70064
@@ -1243,8 +995,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "cycles",
         "count": 10849793
@@ -1253,8 +1003,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 0,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3736054
@@ -1263,8 +1011,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "cycles",
         "count": 751713121
@@ -1273,8 +1019,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 258847426
@@ -1283,8 +1027,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 213857
@@ -1293,8 +1035,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73640
@@ -1303,8 +1043,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "cycles",
         "count": 10669342
@@ -1313,8 +1051,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 1,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3673917
@@ -1323,8 +1059,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "cycles",
         "count": 745912915
@@ -1333,8 +1067,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 256850164
@@ -1343,8 +1075,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 213000
@@ -1353,8 +1083,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73345
@@ -1363,8 +1091,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "cycles",
         "count": 10843728
@@ -1373,8 +1099,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 2,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3733965
@@ -1383,8 +1107,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "cycles",
         "count": 721352134
@@ -1393,8 +1115,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 248392822
@@ -1403,8 +1123,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 208648
@@ -1413,8 +1131,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 71846
@@ -1423,8 +1139,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "cycles",
         "count": 10608050
@@ -1433,8 +1147,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 3,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3652811
@@ -1443,8 +1155,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "cycles",
         "count": 933479759
@@ -1453,8 +1163,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 321437562
@@ -1463,8 +1171,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 241726
@@ -1473,8 +1179,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 83236
@@ -1483,8 +1187,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "cycles",
         "count": 14087816
@@ -1493,8 +1195,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 4,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 4851045
@@ -1503,8 +1203,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "cycles",
         "count": 741420913
@@ -1513,8 +1211,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 255303373
@@ -1523,8 +1219,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 211559
@@ -1533,8 +1227,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 72848
@@ -1543,8 +1235,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "cycles",
         "count": 10646980
@@ -1553,8 +1243,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 5,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3666216
@@ -1563,8 +1251,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "cycles",
         "count": 731145293
@@ -1573,8 +1259,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 251765031
@@ -1583,8 +1267,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 264494
@@ -1593,8 +1275,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 91076
@@ -1603,8 +1283,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "cycles",
         "count": 10845308
@@ -1613,8 +1291,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 6,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3734509
@@ -1623,8 +1299,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "cycles",
         "count": 753393775
@@ -1633,8 +1307,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 259426148
@@ -1643,8 +1315,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 214567
@@ -1653,8 +1323,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 73884
@@ -1663,8 +1331,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "cycles",
         "count": 10988944
@@ -1673,8 +1339,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 7,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3783969
@@ -1683,8 +1347,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "cycles",
         "count": 731973298
@@ -1693,8 +1355,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 252050149
@@ -1703,8 +1363,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 300269
@@ -1713,8 +1371,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 103395
@@ -1723,8 +1379,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "cycles",
         "count": 10569938
@@ -1733,8 +1387,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 8,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 3639688
@@ -1743,8 +1395,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "cycles",
         "count": 847912148
@@ -1753,8 +1403,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Compilation",
         "event": "nanoseconds",
         "count": 291972923
@@ -1763,8 +1411,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "cycles",
         "count": 259099
@@ -1773,8 +1419,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Instantiation",
         "event": "nanoseconds",
         "count": 89219
@@ -1783,8 +1427,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "cycles",
         "count": 16792916
@@ -1793,8 +1435,6 @@
         "arch": "x86_64",
         "engine": "/tmp/old_backend_3.so",
         "wasm": "benchmarks/pulldown-cmark/benchmark.wasm",
-        "process": 85389,
-        "iteration": 9,
         "phase": "Execution",
         "event": "nanoseconds",
         "count": 5782529

@@ -67,12 +67,7 @@ impl CallgrindMeasure {
         running_under_valgrind
     }
 
-    fn parse_dump_for_phase(
-        &self,
-        phase: Phase,
-        iteration: u32,
-        part: u32,
-    ) -> Result<ParsedCallgrindDump> {
+    fn parse_dump_for_phase(&self, phase: Phase, part: u32) -> Result<ParsedCallgrindDump> {
         let output_dir = self.output_dir.as_ref().ok_or_else(|| {
             anyhow!(
                 "callgrind output directory is not configured; expected {CALLGRIND_OUT_DIR_ENV_VAR}"
@@ -100,7 +95,7 @@ impl CallgrindMeasure {
             dump_path.display()
         );
 
-        let expected_label = format!("{phase}/{iteration}");
+        let expected_label = phase.to_string();
         let actual_label = dump.label.as_deref().ok_or_else(|| {
             anyhow!(
                 "callgrind dump {} is missing a client-request label",
@@ -131,11 +126,11 @@ impl Measure for CallgrindMeasure {
             return;
         }
 
-        let label = CString::new(format!("{phase}/{}", measurements.iteration())).unwrap();
+        let label = CString::new(phase.to_string()).unwrap();
         callgrind::dump_stats_at(label.as_c_str());
 
         let dump = self
-            .parse_dump_for_phase(phase, measurements.iteration(), self.next_dump_part)
+            .parse_dump_for_phase(phase, self.next_dump_part)
             .unwrap_or_else(|error| panic!("failed to read callgrind dump: {error:#}"));
         self.next_dump_part += 1;
 
@@ -270,7 +265,7 @@ mod tests {
 
         assert_eq!(dump.pid, 773940);
         assert_eq!(dump.part, 1);
-        assert_eq!(dump.label.as_deref(), Some("execution/7"));
+        assert_eq!(dump.label.as_deref(), Some("execution"));
         assert_eq!(
             dump.counts,
             vec![

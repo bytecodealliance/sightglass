@@ -13,10 +13,10 @@ back-to-back. We run noop using both the `cycles` and `perf-counters` measuremen
 aggregate the results:
 
 ```bash
-$ cargo run -- benchmark --processes 1 --iterations-per-process 30 --engine wasmtime --output-format csv benchmarks/noop/benchmark.wasm --measure cycles | grep Execution | cargo run -- analyze --input-format csv --output-format csv
+$ cargo run -- benchmark --processes 30 --engine wasmtime --output-format csv benchmarks/noop/benchmark.wasm --measure cycles | grep Execution | cargo run -- analyze --input-format csv --output-format csv
 x86_64,wasmtime,benchmarks/noop/benchmark.wasm,Execution,cycles,680,1062,808.2,61.506666666666675
 
-$ cargo run -- benchmark --processes 1 --iterations-per-process 30 --engine wasmtime --output-format csv benchmarks/noop/benchmark.wasm --measure perf-counters | grep Execution | cargo run -- analyze --input-format csv --output-format csv
+$ cargo run -- benchmark --processes 30 --engine wasmtime --output-format csv benchmarks/noop/benchmark.wasm --measure perf-counters | grep Execution | cargo run -- analyze --input-format csv --output-format csv
 x86_64,wasmtime,benchmarks/noop/benchmark.wasm,Execution,cache-accesses,16,186,45.0,17.866666666666667
 x86_64,wasmtime,benchmarks/noop/benchmark.wasm,Execution,instructions-retired,470,470,470.0,0.0
 x86_64,wasmtime,benchmarks/noop/benchmark.wasm,Execution,cache-misses,0,4,1.8,1.1733333333333333
@@ -39,10 +39,10 @@ Overestimating this overhead at 2000 CPU cycles, what effect would this have on 
 system, but even so, the 2000-cycle overhead is relatively small:
 
 ```bash
-$ cargo run -- benchmark --processes 1 --iterations-per-process 30 --engine wasmtime --output-format csv benchmarks/shootout-ackermann/benchmark.wasm --measure cycles | grep Execution | cargo run -- analyze -i csv -o csv
+$ cargo run -- benchmark --processes 30 --engine wasmtime --output-format csv benchmarks/shootout-ackermann/benchmark.wasm --measure cycles | grep Execution | cargo run -- analyze -i csv -o csv
 x86_64,wasmtime,benchmarks/shootout-ackermann/benchmark.wasm,Execution,cycles,5072731,6466552,5795681.366666666,463938.97333333344
 
-$ cargo run -- benchmark --processes 1 --iterations-per-process 30 --engine wasmtime --output-format csv benchmarks/shootout-ackermann/benchmark.wasm --measure perf-counters | grep Execution | cargo run -- analyze -i csv -o csv
+$ cargo run -- benchmark --processes 30 --engine wasmtime --output-format csv benchmarks/shootout-ackermann/benchmark.wasm --measure perf-counters | grep Execution | cargo run -- analyze -i csv -o csv
 x86_64,wasmtime,benchmarks/shootout-ackermann/benchmark.wasm,Execution,cache-accesses,4020,16565,5107.066666666667,850.8933333333331
 x86_64,wasmtime,benchmarks/shootout-ackermann/benchmark.wasm,Execution,cache-misses,73,1573,519.9666666666667,369.68888888888904
 x86_64,wasmtime,benchmarks/shootout-ackermann/benchmark.wasm,Execution,cpu-cycles,5423074,9778831,5581209.3,279841.4466666665

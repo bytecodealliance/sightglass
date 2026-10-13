@@ -94,8 +94,6 @@ fn callgrind_metrics(
         .arg("json")
         .arg("--processes")
         .arg("1")
-        .arg("--iterations-per-process")
-        .arg("1")
         .arg("--working-dir")
         .arg(working_dir)
         .arg("--engine-flags")
@@ -945,8 +943,6 @@ mod tests {
                 flags: None,
             },
             wasm: Cow::Borrowed("benchmark.wasm"),
-            process: 0,
-            iteration: 0,
             phase,
             event: Cow::Borrowed(event),
             count,

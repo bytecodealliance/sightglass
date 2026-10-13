@@ -17,8 +17,7 @@ use std::{
 };
 use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
-const DEFAULT_PROCESSES: usize = 10;
-const DEFAULT_ITERATIONS_PER_PROCESS: usize = 10;
+const DEFAULT_PROCESSES: usize = 100;
 
 const DATA_FILE: &str = "sightglass-data.csv";
 const OLD_DATA_FILE: &str = "sightglass-data.old.csv";
@@ -31,7 +30,6 @@ mod callgrind {
     use tempfile::TempDir;
 
     const DEFAULT_CALLGRIND_PROCESSES: usize = 3;
-    const DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS: usize = 1;
 
     // 64KiB, 8-way associative, 64B line size.
     const CACHE_MODEL_I1: &str = "65536,8,64";
@@ -59,14 +57,6 @@ mod callgrind {
                 DEFAULT_CALLGRIND_PROCESSES
             } else {
                 DEFAULT_PROCESSES
-            }
-        }
-
-        pub(super) fn default_iterations_per_process(&self) -> usize {
-            if self.uses_callgrind() {
-                DEFAULT_CALLGRIND_ITERATIONS_PER_PROCESS
-            } else {
-                DEFAULT_ITERATIONS_PER_PROCESS
             }
         }
 
@@ -133,7 +123,6 @@ mod callgrind {
                 engine_flags,
                 wasm,
                 1,
-                self.iterations_per_process(),
                 Format::Json,
             );
 
@@ -187,10 +176,6 @@ mod callgrind {
             DEFAULT_PROCESSES
         }
 
-        pub(super) fn default_iterations_per_process(&self) -> usize {
-            DEFAULT_ITERATIONS_PER_PROCESS
-        }
-
         pub(super) fn validate_callgrind(&self) -> Result<()> {
             Ok(())
         }
@@ -213,9 +198,6 @@ mod callgrind {
 }
 
 /// Measure compilation, instantiation, and execution of a Wasm file.
-///
-/// The total number of samples taken for each Wasm benchmark is `PROCESSES *
-/// NUMBER_OF_ITERATIONS_PER_PROCESS`.
 #[derive(Parser, Debug)]
 pub struct BenchmarkCommand {
     /// The path to the file(s) to benchmark. This accepts one or more:
@@ -308,8 +290,8 @@ pub struct BenchmarkCommand {
 
     /// How many processes should we use for each Wasm benchmark?
     ///
-    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
-    /// default is `3`.
+    /// Defaults to `100`, unless using the `callgrind` measure, in which case
+    /// the default is `3`.
     #[arg(long = "processes", value_name = "PROCESSES")]
     processes: Option<usize>,
 
@@ -320,16 +302,6 @@ pub struct BenchmarkCommand {
     /// match the order of the engines specified.
     #[arg(long = "name", short = 'n')]
     names: Option<Vec<String>>,
-
-    /// How many times should we run a benchmark in a single process?
-    ///
-    /// Defaults to `10`, unless using the `callgrind` measure, in which case the
-    /// default is `1`.
-    #[arg(
-        long = "iterations-per-process",
-        value_name = "NUMBER_OF_ITERATIONS_PER_PROCESS"
-    )]
-    iterations_per_process: Option<usize>,
 
     /// Output raw data, rather than the summarized, human-readable analysis
     /// results.
@@ -389,9 +361,9 @@ pub struct BenchmarkCommand {
     ///
     /// If no measures are specified, the "cycles" measure is used.
     ///
-    /// `callgrind` defaults to fewer processes and iterations per process
-    /// because it runs the benchmarking processes under Valgrind, which is
-    /// slower but also more deterministic and less noisy.
+    /// `callgrind` defaults to fewer samples because it runs the benchmarking
+    /// processes under Valgrind, which is slower but also more deterministic
+    /// and less noisy.
     #[arg(long = "measure", short = 'm', action = clap::ArgAction::Append)]
     measures: Vec<MeasureType>,
 
@@ -428,8 +400,8 @@ pub struct BenchmarkCommand {
     #[arg(short, long, default_value = "0.01")]
     significance_level: f64,
 
-    /// Pin all benchmark iterations in a process to a single core. See
-    /// `cpu_affinity` in the `sightglass-recorder` crate for more information.
+    /// Pin each benchmark subprocess to a single core. See `cpu_affinity` in
+    /// the `sightglass-recorder` crate for more information.
     #[arg(long)]
     pin: bool,
 
@@ -442,10 +414,6 @@ pub struct BenchmarkCommand {
 impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
         anyhow::ensure!(self.processes() > 0, "processes must be greater than zero");
-        anyhow::ensure!(
-            self.iterations_per_process() > 0,
-            "iterations-per-process must be greater than zero"
-        );
         anyhow::ensure!(
             !self.engines.is_empty(),
             "must pass one or more engines to benchmark with -e/--engine"
@@ -480,11 +448,6 @@ impl BenchmarkCommand {
 
     fn processes(&self) -> usize {
         self.processes.unwrap_or_else(|| self.default_processes())
-    }
-
-    fn iterations_per_process(&self) -> usize {
-        self.iterations_per_process
-            .unwrap_or_else(|| self.default_iterations_per_process())
     }
 
     /// Pair each engine with the flags it should be configured with.
@@ -636,60 +599,47 @@ impl BenchmarkCommand {
                     module = Some(engine.take().unwrap().compile(&bytes));
                 }
 
-                // Run the benchmark (compilation, instantiation, and execution) several times in
-                // this process.
-                for _ in 0..self.iterations_per_process() {
-                    match self.benchmark_phase {
-                        None => {
-                            let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
-                            engine = Some(new_engine);
-                        }
-                        Some(Phase::Compilation) => {
-                            let new_engine =
-                                benchmark::compilation(engine.take().unwrap(), &bytes)?;
-                            engine = Some(new_engine);
-                        }
-                        Some(Phase::Instantiation) => {
-                            let new_module = benchmark::instantiation(module.take().unwrap())?;
-                            module = Some(new_module);
-                        }
-                        Some(Phase::Execution) => {
-                            let new_module = benchmark::execution(module.take().unwrap())?;
-                            module = Some(new_module);
+                // Run the benchmark!
+                match self.benchmark_phase {
+                    None => {
+                        let new_engine = benchmark::all(engine.take().unwrap(), &bytes)?;
+                        engine = Some(new_engine);
+                    }
+                    Some(Phase::Compilation) => {
+                        let new_engine = benchmark::compilation(engine.take().unwrap(), &bytes)?;
+                        engine = Some(new_engine);
+                    }
+                    Some(Phase::Instantiation) => {
+                        let new_module = benchmark::instantiation(module.take().unwrap())?;
+                        module = Some(new_module);
+                    }
+                    Some(Phase::Execution) => {
+                        let new_module = benchmark::execution(module.take().unwrap())?;
+                        module = Some(new_module);
+                    }
+                }
+
+                // Ensure that its output matches our expectations.
+                match self.check_output(Path::new(wasm_file), &stdout, &stderr) {
+                    Ok(()) => {
+                        if !self.keep_logs {
+                            let _ = fs::remove_file(&stdout);
+                            let _ = fs::remove_file(&stderr);
+                        } else {
+                            log::info!(
+                                "Kept log files: {} and {}",
+                                stdout.display(),
+                                stderr.display()
+                            );
                         }
                     }
-
-                    let check_result = self.check_output(Path::new(wasm_file), &stdout, &stderr);
-
-                    // Handle log cleanup based on success/failure and --keep-logs flag
-                    match check_result {
-                        Ok(()) => {
-                            if !self.keep_logs {
-                                let _ = fs::remove_file(&stdout);
-                                let _ = fs::remove_file(&stderr);
-                            } else {
-                                log::info!(
-                                    "Kept log files: {} and {}",
-                                    stdout.display(),
-                                    stderr.display()
-                                );
-                            }
-                        }
-                        Err(e) => {
-                            // Failure: keep logs and inform user
-                            eprintln!("Benchmark output check failed. Log files preserved:");
-                            eprintln!("  stdout: {}", stdout.display());
-                            eprintln!("  stderr: {}", stderr.display());
-                            return Err(e);
-                        }
+                    Err(e) => {
+                        // Failure: keep logs and inform user
+                        eprintln!("Benchmark output check failed. Log files preserved:");
+                        eprintln!("  stdout: {}", stdout.display());
+                        eprintln!("  stderr: {}", stderr.display());
+                        return Err(e);
                     }
-
-                    engine
-                        .as_mut()
-                        .map(|e| e.measurements())
-                        .or_else(|| module.as_mut().map(|m| m.measurements()))
-                        .unwrap()
-                        .next_iteration();
                 }
 
                 drop((engine, module));
@@ -780,18 +730,13 @@ impl BenchmarkCommand {
                 flags,
                 wasm,
                 1,
-                self.iterations_per_process(),
                 Format::Json,
             );
             Ok(prepared)
         })
     }
 
-    fn execute_in_subprocesses<F>(
-        &self,
-        iteration_label: &str,
-        mut prepare_command: F,
-    ) -> Result<()>
+    fn execute_in_subprocesses<F>(&self, label: &str, mut prepare_command: F) -> Result<()>
     where
         F: FnMut(&Path, Option<&str>, Option<&str>, &Path) -> Result<PreparedCommand>,
     {
@@ -799,16 +744,11 @@ impl BenchmarkCommand {
 
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
-            "\nRunning {} total {} ({} engines * {} benchmarks * {} processes * {} iterations per process)",
-            self.engines.len()
-                * wasm_files.len()
-                * self.processes()
-                * self.iterations_per_process(),
-            iteration_label,
+            "\nRunning {} total {label} ({} engines * {} benchmarks * {} processes)",
+            self.engines.len() * wasm_files.len() * self.processes(),
             self.engines.len(),
             wasm_files.len(),
             self.processes(),
-            self.iterations_per_process()
         );
         eprint!("\n[Done] [Elapsed    ] [Est. Rem.  ]");
 
@@ -1062,15 +1002,12 @@ impl BenchmarkCommand {
         engine_flags: Option<&str>,
         wasm: &Path,
         processes: usize,
-        iterations_per_process: usize,
         output_format: Format,
     ) {
         command
             .arg("benchmark")
             .arg("--processes")
             .arg(processes.to_string())
-            .arg("--iterations-per-process")
-            .arg(iterations_per_process.to_string())
             .arg("--engine")
             .arg(engine)
             .args(
@@ -1260,8 +1197,6 @@ mod tests {
                 flags: Some("-Ccompiler=winch".into()),
             },
             wasm: "benchmarks/noop/benchmark.wasm".into(),
-            process: 0,
-            iteration: 0,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,
@@ -1476,8 +1411,6 @@ execution
                 flags: None,
             },
             wasm: wasm.into(),
-            process: 0,
-            iteration: 0,
             phase: Phase::Execution,
             event: "cycles".into(),
             count,
@@ -1682,7 +1615,6 @@ execution
                 flags.as_deref(),
                 Path::new("dummy.wasm"),
                 1,
-                1,
                 Format::Json,
             );
 
@@ -1886,7 +1818,6 @@ instantiation :: nanoseconds :: pulldown-cmark
             engine_flags_common: None,
             processes: None,
             names: None,
-            iterations_per_process: None,
             raw: false,
             output_format: Format::Json,
             output_file: None,

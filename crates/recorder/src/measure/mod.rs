@@ -10,8 +10,6 @@ pub struct Measurements<'a> {
     arch: &'a str,
     engine: Engine<'a>,
     wasm: &'a str,
-    process: u32,
-    iteration: u32,
     measurements: Vec<Measurement<'a>>,
 }
 
@@ -22,25 +20,13 @@ impl<'a> Measurements<'a> {
             arch,
             engine,
             wasm,
-            process: std::process::id(),
-            iteration: 0,
             measurements: vec![],
         }
-    }
-
-    /// Advance the iteration counter.
-    pub fn next_iteration(&mut self) {
-        self.iteration += 1;
     }
 
     /// Reserve additional capacity for more measurements internally.
     pub fn reserve(&mut self, capacity: usize) {
         self.measurements.reserve(capacity);
-    }
-
-    /// Get the current iteration index.
-    pub fn iteration(&self) -> u32 {
-        self.iteration
     }
 
     /// Add a measurement of the given event for the given phase to this
@@ -50,8 +36,6 @@ impl<'a> Measurements<'a> {
             arch: self.arch.into(),
             engine: self.engine.clone(),
             wasm: self.wasm.into(),
-            process: self.process,
-            iteration: self.iteration,
             phase,
             event,
             count,
