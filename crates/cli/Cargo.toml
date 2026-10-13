@@ -20,7 +20,6 @@ sightglass-build = { path = "../build" }
 sightglass-data = { path = "../data" }
 sightglass-fingerprint = { path = "../fingerprint" }
 sightglass-recorder = { path = "../recorder" }
-sightglass-upload = { path = "../upload" }
 clap = { version = "4", features = ["derive"] }
 termcolor = "1"
 thiserror = "1.0"

@@ -6,7 +6,6 @@ mod pca_metrics;
 mod report;
 mod suite;
 mod summarize;
-mod upload;
 mod validate;
 
 use anyhow::Result;
@@ -21,7 +20,6 @@ use report::ReportCommand;
 use std::io::{self, IsTerminal};
 use summarize::SummarizeCommand;
 use termcolor::{ColorChoice, StandardStream};
-use upload::UploadCommand;
 use validate::ValidateCommand;
 
 /// A stdout writer for human-readable output. Colors are only emitted when
@@ -54,7 +52,6 @@ enum SightglassCommand {
     PcaMetrics(PcaMetricsCommand),
     Report(ReportCommand),
     Summarize(SummarizeCommand),
-    UploadElastic(UploadCommand),
     Validate(ValidateCommand),
 }
 
@@ -69,7 +66,6 @@ impl SightglassCommand {
             SightglassCommand::PcaMetrics(metrics) => metrics.execute(),
             SightglassCommand::Report(report) => report.execute(),
             SightglassCommand::Summarize(summarize) => summarize.execute(),
-            SightglassCommand::UploadElastic(upload) => upload.execute(),
             SightglassCommand::Validate(validate) => validate.execute(),
         }
     }
