@@ -28,7 +28,17 @@ mod callgrind {
     use sightglass_recorder::measure::callgrind::CALLGRIND_OUT_DIR_ENV_VAR;
     use tempfile::TempDir;
 
-    const DEFAULT_CALLGRIND_ITERATIONS: usize = 3;
+    /// Callgrind's counts are deterministic, so these samples differ only in
+    /// what differs between processes. Six is the fewest that gives a 1%
+    /// significance level any room: with `n` samples of each engine there are
+    /// only `C(2n, n)` ways for them to interleave, so no comparison can
+    /// report a two-sided p-value below `2 / C(2n, n)`, which is 0.1 at three
+    /// samples and 0.0022 at six. Five would just clear 1%, at 0.0079, leaving
+    /// nothing for a sample that falls out of order.
+    ///
+    /// `warn_if_no_result_will_be_attainable` covers a run told to use fewer,
+    /// before it spends the time measuring.
+    const DEFAULT_CALLGRIND_ITERATIONS: usize = 6;
 
     // 64KiB, 8-way associative, 64B line size.
     const CACHE_MODEL_I1: &str = "65536,8,64";
@@ -450,7 +460,67 @@ impl BenchmarkCommand {
         // Validate the engines/engine-flags pairing up front so that we fail
         // fast before spawning any benchmark processes.
         self.engine_flag_pairs()?;
+        self.warn_if_no_result_will_be_attainable();
         Ok(())
+    }
+
+    /// Warn, before running anything, when this run's iteration count cannot
+    /// produce a significant result however large a regression it measures.
+    ///
+    /// The floor depends only on how many iterations each engine gets, which
+    /// is known from the arguments. Checking here rather than alongside the
+    /// results means a developer who asked for too few hears about it in the
+    /// first second, rather than after sitting through the whole suite.
+    fn warn_if_no_result_will_be_attainable(&self) {
+        if let Some(warning) = self.unattainable_result_warning() {
+            eprintln!("\n{warning}");
+        }
+    }
+
+    /// The warning's text, or `None` when this run can conclude something.
+    ///
+    /// Split out from the printing so the arithmetic can be tested directly.
+    fn unattainable_result_warning(&self) -> Option<String> {
+        // `--raw` prints measurements without testing them, and a run with one
+        // engine configuration is summarized rather than compared.
+        if self.raw || self.engine_flag_pairs().ok()?.len() < 2 {
+            return None;
+        }
+
+        let iterations = self.iterations();
+        let floor =
+            sightglass_analysis::mann_whitney::smallest_attainable_p_value(iterations, iterations);
+        if floor <= self.significance_level {
+            return None;
+        }
+
+        // The smallest iteration count that would clear the level, so the
+        // warning says what to do rather than only what is wrong.
+        let enough = (iterations + 1..=100).find(|&n| {
+            sightglass_analysis::mann_whitney::smallest_attainable_p_value(n, n)
+                <= self.significance_level
+        });
+        let remedy = match enough {
+            Some(n) => format!(
+                "Pass `--iters {n}` (or raise `--significance-level`) to draw that \
+                 conclusion."
+            ),
+            None => "Raise `--significance-level` to draw that conclusion from a run like \
+                     this one."
+                .to_string(),
+        };
+
+        let significance_level = self.significance_level;
+        Some(format!(
+            "Warning: {iterations} iterations cannot show a regression at \
+             p < {significance_level}, whatever\n\
+             \x20        the regression's size: with so few samples of each engine there \
+             are only\n\
+             \x20        so many ways for them to interleave, and the smallest p-value \
+             any of\n\
+             \x20        them could reach is {floor:.4}.\n\
+             \x20        {remedy}"
+        ))
     }
 
     fn iterations(&self) -> usize {
@@ -1733,6 +1803,65 @@ execution
             "expected summaries without effect-size headers:\n{summary}"
         );
         assert!(summary.contains("compilation"));
+
+        Ok(())
+    }
+
+    /// The run's iteration count alone says whether it can conclude anything,
+    /// so the warning has to come before the benchmarks rather than alongside
+    /// the results: a developer who asked for too few iterations should not sit
+    /// through the whole suite to find out.
+    #[test]
+    fn a_run_that_cannot_conclude_anything_warns_before_it_starts() -> Result<()> {
+        let command = |args: &[&str]| -> Result<BenchmarkCommand> {
+            let mut argv = vec!["benchmark", "-e", "a", "-e", "b"];
+            argv.extend_from_slice(args);
+            Ok(BenchmarkCommand::try_parse_from(argv)?)
+        };
+
+        // Three iterations of each engine floor at 0.1, well above 1%.
+        let warning = command(&["--iters", "3", "a.wasm"])?
+            .unattainable_result_warning()
+            .expect("three iterations cannot reach 1%");
+        assert!(
+            warning.contains("3 iterations cannot show a regression"),
+            "{warning}"
+        );
+        assert!(warning.contains("is 0.1000"), "{warning}");
+
+        // The remedy is the smallest count that would have worked.
+        assert!(warning.contains("--iters 5"), "{warning}");
+
+        // Which, at five, it does: 2 / C(10, 5) is 0.0079.
+        assert_eq!(
+            command(&["--iters", "5", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+
+        // The callgrind default leaves room beyond that.
+        assert_eq!(
+            command(&["--iters", "6", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+
+        // A looser level lets a smaller run conclude something.
+        assert_eq!(
+            command(&["--iters", "4", "--significance-level", "0.05", "a.wasm"])?
+                .unattainable_result_warning(),
+            None
+        );
+
+        // Nothing is tested when the measurements are printed raw, or when
+        // there is only one engine to compare.
+        assert_eq!(
+            command(&["--iters", "3", "--raw", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+        assert_eq!(
+            BenchmarkCommand::try_parse_from(["benchmark", "-e", "a", "--iters", "3", "a.wasm"])?
+                .unattainable_result_warning(),
+            None
+        );
 
         Ok(())
     }
