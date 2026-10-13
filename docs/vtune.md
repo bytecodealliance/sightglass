@@ -51,7 +51,7 @@ To see flame graphs and explore call stacks, re-collect results with "Collect st
 
 - Try restricting which CPU cores are used with a tool like `taskset`: e.g., `taskset --cpu-list 0`
 - Ensure the benchmark is not context-switched to another core using the Sightglass `--pin` flag
-- You may want to analyze a single iteration; use `--processes 1`
+- You may want to analyze a single iteration; use `--iters 1`
 - When collecting call stacks, there is a balance between accuracy and slowing the workload down; on
   Linux, `-knob enable-stack-collection=true -knob stack-size=2048 -knob stack-type=software_lbr`
   seemed to work well but [this

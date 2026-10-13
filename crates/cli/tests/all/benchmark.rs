@@ -31,7 +31,7 @@ fn benchmark_output_format_requires_raw() {
 fn benchmark_phase_compilation() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--benchmark-phase")
         .arg("compilation")
@@ -49,7 +49,7 @@ fn benchmark_phase_compilation() {
 fn benchmark_phase_instantiation() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--benchmark-phase")
         .arg("instantiation")
@@ -68,7 +68,7 @@ fn benchmark_phase_instantiation() {
 fn benchmark_phase_execution() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--benchmark-phase")
         .arg("execution")
@@ -87,7 +87,7 @@ fn benchmark_phase_execution() {
 fn benchmark_json() {
     let assert = sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("4")
         .arg("--output-format")
         .arg("json")
@@ -113,7 +113,7 @@ fn benchmark_json() {
 fn benchmark_csv() {
     let assert = sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("4")
         .arg("--output-format")
         .arg("csv")
@@ -142,7 +142,7 @@ fn benchmark_csv() {
 #[test]
 fn benchmark_summary() {
     sightglass_cli_benchmark()
-        .arg("--processes")
+        .arg("--iters")
         .arg("3")
         .arg("--")
         .arg(benchmark("noop"))
@@ -180,7 +180,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg(&test_engine)
         .arg("--engine")
         .arg(&alt_engine_path)
-        .arg("--processes")
+        .arg("--iters")
         .arg("200")
         // The two engines are identical copies, so their differences are not
         // significant; show them anyway to exercise the output format.
@@ -238,7 +238,7 @@ fn benchmark_single_engine_multiple_flags() {
         .arg("-W fuel=99999999")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -267,7 +267,7 @@ fn benchmark_multiple_engines_common_flags() {
         .arg(&alt)
         .arg("--engine-flags-common")
         .arg("-W fuel=99999999")
-        .arg("--processes")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -292,7 +292,7 @@ fn benchmark_multiple_engines_multiple_flags() {
         .arg("-W fuel=99999999")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -321,7 +321,7 @@ fn benchmark_common_and_per_engine_flags() {
         .arg("")
         .arg("--engine-flags")
         .arg("-W epoch-interruption=y")
-        .arg("--processes")
+        .arg("--iters")
         .arg("5")
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
@@ -343,7 +343,7 @@ fn benchmark_common_and_per_engine_flags() {
 #[test]
 fn benchmark_geomean() {
     sightglass_cli_benchmark()
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--")
         .arg(benchmark("noop"))
@@ -360,7 +360,7 @@ fn benchmark_output_file() -> anyhow::Result<()> {
     let out = dir.path().join("out.json");
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("1")
         .arg("--output-file")
         .arg(&out)
@@ -381,7 +381,7 @@ fn benchmark_output_file() -> anyhow::Result<()> {
 fn benchmark_name_override() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("1")
         .arg("--name")
         .arg("my-custom-engine")
@@ -397,7 +397,7 @@ fn benchmark_name_override() {
 fn benchmark_measure_noop() {
     sightglass_cli_benchmark()
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("1")
         .arg("--measure")
         .arg("time")
@@ -418,7 +418,7 @@ fn benchmark_saves_data_file() -> anyhow::Result<()> {
 
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--")
         .arg(benchmark("noop"))
@@ -471,7 +471,7 @@ fn benchmark_saves_data_file_from_subprocesses() -> anyhow::Result<()> {
 
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
-        .arg("--processes")
+        .arg("--iters")
         .arg("2")
         .arg("--")
         .arg(benchmark("noop"))
@@ -514,7 +514,7 @@ fn benchmark_rotates_data_file() -> anyhow::Result<()> {
     let run = || {
         sightglass_cli_benchmark()
             .env(DATA_DIR_ENV_VAR, dir.path())
-            .arg("--processes")
+            .arg("--iters")
             .arg("1")
             .arg("--")
             .arg(benchmark("noop"))
@@ -553,7 +553,7 @@ fn benchmark_raw_does_not_save_data_file() -> anyhow::Result<()> {
     sightglass_cli_benchmark()
         .env(DATA_DIR_ENV_VAR, dir.path())
         .arg("--raw")
-        .arg("--processes")
+        .arg("--iters")
         .arg("1")
         .arg("--")
         .arg(benchmark("noop"))

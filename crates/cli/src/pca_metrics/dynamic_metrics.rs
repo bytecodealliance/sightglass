@@ -92,7 +92,7 @@ fn callgrind_metrics(
         .arg("--raw")
         .arg("--output-format")
         .arg("json")
-        .arg("--processes")
+        .arg("--iters")
         .arg("1")
         .arg("--working-dir")
         .arg(working_dir)

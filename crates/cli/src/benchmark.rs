@@ -17,7 +17,7 @@ use std::{
 };
 use termcolor::{ColorChoice, NoColor, StandardStream, WriteColor};
 
-const DEFAULT_PROCESSES: usize = 100;
+const DEFAULT_ITERATIONS: usize = 100;
 
 const DATA_FILE: &str = "sightglass-data.csv";
 const OLD_DATA_FILE: &str = "sightglass-data.old.csv";
@@ -29,7 +29,7 @@ mod callgrind {
     use sightglass_recorder::measure::callgrind::CALLGRIND_OUT_DIR_ENV_VAR;
     use tempfile::TempDir;
 
-    const DEFAULT_CALLGRIND_PROCESSES: usize = 3;
+    const DEFAULT_CALLGRIND_ITERATIONS: usize = 3;
 
     // 64KiB, 8-way associative, 64B line size.
     const CACHE_MODEL_I1: &str = "65536,8,64";
@@ -52,11 +52,11 @@ mod callgrind {
     }
 
     impl BenchmarkCommand {
-        pub(super) fn default_processes(&self) -> usize {
+        pub(super) fn default_iterations(&self) -> usize {
             if self.uses_callgrind() {
-                DEFAULT_CALLGRIND_PROCESSES
+                DEFAULT_CALLGRIND_ITERATIONS
             } else {
-                DEFAULT_PROCESSES
+                DEFAULT_ITERATIONS
             }
         }
 
@@ -172,8 +172,8 @@ mod callgrind {
     use super::*;
 
     impl BenchmarkCommand {
-        pub(super) fn default_processes(&self) -> usize {
-            DEFAULT_PROCESSES
+        pub(super) fn default_iterations(&self) -> usize {
+            DEFAULT_ITERATIONS
         }
 
         pub(super) fn validate_callgrind(&self) -> Result<()> {
@@ -288,12 +288,17 @@ pub struct BenchmarkCommand {
     )]
     engine_flags_common: Option<String>,
 
-    /// How many processes should we use for each Wasm benchmark?
+    /// How many times should we run each benchmark?
     ///
     /// Defaults to `100`, unless using the `callgrind` measure, in which case
     /// the default is `3`.
-    #[arg(long = "processes", value_name = "PROCESSES")]
-    processes: Option<usize>,
+    #[arg(
+        short = 'i',
+        long = "iters",
+        alias = "iterations",
+        value_name = "ITERATIONS"
+    )]
+    iterations: Option<usize>,
 
     /// Override the "engine" name; this is useful if running experiments that might
     /// not have a differentiating engine name (e.g. if customizing the flags).
@@ -413,7 +418,10 @@ pub struct BenchmarkCommand {
 
 impl BenchmarkCommand {
     pub fn execute(&self) -> Result<()> {
-        anyhow::ensure!(self.processes() > 0, "processes must be greater than zero");
+        anyhow::ensure!(
+            self.iterations() > 0,
+            "iterations must be greater than zero"
+        );
         anyhow::ensure!(
             !self.engines.is_empty(),
             "must pass one or more engines to benchmark with -e/--engine"
@@ -431,10 +439,10 @@ impl BenchmarkCommand {
             );
         }
 
-        if self.processes() == 1 {
+        if self.iterations() == 1 {
             self.execute_in_current_process()
         } else {
-            self.execute_in_multiple_processes()
+            self.execute_in_one_process_per_iteration()
         }
     }
 
@@ -446,8 +454,8 @@ impl BenchmarkCommand {
         Ok(())
     }
 
-    fn processes(&self) -> usize {
-        self.processes.unwrap_or_else(|| self.default_processes())
+    fn iterations(&self) -> usize {
+        self.iterations.unwrap_or_else(|| self.default_iterations())
     }
 
     /// Pair each engine with the flags it should be configured with.
@@ -706,9 +714,9 @@ impl BenchmarkCommand {
         Ok(())
     }
 
-    /// Execute the benchmark(s) by spawning multiple processes. Each of the spawned processes will
-    /// run the `execute_in_current_process` function above.
-    fn execute_in_multiple_processes(&self) -> Result<()> {
+    /// Execute the benchmark(s) by spawning one process per iteration. Each of the spawned
+    /// processes will run the `execute_in_current_process` function above.
+    fn execute_in_one_process_per_iteration(&self) -> Result<()> {
         let this_exe =
             std::env::current_exe().context("failed to get the current executable's path")?;
         self.execute_in_subprocesses("iterations", |engine, name, flags, wasm| {
@@ -744,11 +752,11 @@ impl BenchmarkCommand {
 
         let wasm_files: Vec<_> = self.benchmarks.iter().flat_map(|b| b.paths()).collect();
         eprintln!(
-            "\nRunning {} total {label} ({} engines * {} benchmarks * {} processes)",
-            self.engines.len() * wasm_files.len() * self.processes(),
+            "\nRunning {} total {label} ({} engines * {} benchmarks * {} iterations)",
+            self.engines.len() * wasm_files.len() * self.iterations(),
             self.engines.len(),
             wasm_files.len(),
-            self.processes(),
+            self.iterations(),
         );
         eprint!("\n[Done] [Elapsed    ] [Est. Rem.  ]");
 
@@ -769,7 +777,7 @@ impl BenchmarkCommand {
 
             let name = self.engine_name_override(i);
             for wasm in wasm_files.iter().cloned() {
-                choices.push((engine.clone(), name, flags.clone(), wasm, self.processes()));
+                choices.push((engine.clone(), name, flags.clone(), wasm, self.iterations()));
             }
         }
 
@@ -777,12 +785,12 @@ impl BenchmarkCommand {
         let mut measurements = vec![];
 
         let mut i = 0;
-        let n = choices.len() * self.processes();
+        let n = choices.len() * self.iterations();
         let start = std::time::Instant::now();
 
         while !choices.is_empty() {
             let index = rng.gen_range(0, choices.len());
-            let (engine, name, flags, wasm, procs_left) = &mut choices[index];
+            let (engine, name, flags, wasm, iters_left) = &mut choices[index];
             let mut prepared = prepare_command(engine, *name, flags.as_deref(), wasm)?;
             let output = prepared
                 .command
@@ -809,9 +817,9 @@ impl BenchmarkCommand {
                 let elapsed_mins = elapsed / 60 % 60;
                 let elapsed_secs = elapsed % 60;
 
-                let secs_per_proc = (elapsed as f64) / (i as f64);
-                let procs_left = n - i;
-                let eta = (procs_left as f64) * secs_per_proc;
+                let secs_per_iter = (elapsed as f64) / (i as f64);
+                let iters_left = n - i;
+                let eta = (iters_left as f64) * secs_per_iter;
                 let eta = eta.round() as u64;
                 let eta_hours = eta / 60 / 60;
                 let eta_mins = eta / 60 % 60;
@@ -833,8 +841,8 @@ impl BenchmarkCommand {
                     .context(prepared.result_context)?,
             );
 
-            *procs_left -= 1;
-            if *procs_left == 0 {
+            *iters_left -= 1;
+            if *iters_left == 0 {
                 choices.swap_remove(index);
             }
         }
@@ -1001,13 +1009,13 @@ impl BenchmarkCommand {
         engine_name: Option<&str>,
         engine_flags: Option<&str>,
         wasm: &Path,
-        processes: usize,
+        iterations: usize,
         output_format: Format,
     ) {
         command
             .arg("benchmark")
-            .arg("--processes")
-            .arg(processes.to_string())
+            .arg("--iters")
+            .arg(iterations.to_string())
             .arg("--engine")
             .arg(engine)
             .args(
@@ -1650,6 +1658,38 @@ execution
         Ok(())
     }
 
+    /// The parent spawns children by name, so the iteration count it forwards
+    /// must be a flag the child actually parses. Renaming the flag on only one
+    /// side of that handoff would leave every child running the default number
+    /// of iterations instead.
+    #[test]
+    fn child_args_forward_a_parsable_iteration_count() -> Result<()> {
+        let mut child = Command::new("sightglass-cli");
+        let command = BenchmarkCommand::try_parse_from(["benchmark", "-e", "a", "dummy.wasm"])?;
+        command.add_benchmark_child_args(
+            &mut child,
+            Path::new("a"),
+            None,
+            None,
+            Path::new("dummy.wasm"),
+            7,
+            Format::Json,
+        );
+        let args: Vec<String> = child
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+
+        // Round-trip the child's argv back through the parser, rather than
+        // asserting on the flag's spelling: that is what the child does.
+        let child_command = BenchmarkCommand::try_parse_from(
+            std::iter::once("sightglass-cli".to_string()).chain(args),
+        )?;
+        assert_eq!(child_command.iterations(), 7);
+
+        Ok(())
+    }
+
     #[test]
     fn summary_flag_forces_summaries() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
@@ -1816,7 +1856,7 @@ instantiation :: nanoseconds :: pulldown-cmark
             engines: vec!["/tmp/engine.so".into()],
             engine_flags: vec![],
             engine_flags_common: None,
-            processes: None,
+            iterations: None,
             names: None,
             raw: false,
             output_format: Format::Json,

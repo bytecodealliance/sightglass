@@ -95,8 +95,8 @@ You can always see all subcommands and options via
 cargo run -- help
 ```
 
-There are flags to control how many different processes we spawn and take
-measurements from, how many iterations we perform for each process, etc...
+There are flags to control how many iterations of each benchmark we measure
+(each in its own process), etc...
 
 That said, here are a couple of typical usage scenarios.
 
