@@ -20,6 +20,14 @@ use termcolor::{ColorSpec, WriteColor};
 /// and event, one `EffectSize` is produced for each pair of engines present in
 /// that group. If fewer than two different engines are represented in
 /// `measurements` then an error is returned.
+///
+/// Each comparison is a Mann-Whitney U test; see [`crate::mann_whitney`] for
+/// the method. Note that this estimates a different quantity than the suite
+/// geomean does: the median of the ratios between the two engines' samples,
+/// rather than the ratio of their means. The geomean is an aggregate over a
+/// fixed set of benchmarks, which the mean is the right summary for, while a
+/// single benchmark's comparison is about where its samples sit relative to
+/// each other.
 pub fn calculate<'a>(
     significance_level: f64,
     measurements: &[Measurement<'a>],
