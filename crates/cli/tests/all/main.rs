@@ -6,7 +6,6 @@ mod help;
 mod pca_metrics;
 mod report;
 mod summarize;
-mod upload;
 mod util;
 mod validate;
 
