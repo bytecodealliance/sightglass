@@ -251,7 +251,7 @@
                     {% set cv_class = "inconsistent" if bstats.cv > 5 else "" %}
                     <td class="{{ cv_class }}">{{ bstats.cv|floatfmt }}%</td>
                     {# Baseline column without CV #}
-                    <td class="cycle-count">{{ bstats.p25|cyclefmt }} cycles (p25)</td>
+                    <td class="cycle-count">{{ bstats.median|cyclefmt }} cycles (median)</td>
                     {# Then show other engines #}
                     {% for engine, pstats in benchmark.stats_by_engine|items %}
                         {% if pstats.relative_stats %}
@@ -294,7 +294,7 @@
                 <thead>
                     <tr>
                         <th>Engine</th>
-                        <th class="cycles-col">Cycles (p25)</th>
+                        <th class="cycles-col">Cycles (median)</th>
                         <th class="performance-col">Performance</th>
                         <th class="confidence-col">Confidence Interval</th>
                         <th class="cv-col">CV%</th>
@@ -303,7 +303,7 @@
                 <tbody>
                     <tr class="baseline-row">
                         <td class="engine-name"><span class="baseline-star" title="Baseline engine">📊</span> {{ stats.baseline_engine }}</td>
-                        <td class="cycles-col">{{ bstats.p25|cyclefmt }} cycles (p25)</td>
+                        <td class="cycles-col">{{ bstats.median|cyclefmt }} cycles (median)</td>
                         <td class="performance-col">—</td>
                         <td class="confidence-col">—</td>
                         <td class="cv-col{% if bstats.cv > 5 %} high-cv{% endif %}">{{ bstats.cv|floatfmt }}%</td>
@@ -313,7 +313,7 @@
                             {% set rel = pstats.relative_stats %}
                             <tr>
                                 <td class="engine-name">{{ benchmark.short_names[engine] }}</td>
-                                <td class="cycles-col">{{ pstats.p25|cyclefmt }} cycles</td>
+                                <td class="cycles-col">{{ pstats.median|cyclefmt }} cycles</td>
                                 <td class="performance-col">
                                     {% if rel.is_significant %}
                                         {% set class = "slower" if rel.speedup_ratio > 1 else "faster" %}
@@ -329,10 +329,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="confidence-col">
-                                    {% if rel.confidence_interval_half_width %}
-                                        ±{{ rel.confidence_interval_half_width|cyclefmt }} cycles
+                                    {% if rel.speedup_confidence_interval %}
+                                        {{ rel.speedup_confidence_interval[0]|round(3) }}x to {{ rel.speedup_confidence_interval[1]|round(3) }}x
                                     {% else %}
-                                        —
+                                        &mdash;
                                     {% endif %}
                                 </td>
                                 <td class="cv-col{% if pstats.cv > 5 %} high-cv{% endif %}">{{ pstats.cv|floatfmt }}%</td>
@@ -406,18 +406,21 @@
         <div id="effect-size-methodology" style="margin-top: 40px; padding: 20px; background: #f9f9f9; border-radius: 5px;">
             <h2>Statistical Methods</h2>
             <p>
-                Uses effect size analysis with confidence intervals based on Student's t-test.
-                Statistical significance indicates the difference is likely real (not measurement noise).
-                Tests with CV > 5% may have unreliable measurements.
+                Engines are compared with the Mann-Whitney U test, which ranks the two sets of counts
+                against each other and so assumes nothing about their distribution. Benchmark timings are
+                right-skewed, since code cannot run faster than its critical path but can be interrupted
+                without limit, which a t-test would not account for.
+                Tests with CV &gt; 5% may have unreliable measurements.
             </p>
             <p>
                 <strong>Baseline Engine (📊):</strong> The baseline engine is the reference point for all comparisons.
                 Performance differences are calculated relative to the baseline. The baseline engine appears with a chart icon (📊) and is highlighted with a light blue background in detailed tables.
             </p>
             <p>
-                <strong>P25 Metric:</strong> Cycle counts show the 25th percentile (p25) rather than mean or median.
-                This metric is more robust to outliers, as noise in benchmarking typically appears as spikes on the higher end (system interrupts, background processes, etc.).
-                P25 represents a "good run" that is consistently achievable—25% of runs are this fast or faster.
+                <strong>Median Metric:</strong> Cycle counts show the median rather than the mean.
+                The median is robust to outliers, as noise in benchmarking typically appears as spikes on the
+                higher end (system interrupts, background processes, etc.), and it is the statistic the
+                significance test estimates, so the number shown is the number that was tested.
             </p>
             <p>
                 <strong>Color Coding:</strong>

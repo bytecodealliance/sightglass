@@ -182,8 +182,9 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
         .arg(&alt_engine_path)
         .arg("--iters")
         .arg("200")
-        // The two engines are identical copies, so their differences are not
-        // significant; show them anyway to exercise the output format.
+        // Show insignificant results too, so the output format is exercised
+        // whichever way these two identical copies of the engine happen to
+        // compare.
         .arg("--show-insignificant")
         .arg(benchmark("noop"))
         .assert()
@@ -198,7 +199,7 @@ fn benchmark_effect_size() -> anyhow::Result<()> {
                 .and(predicate::str::contains("Median"))
                 .and(predicate::str::is_match(r#"│ \d+ +│"#).unwrap())
                 .and(
-                    predicate::str::contains("Δ = ")
+                    predicate::str::contains("faster than")
                         .or(predicate::str::contains("No difference in performance.")),
                 ),
         );

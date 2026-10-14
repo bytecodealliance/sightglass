@@ -1,4 +1,4 @@
-use crate::geomean::GEOMEAN;
+use crate::geomean::{Geomean, GEOMEAN};
 use crate::keys::KeyBuilder;
 use anyhow::Result;
 use sightglass_data::{Measurement, Summary};
@@ -13,25 +13,27 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
             .filter(|m| k.matches(m))
             .map(|m| m.count)
             .collect();
+
+        // Sort up front so the percentiles and the extremes can all be read
+        // off the same ordering.
+        grouped_counts.sort();
+        let first = *grouped_counts.first().expect("at least one element");
+        let last = *grouped_counts.last().expect("at least one element");
+
         summaries.push(Summary {
             arch: k.arch.unwrap(),
             engine: k.engine.unwrap(),
             wasm: k.wasm.unwrap(),
             phase: k.phase.unwrap(),
             event: k.event.unwrap(),
-            min: grouped_counts
-                .iter()
-                .cloned()
-                .min()
-                .expect("at least one element"),
-            max: grouped_counts
-                .iter()
-                .cloned()
-                .max()
-                .expect("at least one element"),
+            min: first,
+            max: last,
             mean: mean(&grouped_counts),
             mean_deviation: mean_deviation(&grouped_counts),
-            median: median(grouped_counts.as_mut_slice()),
+            median: percentile_from_sorted(&grouped_counts, 50.0),
+            samples: grouped_counts.len(),
+            p25: percentile_from_sorted(&grouped_counts, 25.0),
+            p75: percentile_from_sorted(&grouped_counts, 75.0),
         })
     }
     summaries
@@ -52,9 +54,13 @@ fn mean_deviation(numbers: &[u64]) -> f64 {
         / numbers.len() as f64
 }
 
-/// Calculate the standard deviation of a slice of numbers.
+/// Calculate the sample standard deviation of a slice of numbers.
+///
+/// This divides by `n - 1` rather than `n`, matching the sample variance that
+/// the significance tests use. Fewer than two numbers have no sample
+/// deviation, which is reported as zero.
 pub fn std_deviation(numbers: &[u64]) -> f64 {
-    if numbers.is_empty() {
+    if numbers.len() < 2 {
         return 0.0;
     }
     let mean = mean(numbers);
@@ -65,7 +71,7 @@ pub fn std_deviation(numbers: &[u64]) -> f64 {
             diff * diff
         })
         .sum::<f64>()
-        / numbers.len() as f64;
+        / (numbers.len() - 1) as f64;
     variance.sqrt()
 }
 
@@ -87,6 +93,20 @@ pub fn percentile_from_sorted(sorted_numbers: &[u64], p: f64) -> f64 {
     }
 }
 
+/// The percent change of `value` against `baseline`.
+///
+/// This is the plain percent change, `(value - baseline) / baseline`, not the
+/// symmetric difference: `report_stats` has an explicit baseline engine, so the
+/// two values are not interchangeable. A baseline of zero has no percent change
+/// and is reported as zero.
+pub fn percent_change(value: f64, baseline: f64) -> f64 {
+    if baseline == 0.0 {
+        0.0
+    } else {
+        (value - baseline) / baseline * 100.0
+    }
+}
+
 /// Calculate the coefficient of variation (CV) as a percentage.
 pub fn coefficient_of_variation(numbers: &[u64]) -> f64 {
     let mean_val = mean(numbers);
@@ -97,25 +117,20 @@ pub fn coefficient_of_variation(numbers: &[u64]) -> f64 {
     }
 }
 
-/// Returns the median value of a group.
-fn median(numbers: &mut [u64]) -> u64 {
-    numbers.sort();
-    // Note this index is *the* right one for odd lengths (the median value among 2p+1 values is at
-    // index p), and *a* right one for even lengths.
-    numbers[numbers.len() / 2]
-}
+/// Write a vector of [Summary] structures to the passed `output_file` in
+/// human-readable form, led by the suite `geomeans`.
+pub fn write(
+    mut summaries: Vec<Summary<'_>>,
+    geomeans: &[Geomean<'_>],
+    output_file: &mut dyn WriteColor,
+) -> Result<()> {
+    write_geomeans(geomeans, output_file)?;
 
-/// Write a vector of [Summary] structures to the passed `output_file` in human-readable form.
-pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) -> Result<()> {
     // TODO this sorting is not using `arch` which is not guaranteed to be the
     // same in result sets; potentially this could re-use `Key` functionality.
-    //
-    // Our "Geomean" results always come first, then we sort by phase,
-    // benchmark, event, and finally engine.
     summaries.sort_by(|x, y| {
-        (y.wasm == GEOMEAN)
-            .cmp(&(x.wasm == GEOMEAN))
-            .then_with(|| x.phase.cmp(&y.phase))
+        x.phase
+            .cmp(&y.phase)
             .then_with(|| x.wasm.cmp(&y.wasm))
             .then_with(|| x.event.cmp(&y.event))
             .then_with(|| x.engine.cmp(&y.engine))
@@ -171,6 +186,71 @@ pub fn write(mut summaries: Vec<Summary<'_>>, output_file: &mut dyn WriteColor) 
     Ok(())
 }
 
+/// Write the suite `geomeans` as a leading section, nested by phase and event
+/// like the per-benchmark summaries that follow. A no-op if there are none.
+fn write_geomeans(geomeans: &[Geomean<'_>], output_file: &mut dyn WriteColor) -> Result<()> {
+    if geomeans.is_empty() {
+        return Ok(());
+    }
+
+    let mut geomeans: Vec<&Geomean<'_>> = geomeans.iter().collect();
+    geomeans.sort_by(|x, y| {
+        x.phase
+            .cmp(&y.phase)
+            .then_with(|| x.event.cmp(&y.event))
+            .then_with(|| x.engine.cmp(&y.engine))
+    });
+
+    crate::write_in(output_file, &crate::benchmark_spec(), GEOMEAN)?;
+    writeln!(output_file)?;
+
+    let mut last_phase = None;
+    let mut last_event = None;
+    let mut rows: Vec<Vec<String>> = vec![];
+
+    for geomean in geomeans {
+        if last_phase != Some(geomean.phase) {
+            flush_geomean_table(output_file, &mut rows)?;
+            last_phase = Some(geomean.phase);
+            last_event = None;
+            write!(output_file, "    ")?;
+            crate::write_in(
+                output_file,
+                &crate::phase_spec(),
+                &geomean.phase.to_string(),
+            )?;
+            writeln!(output_file)?;
+        }
+
+        if last_event.as_ref() != Some(&geomean.event) {
+            flush_geomean_table(output_file, &mut rows)?;
+            last_event = Some(geomean.event.clone());
+            write!(output_file, "        ")?;
+            crate::write_in(output_file, &crate::event_spec(), &geomean.event)?;
+            writeln!(output_file)?;
+        }
+
+        rows.push(crate::geomean_row(geomean, geomean.engine.to_string()));
+    }
+    flush_geomean_table(output_file, &mut rows)?;
+
+    writeln!(output_file)?;
+    Ok(())
+}
+
+/// Render any buffered geomean `rows` as a table, then clear them. A no-op if
+/// there are no rows.
+fn flush_geomean_table(
+    output_file: &mut dyn WriteColor,
+    rows: &mut Vec<Vec<String>>,
+) -> Result<()> {
+    if !rows.is_empty() {
+        crate::write_geomean_table(output_file, "            ", rows)?;
+        rows.clear();
+    }
+    Ok(())
+}
+
 /// Render any buffered statistics `rows` as a table, then clear them. A no-op if
 /// there are no rows.
 fn flush_stats_table(output_file: &mut dyn WriteColor, rows: &mut Vec<Vec<String>>) -> Result<()> {
@@ -184,6 +264,7 @@ fn flush_stats_table(output_file: &mut dyn WriteColor, rows: &mut Vec<Vec<String
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geomean::Geomean;
     use sightglass_data::{Engine, Phase};
 
     #[test]
@@ -211,9 +292,12 @@ mod tests {
                 event: "cycles".into(),
                 mean: 1.0,
                 min: 0,
-                median: 1,
+                median: 1.0,
                 max: 2,
                 mean_deviation: 2f64 / 3f64,
+                samples: 3,
+                p25: 0.5,
+                p75: 1.5,
             }]
         );
     }
@@ -267,7 +351,7 @@ mod tests {
     }
 
     #[test]
-    fn write_sorts_geomean_first() {
+    fn write_puts_the_geomean_first() {
         fn summary<'a>(wasm: &'a str) -> Summary<'a> {
             Summary {
                 arch: "x86".into(),
@@ -277,33 +361,91 @@ mod tests {
                 event: "cycles".into(),
                 min: 1,
                 max: 3,
-                median: 2,
+                median: 2.0,
                 mean: 2.0,
                 mean_deviation: 0.0,
+                samples: 3,
+                p25: 1.5,
+                p75: 2.5,
             }
         }
 
-        // "Aaa" sorts before "Geomean" lexicographically, so this exercises
-        // the explicit total-first ordering rather than a sorting accident.
-        let summaries = vec![summary("Aaa"), summary("Geomean"), summary("zzz")];
+        // "Aaa" sorts before "Geomean" lexicographically and is passed first, so
+        // this exercises the explicit ordering rather than a sorting accident.
+        let summaries = vec![summary("Aaa"), summary("zzz")];
+        let geomeans = vec![Geomean {
+            arch: "x86".into(),
+            engine: "e".into(),
+            phase: Phase::Compilation,
+            event: "cycles".into(),
+            geomean: 2.0,
+            benchmarks: 2,
+        }];
         let mut out = termcolor::NoColor::new(Vec::new());
-        write(summaries, &mut out).unwrap();
+        write(summaries, &geomeans, &mut out).unwrap();
         let out = String::from_utf8(out.into_inner()).unwrap();
 
-        let total = out.find("Geomean").unwrap();
+        let geomean = out.find("Geomean").unwrap();
         let aaa = out.find("Aaa").unwrap();
         let zzz = out.find("zzz").unwrap();
         assert!(
-            total < aaa && total < zzz,
-            "Geomean should be first:\n{out}"
+            geomean < aaa && geomean < zzz,
+            "the geomean should be first:\n{out}"
         );
     }
 
     #[test]
+    fn write_omits_the_geomean_section_when_there_is_none() {
+        // A single benchmark has no geomean, and its section should not appear
+        // empty.
+        let summaries = vec![Summary {
+            arch: "x86".into(),
+            engine: "e".into(),
+            wasm: "only.wasm".into(),
+            phase: Phase::Compilation,
+            event: "cycles".into(),
+            min: 1,
+            max: 3,
+            median: 2.0,
+            mean: 2.0,
+            mean_deviation: 0.0,
+            samples: 3,
+            p25: 1.5,
+            p75: 2.5,
+        }];
+        let mut out = termcolor::NoColor::new(Vec::new());
+        write(summaries, &[], &mut out).unwrap();
+        let out = String::from_utf8(out.into_inner()).unwrap();
+
+        assert!(!out.contains("Geomean"), "{out}");
+        assert!(out.starts_with("compilation"), "{out}");
+    }
+
+    #[test]
     fn test_std_deviation() {
+        // The sample deviation, dividing by `n - 1`. The population deviation
+        // of these numbers is exactly 2.0, so this also pins down which of the
+        // two we compute.
         let numbers = vec![2, 4, 4, 4, 5, 5, 7, 9];
         let std_dev = std_deviation(&numbers);
-        assert!((std_dev - 2.0).abs() < 0.1);
+        assert!((std_dev - 2.138_089_935_299_395).abs() < 1e-12, "{std_dev}");
+
+        // One number has no sample deviation.
+        assert_eq!(std_deviation(&[42]), 0.0);
+        assert_eq!(std_deviation(&[]), 0.0);
+    }
+
+    #[test]
+    fn the_median_interpolates_on_even_lengths() {
+        // A separate median helper used to return the upper middle element, 6,
+        // where the percentile interpolates. Everything reads the median off
+        // `percentile_from_sorted` now, so there is one answer.
+        let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        assert_eq!(percentile_from_sorted(&numbers, 50.0), 5.5);
+
+        // Odd lengths have an exact middle either way.
+        let numbers = vec![1, 2, 3];
+        assert_eq!(percentile_from_sorted(&numbers, 50.0), 2.0);
     }
 
     #[test]

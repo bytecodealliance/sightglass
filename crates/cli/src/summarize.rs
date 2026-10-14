@@ -10,6 +10,9 @@ use std::{
 /// Summarize benchmark output; accepts raw benchmark results in `stdin` (i.e.,
 /// from `sightglass-cli benchmark ...`) and prints the summarized results to
 /// `stdout`.
+///
+/// Human-readable output is led by the suite geomean across the benchmarks.
+/// Structured output holds the per-benchmark summaries alone.
 #[derive(Debug, Parser)]
 #[command(name = "summarize")]
 pub struct SummarizeCommand {
@@ -29,7 +32,7 @@ pub struct SummarizeCommand {
 
 impl SummarizeCommand {
     pub fn execute(&self) -> Result<()> {
-        let mut measurements = if let Some(files) = self.input_file.as_ref() {
+        let measurements = if let Some(files) = self.input_file.as_ref() {
             let mut ms = Vec::new();
             for file in files {
                 let reader = BufReader::new(File::open(file)?);
@@ -40,13 +43,12 @@ impl SummarizeCommand {
             self.input_format.read(io::stdin())?
         };
 
-        geomean::add(&mut measurements);
-
         let summaries = summarize::calculate(&measurements);
         if let Some(output_format) = &self.output_format {
             output_format.write(&summaries, io::stdout())
         } else {
-            summarize::write(summaries, &mut crate::stdout_writer())
+            let geomeans = geomean::summarize(&measurements);
+            summarize::write(summaries, &geomeans, &mut crate::stdout_writer())
         }
     }
 }

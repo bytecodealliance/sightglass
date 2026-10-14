@@ -1,16 +1,22 @@
 pub mod effect_size;
 pub mod geomean;
 pub mod keys;
+pub mod mann_whitney;
 pub mod report_stats;
 pub mod summarize;
 
+use geomean::Geomean;
 use sightglass_data::Summary;
 use std::io;
 use termcolor::{Color, ColorSpec, WriteColor};
 
 /// The column headers for the min/max/mean/median/engine statistics table shared
 /// by [`summarize::write`] and [`effect_size::write`].
-pub(crate) const STATS_HEADERS: [&str; 5] = ["Min", "Max", "Mean", "Median", "Engine"];
+pub(crate) const STATS_HEADERS: [&str; 6] = ["Min", "Max", "Mean", "Median", "Noise", "Engine"];
+
+/// The column headers for the geomean table shared by [`summarize::write`] and
+/// [`effect_size::write`].
+pub(crate) const GEOMEAN_HEADERS: [&str; 3] = ["Geomean", "Benchmarks", "Engine"];
 
 fn fg(color: Color) -> ColorSpec {
     let mut spec = ColorSpec::new();
@@ -75,9 +81,47 @@ pub(crate) fn summary_row(summary: &Summary<'_>, engine: String) -> Vec<String> 
         summary.min.to_string(),
         summary.max.to_string(),
         format!("{:.2}", summary.mean),
-        summary.median.to_string(),
+        format!("{:.2}", summary.median),
+        // Three decimals rather than the two the counts get: the
+        // semi-deterministic counters are quiet enough that two would round a
+        // third of benchmarks to "0.00%", which is the distinction this column
+        // exists to draw.
+        format!("{:.3}%", summary.noise()),
         engine,
     ]
+}
+
+/// Build a geomean-table row (matching [`GEOMEAN_HEADERS`]) from a [`Geomean`]
+/// and an engine label.
+pub(crate) fn geomean_row(geomean: &Geomean<'_>, engine: String) -> Vec<String> {
+    vec![
+        format!("{:.2}", geomean.geomean),
+        geomean.benchmarks.to_string(),
+        engine,
+    ]
+}
+
+/// Render the geomean `rows` as a colored table.
+pub(crate) fn write_geomean_table(
+    output: &mut dyn WriteColor,
+    indent: &str,
+    rows: &[Vec<String>],
+) -> io::Result<()> {
+    let dimmed = {
+        let mut spec = ColorSpec::new();
+        spec.set_dimmed(true);
+        spec
+    };
+    // One spec per column: Geomean (plain), Benchmarks (dimmed), Engine (blue).
+    let column_specs = [ColorSpec::new(), dimmed, engine_spec()];
+    write_table(
+        output,
+        indent,
+        &GEOMEAN_HEADERS,
+        &orange(),
+        &column_specs,
+        rows,
+    )
 }
 
 /// Render the min/max/mean/median/engine statistics `rows` as a colored table.
@@ -94,8 +138,17 @@ pub(crate) fn write_stats_table(
         spec
     };
     let plain = ColorSpec::new();
-    // One spec per column: Min, Max (dimmed), Mean, Median (plain), Engine (blue).
-    let column_specs = [dimmed.clone(), dimmed, plain.clone(), plain, engine_spec()];
+    // One spec per column: Min, Max (dimmed), Mean, Median (plain), Noise
+    // (dimmed), Engine (blue). `write_table` zips cells against these, so a
+    // short list silently drops the columns past its end.
+    let column_specs = [
+        dimmed.clone(),
+        dimmed.clone(),
+        plain.clone(),
+        plain,
+        dimmed,
+        engine_spec(),
+    ];
     write_table(
         output,
         indent,
@@ -231,12 +284,6 @@ mod tests {
         assert_eq!(
             benchmark_label("../../benchmarks/noop/benchmark.wasm"),
             "noop"
-        );
-
-        // Our synthetic total is preserved.
-        assert_eq!(
-            benchmark_label(crate::geomean::GEOMEAN),
-            crate::geomean::GEOMEAN
         );
     }
 }

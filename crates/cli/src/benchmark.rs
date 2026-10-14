@@ -2,7 +2,6 @@ use crate::suite::BenchmarkOrSuite;
 use anyhow::{anyhow, Context, Result};
 use clap::Parser;
 use rand::{rngs::SmallRng, Rng, SeedableRng};
-use sightglass_analysis::geomean::GEOMEAN;
 use sightglass_data::{Format, Measurement, Phase};
 use sightglass_recorder::bench_api::Engine;
 use sightglass_recorder::cpu_affinity::bind_to_single_core;
@@ -29,7 +28,17 @@ mod callgrind {
     use sightglass_recorder::measure::callgrind::CALLGRIND_OUT_DIR_ENV_VAR;
     use tempfile::TempDir;
 
-    const DEFAULT_CALLGRIND_ITERATIONS: usize = 3;
+    /// Callgrind's counts are deterministic, so these samples differ only in
+    /// what differs between processes. Six is the fewest that gives a 1%
+    /// significance level any room: with `n` samples of each engine there are
+    /// only `C(2n, n)` ways for them to interleave, so no comparison can
+    /// report a two-sided p-value below `2 / C(2n, n)`, which is 0.1 at three
+    /// samples and 0.0022 at six. Five would just clear 1%, at 0.0079, leaving
+    /// nothing for a sample that falls out of order.
+    ///
+    /// `warn_if_no_result_will_be_attainable` covers a run told to use fewer,
+    /// before it spends the time measuring.
+    const DEFAULT_CALLGRIND_ITERATIONS: usize = 6;
 
     // 64KiB, 8-way associative, 64B line size.
     const CACHE_MODEL_I1: &str = "65536,8,64";
@@ -451,7 +460,67 @@ impl BenchmarkCommand {
         // Validate the engines/engine-flags pairing up front so that we fail
         // fast before spawning any benchmark processes.
         self.engine_flag_pairs()?;
+        self.warn_if_no_result_will_be_attainable();
         Ok(())
+    }
+
+    /// Warn, before running anything, when this run's iteration count cannot
+    /// produce a significant result however large a regression it measures.
+    ///
+    /// The floor depends only on how many iterations each engine gets, which
+    /// is known from the arguments. Checking here rather than alongside the
+    /// results means a developer who asked for too few hears about it in the
+    /// first second, rather than after sitting through the whole suite.
+    fn warn_if_no_result_will_be_attainable(&self) {
+        if let Some(warning) = self.unattainable_result_warning() {
+            eprintln!("\n{warning}");
+        }
+    }
+
+    /// The warning's text, or `None` when this run can conclude something.
+    ///
+    /// Split out from the printing so the arithmetic can be tested directly.
+    fn unattainable_result_warning(&self) -> Option<String> {
+        // `--raw` prints measurements without testing them, and a run with one
+        // engine configuration is summarized rather than compared.
+        if self.raw || self.engine_flag_pairs().ok()?.len() < 2 {
+            return None;
+        }
+
+        let iterations = self.iterations();
+        let floor =
+            sightglass_analysis::mann_whitney::smallest_attainable_p_value(iterations, iterations);
+        if floor <= self.significance_level {
+            return None;
+        }
+
+        // The smallest iteration count that would clear the level, so the
+        // warning says what to do rather than only what is wrong.
+        let enough = (iterations + 1..=100).find(|&n| {
+            sightglass_analysis::mann_whitney::smallest_attainable_p_value(n, n)
+                <= self.significance_level
+        });
+        let remedy = match enough {
+            Some(n) => format!(
+                "Pass `--iters {n}` (or raise `--significance-level`) to draw that \
+                 conclusion."
+            ),
+            None => "Raise `--significance-level` to draw that conclusion from a run like \
+                     this one."
+                .to_string(),
+        };
+
+        let significance_level = self.significance_level;
+        Some(format!(
+            "Warning: {iterations} iterations cannot show a regression at \
+             p < {significance_level}, whatever\n\
+             \x20        the regression's size: with so few samples of each engine there \
+             are only\n\
+             \x20        so many ways for them to interleave, and the smallest p-value \
+             any of\n\
+             \x20        them could reach is {floor:.4}.\n\
+             \x20        {remedy}"
+        ))
     }
 
     fn iterations(&self) -> usize {
@@ -920,17 +989,13 @@ impl BenchmarkCommand {
         if self.raw {
             self.output_format.write(measurements, output_file)?;
         } else {
-            // Report an aggregate alongside the per-benchmark results.
-            let mut measurements = measurements.to_vec();
-            sightglass_analysis::geomean::add(&mut measurements);
-
             // Compare engine configurations against each other, unless there is
             // only one of them (a single engine with a single set of flags) or
             // the user explicitly asked for summaries.
             if self.summary || self.engine_flag_pairs()?.len() == 1 {
-                display_summaries(&measurements, output_file)?;
+                display_summaries(measurements, output_file)?;
             } else {
-                self.display_effect_sizes(&measurements, output_file)?;
+                self.display_effect_sizes(measurements, output_file)?;
             }
         }
         Ok(())
@@ -953,18 +1018,21 @@ impl BenchmarkCommand {
         let mut effect_sizes =
             sightglass_analysis::effect_size::calculate(self.significance_level, &measurements)?;
 
-        // By default, hide statistically insignificant results. Our "Geomean"
-        // results are always kept, even when they are insignificant.
+        // By default, hide statistically insignificant per-benchmark results.
+        // The suite geomean is always shown, even when it is insignificant.
         let mut hidden = 0;
         if !self.show_insignificant {
             let before = effect_sizes.len();
-            effect_sizes.retain(|e| e.is_significant() || e.wasm == GEOMEAN);
+            effect_sizes.retain(|e| e.is_significant());
             hidden = before - effect_sizes.len();
         }
 
+        let geomeans =
+            sightglass_analysis::geomean::effect_size(self.significance_level, &measurements);
         let summaries = sightglass_analysis::summarize::calculate(&measurements);
         sightglass_analysis::effect_size::write(
             effect_sizes,
+            &geomeans,
             &summaries,
             self.significance_level,
             output_file,
@@ -1134,7 +1202,8 @@ fn display_summaries(
     output_file: &mut dyn WriteColor,
 ) -> Result<()> {
     let summaries = sightglass_analysis::summarize::calculate(measurements);
-    sightglass_analysis::summarize::write(summaries, output_file)
+    let geomeans = sightglass_analysis::geomean::summarize(measurements);
+    sightglass_analysis::summarize::write(summaries, &geomeans, output_file)
 }
 
 /// Parse a `--color` value into a `ColorChoice`.
@@ -1302,69 +1371,69 @@ mod tests {
 compilation
     pulldown-cmark
         cycles
-            ┌───────────┬───────────┬──────────────┬───────────┬───────────────────────┐
-            │ Min       │ Max       │ Mean         │ Median    │ Engine                │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 696450758 │ 823537015 │ 740410589.60 │ 725850172 │ /tmp/old_backend.so   │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 688475571 │ 796284592 │ 710846289.20 │ 704156210 │ /tmp/old_backend_2.so │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 721352134 │ 933479759 │ 776890922.40 │ 751713121 │ /tmp/old_backend_3.so │
-            └───────────┴───────────┴──────────────┴───────────┴───────────────────────┘
+            ┌───────────┬───────────┬──────────────┬──────────────┬────────┬───────────────────────┐
+            │ Min       │ Max       │ Mean         │ Median       │ Noise  │ Engine                │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 696450758 │ 823537015 │ 740410589.60 │ 725013534.50 │ 6.434% │ /tmp/old_backend.so   │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 688475571 │ 796284592 │ 710846289.20 │ 704064509.50 │ 1.881% │ /tmp/old_backend_2.so │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 721352134 │ 933479759 │ 776890922.40 │ 748813018.00 │ 8.275% │ /tmp/old_backend_3.so │
+            └───────────┴───────────┴──────────────┴──────────────┴────────┴───────────────────────┘
         nanoseconds
-            ┌───────────┬───────────┬──────────────┬───────────┬───────────────────────┐
-            │ Min       │ Max       │ Mean         │ Median    │ Engine                │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 239819667 │ 283581244 │ 254957035.80 │ 249943222 │ /tmp/old_backend.so   │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 237074550 │ 274198271 │ 244777841.50 │ 242474132 │ /tmp/old_backend_2.so │
-            ├───────────┼───────────┼──────────────┼───────────┼───────────────────────┤
-            │ 248392822 │ 321437562 │ 267517235.10 │ 258847426 │ /tmp/old_backend_3.so │
-            └───────────┴───────────┴──────────────┴───────────┴───────────────────────┘
+            ┌───────────┬───────────┬──────────────┬──────────────┬────────┬───────────────────────┐
+            │ Min       │ Max       │ Mean         │ Median       │ Noise  │ Engine                │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 239819667 │ 283581244 │ 254957035.80 │ 249655129.50 │ 6.434% │ /tmp/old_backend.so   │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 237074550 │ 274198271 │ 244777841.50 │ 242442555.50 │ 1.881% │ /tmp/old_backend_2.so │
+            ├───────────┼───────────┼──────────────┼──────────────┼────────┼───────────────────────┤
+            │ 248392822 │ 321437562 │ 267517235.10 │ 257848795.00 │ 8.275% │ /tmp/old_backend_3.so │
+            └───────────┴───────────┴──────────────┴──────────────┴────────┴───────────────────────┘
 instantiation
     pulldown-cmark
         cycles
-            ┌────────┬────────┬───────────┬────────┬───────────────────────┐
-            │ Min    │ Max    │ Mean      │ Median │ Engine                │
-            ├────────┼────────┼───────────┼────────┼───────────────────────┤
-            │ 186145 │ 229974 │ 213469.60 │ 221862 │ /tmp/old_backend.so   │
-            ├────────┼────────┼───────────┼────────┼───────────────────────┤
-            │ 200003 │ 308810 │ 220099.00 │ 213468 │ /tmp/old_backend_2.so │
-            ├────────┼────────┼───────────┼────────┼───────────────────────┤
-            │ 203474 │ 300269 │ 233069.30 │ 214567 │ /tmp/old_backend_3.so │
-            └────────┴────────┴───────────┴────────┴───────────────────────┘
+            ┌────────┬────────┬───────────┬───────────┬─────────┬───────────────────────┐
+            │ Min    │ Max    │ Mean      │ Median    │ Noise   │ Engine                │
+            ├────────┼────────┼───────────┼───────────┼─────────┼───────────────────────┤
+            │ 186145 │ 229974 │ 213469.60 │ 221339.50 │ 8.632%  │ /tmp/old_backend.so   │
+            ├────────┼────────┼───────────┼───────────┼─────────┼───────────────────────┤
+            │ 200003 │ 308810 │ 220099.00 │ 211762.00 │ 4.431%  │ /tmp/old_backend_2.so │
+            ├────────┼────────┼───────────┼───────────┼─────────┼───────────────────────┤
+            │ 203474 │ 300269 │ 233069.30 │ 214212.00 │ 19.997% │ /tmp/old_backend_3.so │
+            └────────┴────────┴───────────┴───────────┴─────────┴───────────────────────┘
         nanoseconds
-            ┌───────┬────────┬──────────┬────────┬───────────────────────┐
-            │ Min   │ Max    │ Mean     │ Median │ Engine                │
-            ├───────┼────────┼──────────┼────────┼───────────────────────┤
-            │ 64098 │ 79190  │ 73506.90 │ 76397  │ /tmp/old_backend.so   │
-            ├───────┼────────┼──────────┼────────┼───────────────────────┤
-            │ 68870 │ 106337 │ 75789.90 │ 73507  │ /tmp/old_backend_2.so │
-            ├───────┼────────┼──────────┼────────┼───────────────────────┤
-            │ 70064 │ 103395 │ 80255.30 │ 73884  │ /tmp/old_backend_3.so │
-            └───────┴────────┴──────────┴────────┴───────────────────────┘
+            ┌───────┬────────┬──────────┬──────────┬─────────┬───────────────────────┐
+            │ Min   │ Max    │ Mean     │ Median   │ Noise   │ Engine                │
+            ├───────┼────────┼──────────┼──────────┼─────────┼───────────────────────┤
+            │ 64098 │ 79190  │ 73506.90 │ 76217.00 │ 8.631%  │ /tmp/old_backend.so   │
+            ├───────┼────────┼──────────┼──────────┼─────────┼───────────────────────┤
+            │ 68870 │ 106337 │ 75789.90 │ 72919.50 │ 4.431%  │ /tmp/old_backend_2.so │
+            ├───────┼────────┼──────────┼──────────┼─────────┼───────────────────────┤
+            │ 70064 │ 103395 │ 80255.30 │ 73762.00 │ 19.998% │ /tmp/old_backend_3.so │
+            └───────┴────────┴──────────┴──────────┴─────────┴───────────────────────┘
 execution
     pulldown-cmark
         cycles
-            ┌──────────┬──────────┬─────────────┬──────────┬───────────────────────┐
-            │ Min      │ Max      │ Mean        │ Median   │ Engine                │
-            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
-            │ 10334150 │ 14169904 │ 12342413.00 │ 13146295 │ /tmp/old_backend.so   │
-            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
-            │ 10328193 │ 12631959 │ 10829803.50 │ 10688469 │ /tmp/old_backend_2.so │
-            ├──────────┼──────────┼─────────────┼──────────┼───────────────────────┤
-            │ 10569938 │ 16792916 │ 11690281.50 │ 10845308 │ /tmp/old_backend_3.so │
-            └──────────┴──────────┴─────────────┴──────────┴───────────────────────┘
+            ┌──────────┬──────────┬─────────────┬─────────────┬─────────┬───────────────────────┐
+            │ Min      │ Max      │ Mean        │ Median      │ Noise   │ Engine                │
+            ├──────────┼──────────┼─────────────┼─────────────┼─────────┼───────────────────────┤
+            │ 10334150 │ 14169904 │ 12342413.00 │ 13106653.00 │ 20.710% │ /tmp/old_backend.so   │
+            ├──────────┼──────────┼─────────────┼─────────────┼─────────┼───────────────────────┤
+            │ 10328193 │ 12631959 │ 10829803.50 │ 10634659.00 │ 3.000%  │ /tmp/old_backend_2.so │
+            ├──────────┼──────────┼─────────────┼─────────────┼─────────┼───────────────────────┤
+            │ 10569938 │ 16792916 │ 11690281.50 │ 10844518.00 │ 2.781%  │ /tmp/old_backend_3.so │
+            └──────────┴──────────┴─────────────┴─────────────┴─────────┴───────────────────────┘
         nanoseconds
-            ┌─────────┬─────────┬────────────┬─────────┬───────────────────────┐
-            │ Min     │ Max     │ Mean       │ Median  │ Engine                │
-            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
-            │ 3558517 │ 4879342 │ 4250053.60 │ 4526867 │ /tmp/old_backend.so   │
-            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
-            │ 3556483 │ 4349778 │ 3729210.70 │ 3680543 │ /tmp/old_backend_2.so │
-            ├─────────┼─────────┼────────────┼─────────┼───────────────────────┤
-            │ 3639688 │ 5782529 │ 4025470.30 │ 3734509 │ /tmp/old_backend_3.so │
-            └─────────┴─────────┴────────────┴─────────┴───────────────────────┘
+            ┌─────────┬─────────┬────────────┬────────────┬─────────┬───────────────────────┐
+            │ Min     │ Max     │ Mean       │ Median     │ Noise   │ Engine                │
+            ├─────────┼─────────┼────────────┼────────────┼─────────┼───────────────────────┤
+            │ 3558517 │ 4879342 │ 4250053.60 │ 4513216.50 │ 20.710% │ /tmp/old_backend.so   │
+            ├─────────┼─────────┼────────────┼────────────┼─────────┼───────────────────────┤
+            │ 3556483 │ 4349778 │ 3729210.70 │ 3662013.50 │ 3.000%  │ /tmp/old_backend_2.so │
+            ├─────────┼─────────┼────────────┼────────────┼─────────┼───────────────────────┤
+            │ 3639688 │ 5782529 │ 4025470.30 │ 3734237.00 │ 2.781%  │ /tmp/old_backend_3.so │
+            └─────────┴─────────┴────────────┴────────────┴─────────┴───────────────────────┘
 "#;
         eprintln!("=== Expected ===\n{expected}");
 
@@ -1411,7 +1480,7 @@ execution
     #[test]
     fn effect_sizes_filter_insignificant_by_default() -> Result<()> {
         // Two engines with identical measurements, so no result is significant.
-        // Include a synthetic "Geomean" benchmark alongside a regular one.
+        // Two benchmarks, so there is also a geomean to compare.
         let m = |engine: &'static str, wasm: &'static str, count: u64| Measurement {
             arch: "x86".into(),
             engine: sightglass_data::Engine {
@@ -1424,29 +1493,29 @@ execution
             count,
         };
         let mut measurements = vec![];
-        for wasm in ["bench.wasm", "Geomean"] {
+        for wasm in ["first.wasm", "second.wasm"] {
             for count in [100, 101, 102, 103, 104] {
                 measurements.push(m("a", wasm, count));
                 measurements.push(m("b", wasm, count));
             }
         }
 
-        // By default, the insignificant benchmark is hidden and reported by
-        // count, but the (also insignificant) "Geomean" is kept.
+        // By default, the insignificant benchmarks are hidden and reported by
+        // count, but the (also insignificant) geomean is kept.
         let command = BenchmarkCommand::try_parse_from(["benchmark", "dummy.wasm"])?;
         let mut output = NoColor::new(Vec::new());
         command.display_effect_sizes(&measurements, &mut output)?;
         let actual = String::from_utf8(output.into_inner())?;
         assert!(
             actual.contains("Geomean"),
-            "the Geomean comparison should be kept:\n{actual}"
+            "the geomean comparison should be kept:\n{actual}"
         );
         assert!(
-            !actual.contains("bench"),
-            "the insignificant benchmark should be hidden:\n{actual}"
+            !actual.contains("first") && !actual.contains("second"),
+            "the insignificant benchmarks should be hidden:\n{actual}"
         );
         assert!(
-            actual.contains("1 statistically insignificant result(s) hidden."),
+            actual.contains("2 statistically insignificant result(s) hidden."),
             "expected the hidden-count message:\n{actual}"
         );
         assert!(actual.contains("--show-insignificant"));
@@ -1738,6 +1807,65 @@ execution
         Ok(())
     }
 
+    /// The run's iteration count alone says whether it can conclude anything,
+    /// so the warning has to come before the benchmarks rather than alongside
+    /// the results: a developer who asked for too few iterations should not sit
+    /// through the whole suite to find out.
+    #[test]
+    fn a_run_that_cannot_conclude_anything_warns_before_it_starts() -> Result<()> {
+        let command = |args: &[&str]| -> Result<BenchmarkCommand> {
+            let mut argv = vec!["benchmark", "-e", "a", "-e", "b"];
+            argv.extend_from_slice(args);
+            Ok(BenchmarkCommand::try_parse_from(argv)?)
+        };
+
+        // Three iterations of each engine floor at 0.1, well above 1%.
+        let warning = command(&["--iters", "3", "a.wasm"])?
+            .unattainable_result_warning()
+            .expect("three iterations cannot reach 1%");
+        assert!(
+            warning.contains("3 iterations cannot show a regression"),
+            "{warning}"
+        );
+        assert!(warning.contains("is 0.1000"), "{warning}");
+
+        // The remedy is the smallest count that would have worked.
+        assert!(warning.contains("--iters 5"), "{warning}");
+
+        // Which, at five, it does: 2 / C(10, 5) is 0.0079.
+        assert_eq!(
+            command(&["--iters", "5", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+
+        // The callgrind default leaves room beyond that.
+        assert_eq!(
+            command(&["--iters", "6", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+
+        // A looser level lets a smaller run conclude something.
+        assert_eq!(
+            command(&["--iters", "4", "--significance-level", "0.05", "a.wasm"])?
+                .unattainable_result_warning(),
+            None
+        );
+
+        // Nothing is tested when the measurements are printed raw, or when
+        // there is only one engine to compare.
+        assert_eq!(
+            command(&["--iters", "3", "--raw", "a.wasm"])?.unattainable_result_warning(),
+            None
+        );
+        assert_eq!(
+            BenchmarkCommand::try_parse_from(["benchmark", "-e", "a", "--iters", "3", "a.wasm"])?
+                .unattainable_result_warning(),
+            None
+        );
+
+        Ok(())
+    }
+
     #[test]
     fn test_display_effect_size() -> Result<()> {
         let fixture = std::fs::read("../../test/fixtures/old-vs-new-backend.json")
@@ -1762,85 +1890,84 @@ execution
         eprintln!("=== Actual ===\n{actual}");
 
         let expected = r#"
+
 compilation :: cycles :: pulldown-cmark
 
-    Δ = 231879938.88 ± 5920528.32 (confidence = 95%)
-
     old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    ┌───────────┬────────────┬──────────────┬───────────┬────────────────┐
-    │ Min       │ Max        │ Mean         │ Median    │ Engine         │
-    ├───────────┼────────────┼──────────────┼───────────┼────────────────┤
-    │ 889384088 │ 1045075629 │ 935555419.78 │ 932321327 │ new_backend.so │
-    ├───────────┼────────────┼──────────────┼───────────┼────────────────┤
-    │ 688072501 │ 826253416  │ 703675480.90 │ 699614293 │ old_backend.so │
-    └───────────┴────────────┴──────────────┴───────────┴────────────────┘
+    ┌───────────┬────────────┬──────────────┬──────────────┬────────┬────────────────┐
+    │ Min       │ Max        │ Mean         │ Median       │ Noise  │ Engine         │
+    ├───────────┼────────────┼──────────────┼──────────────┼────────┼────────────────┤
+    │ 889384088 │ 1045075629 │ 935555419.78 │ 932288110.50 │ 3.488% │ new_backend.so │
+    ├───────────┼────────────┼──────────────┼──────────────┼────────┼────────────────┤
+    │ 688072501 │ 826253416  │ 703675480.90 │ 699533853.00 │ 2.200% │ old_backend.so │
+    └───────────┴────────────┴──────────────┴──────────────┴────────┴────────────────┘
 
 compilation :: nanoseconds :: pulldown-cmark
 
-    Δ = 79845660.57 ± 2038688.33 (confidence = 95%)
-
     old_backend.so is 1.32x to 1.34x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    ┌───────────┬───────────┬──────────────┬───────────┬────────────────┐
-    │ Min       │ Max       │ Mean         │ Median    │ Engine         │
-    ├───────────┼───────────┼──────────────┼───────────┼────────────────┤
-    │ 306252409 │ 359863566 │ 322151144.14 │ 321037510 │ new_backend.so │
-    ├───────────┼───────────┼──────────────┼───────────┼────────────────┤
-    │ 236932712 │ 284514295 │ 242305483.57 │ 240907043 │ old_backend.so │
-    └───────────┴───────────┴──────────────┴───────────┴────────────────┘
+    ┌───────────┬───────────┬──────────────┬──────────────┬────────┬────────────────┐
+    │ Min       │ Max       │ Mean         │ Median       │ Noise  │ Engine         │
+    ├───────────┼───────────┼──────────────┼──────────────┼────────┼────────────────┤
+    │ 306252409 │ 359863566 │ 322151144.14 │ 321026072.00 │ 3.488% │ new_backend.so │
+    ├───────────┼───────────┼──────────────┼──────────────┼────────┼────────────────┤
+    │ 236932712 │ 284514295 │ 242305483.57 │ 240879344.50 │ 2.200% │ old_backend.so │
+    └───────────┴───────────┴──────────────┴──────────────┴────────┴────────────────┘
 
 execution :: nanoseconds :: pulldown-cmark
 
-    Δ = 467229.61 ± 57708.35 (confidence = 95%)
+    new_backend.so is 1.14x to 1.15x faster than old_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
-
-    ┌─────────┬─────────┬────────────┬─────────┬────────────────┐
-    │ Min     │ Max     │ Mean       │ Median  │ Engine         │
-    ├─────────┼─────────┼────────────┼─────────┼────────────────┤
-    │ 3061587 │ 4419514 │ 3240065.98 │ 3194630 │ new_backend.so │
-    ├─────────┼─────────┼────────────┼─────────┼────────────────┤
-    │ 3510983 │ 5811112 │ 3707295.59 │ 3673498 │ old_backend.so │
-    └─────────┴─────────┴────────────┴─────────┴────────────────┘
+    ┌─────────┬─────────┬────────────┬────────────┬────────┬────────────────┐
+    │ Min     │ Max     │ Mean       │ Median     │ Noise  │ Engine         │
+    ├─────────┼─────────┼────────────┼────────────┼────────┼────────────────┤
+    │ 3061587 │ 4419514 │ 3240065.98 │ 3192547.50 │ 4.638% │ new_backend.so │
+    ├─────────┼─────────┼────────────┼────────────┼────────┼────────────────┤
+    │ 3510983 │ 5811112 │ 3707295.59 │ 3672463.50 │ 2.797% │ old_backend.so │
+    └─────────┴─────────┴────────────┴────────────┴────────┴────────────────┘
 
 execution :: cycles :: pulldown-cmark
 
-    Δ = 1356859.60 ± 167590.00 (confidence = 95%)
+    new_backend.so is 1.14x to 1.15x faster than old_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    new_backend.so is 1.13x to 1.16x faster than old_backend.so!
-
-    ┌──────────┬──────────┬─────────────┬──────────┬────────────────┐
-    │ Min      │ Max      │ Mean        │ Median   │ Engine         │
-    ├──────────┼──────────┼─────────────┼──────────┼────────────────┤
-    │ 8891120  │ 12834660 │ 9409439.69  │ 9277491  │ new_backend.so │
-    ├──────────┼──────────┼─────────────┼──────────┼────────────────┤
-    │ 10196192 │ 16875960 │ 10766299.29 │ 10668147 │ old_backend.so │
-    └──────────┴──────────┴─────────────┴──────────┴────────────────┘
+    ┌──────────┬──────────┬─────────────┬─────────────┬────────┬────────────────┐
+    │ Min      │ Max      │ Mean        │ Median      │ Noise  │ Engine         │
+    ├──────────┼──────────┼─────────────┼─────────────┼────────┼────────────────┤
+    │ 8891120  │ 12834660 │ 9409439.69  │ 9271442.50  │ 4.638% │ new_backend.so │
+    ├──────────┼──────────┼─────────────┼─────────────┼────────┼────────────────┤
+    │ 10196192 │ 16875960 │ 10766299.29 │ 10665143.00 │ 2.797% │ old_backend.so │
+    └──────────┴──────────┴─────────────┴─────────────┴────────┴────────────────┘
 
 instantiation :: cycles :: pulldown-cmark
 
-    No difference in performance.
+    old_backend.so is 1.05x to 1.07x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    ┌────────┬────────┬───────────┬────────┬────────────────┐
-    │ Min    │ Max    │ Mean      │ Median │ Engine         │
-    ├────────┼────────┼───────────┼────────┼────────────────┤
-    │ 191466 │ 325810 │ 207762.01 │ 199222 │ new_backend.so │
-    ├────────┼────────┼───────────┼────────┼────────────────┤
-    │ 179617 │ 334016 │ 200451.81 │ 188412 │ old_backend.so │
-    └────────┴────────┴───────────┴────────┴────────────────┘
+    ┌────────┬────────┬───────────┬───────────┬────────┬────────────────┐
+    │ Min    │ Max    │ Mean      │ Median    │ Noise  │ Engine         │
+    ├────────┼────────┼───────────┼───────────┼────────┼────────────────┤
+    │ 191466 │ 325810 │ 207762.01 │ 199170.00 │ 4.153% │ new_backend.so │
+    ├────────┼────────┼───────────┼───────────┼────────┼────────────────┤
+    │ 179617 │ 334016 │ 200451.81 │ 188388.00 │ 5.912% │ old_backend.so │
+    └────────┴────────┴───────────┴───────────┴────────┴────────────────┘
 
 instantiation :: nanoseconds :: pulldown-cmark
 
-    No difference in performance.
+    old_backend.so is 1.05x to 1.07x faster than new_backend.so!
+    (confidence = 95%, p < 0.0001)
 
-    ┌───────┬────────┬──────────┬────────┬────────────────┐
-    │ Min   │ Max    │ Mean     │ Median │ Engine         │
-    ├───────┼────────┼──────────┼────────┼────────────────┤
-    │ 65929 │ 112190 │ 71540.70 │ 68600  │ new_backend.so │
-    ├───────┼────────┼──────────┼────────┼────────────────┤
-    │ 61849 │ 115015 │ 69023.59 │ 64878  │ old_backend.so │
-    └───────┴────────┴──────────┴────────┴────────────────┘
+    ┌───────┬────────┬──────────┬──────────┬────────┬────────────────┐
+    │ Min   │ Max    │ Mean     │ Median   │ Noise  │ Engine         │
+    ├───────┼────────┼──────────┼──────────┼────────┼────────────────┤
+    │ 65929 │ 112190 │ 71540.70 │ 68582.00 │ 4.153% │ new_backend.so │
+    ├───────┼────────┼──────────┼──────────┼────────┼────────────────┤
+    │ 61849 │ 115015 │ 69023.59 │ 64869.50 │ 5.912% │ old_backend.so │
+    └───────┴────────┴──────────┴──────────┴────────┴────────────────┘
 "#;
         eprintln!("=== Expected ===\n{expected}");
 

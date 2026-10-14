@@ -9,6 +9,7 @@ use std::{
 
 use serde::Serialize;
 use sightglass_analysis::report_stats::{calculate_benchmark_stats, BenchmarkStats, ReportConfig};
+use sightglass_analysis::summarize::percent_change;
 use sightglass_data::{extract_benchmark_name, Engine, Format, Measurement, Phase};
 use vega_lite_4::{
     AxisBuilder, ColorClassBuilder, EdEncodingBuilder, LegendBuilder, Mark, NormalizedSpecBuilder,
@@ -35,8 +36,8 @@ pub struct ReportCommand {
     #[arg(short = 'b', long = "baseline-engine")]
     baseline_engine: Option<String>,
 
-    /// Significance level for statistical tests (default: 0.05 for 95% confidence)
-    #[arg(long = "significance-level", default_value = "0.05")]
+    /// Significance level for statistical tests (default: 0.01 for 99% confidence)
+    #[arg(long = "significance-level", default_value = "0.01")]
     significance_level: f64,
 
     /// Primary event to analyze (default: cycles)
@@ -144,7 +145,7 @@ impl ReportCommand {
         struct ChartDataPoint {
             count: u64,
             engine: String,
-            p25_delta_pct: f64,
+            median_delta_pct: f64,
         }
 
         let chart_data: Vec<ChartDataPoint> = measurements
@@ -152,8 +153,7 @@ impl ReportCommand {
             .map(|m| ChartDataPoint {
                 count: m.count,
                 engine: m.engine.to_string(),
-                p25_delta_pct: (100.0 * (m.count as f64 - bstats.p25)
-                    / ((m.count as f64 + bstats.p25) / 2.0)),
+                median_delta_pct: percent_change(m.count as f64, bstats.median),
             })
             .collect();
         let cycles_chart = NormalizedSpecBuilder::default()
@@ -194,11 +194,11 @@ impl ReportCommand {
             .encoding(
                 EdEncodingBuilder::default()
                     .x(XClassBuilder::default()
-                        .field("p25_delta_pct")
+                        .field("median_delta_pct")
                         .position_def_type(vl::Type::Quantitative)
                         .axis(
                             AxisBuilder::default()
-                                .title("delta p25 as percentage")
+                                .title("delta median as percentage")
                                 .build()?,
                         )
                         .build()?)
