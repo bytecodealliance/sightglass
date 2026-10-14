@@ -83,6 +83,10 @@ pub fn calculate<'a>(
                     continue;
                 };
 
+                // Sorted once per engine, so the percentiles and the extremes
+                // all come off the same ordering.
+                let (a_sorted, b_sorted) = (sorted(&a), sorted(&b));
+
                 results.push(EffectSize {
                     arch: key.arch.clone().unwrap(),
                     wasm: key.wasm.clone().unwrap(),
@@ -90,11 +94,19 @@ pub fn calculate<'a>(
                     event: key.event.clone().unwrap(),
                     a_engine: (*engine_a).clone(),
                     a_mean: mean(&a),
-                    a_median: median(&a),
+                    a_median: percentile_from_sorted(&a_sorted, 50.0),
+                    a_min: a_sorted[0],
+                    a_max: a_sorted[a_sorted.len() - 1],
+                    a_p25: percentile_from_sorted(&a_sorted, 25.0),
+                    a_p75: percentile_from_sorted(&a_sorted, 75.0),
                     a_samples: a.len(),
                     b_engine: (*engine_b).clone(),
                     b_mean: mean(&b),
-                    b_median: median(&b),
+                    b_median: percentile_from_sorted(&b_sorted, 50.0),
+                    b_min: b_sorted[0],
+                    b_max: b_sorted[b_sorted.len() - 1],
+                    b_p25: percentile_from_sorted(&b_sorted, 25.0),
+                    b_p75: percentile_from_sorted(&b_sorted, 75.0),
                     b_samples: b.len(),
                     significance_level,
                     ratio: comparison.ratio,
@@ -108,11 +120,11 @@ pub fn calculate<'a>(
     Ok(results)
 }
 
-/// The median of `counts`.
-fn median(counts: &[u64]) -> f64 {
+/// A sorted copy of `counts`, for reading percentiles off.
+fn sorted(counts: &[u64]) -> Vec<u64> {
     let mut sorted = counts.to_vec();
     sorted.sort();
-    percentile_from_sorted(&sorted, 50.0)
+    sorted
 }
 
 /// Write a vector of [EffectSize] structures to the passed `output_file` in
@@ -544,10 +556,18 @@ mod tests {
             a_engine: a.clone(),
             a_mean: 100.0,
             a_median: 100.0,
+            a_min: 98,
+            a_max: 102,
+            a_p25: 99.0,
+            a_p75: 101.0,
             a_samples: 10,
             b_engine: b.clone(),
             b_mean: 200.0,
             b_median: 200.0,
+            b_min: 196,
+            b_max: 204,
+            b_p25: 198.0,
+            b_p75: 202.0,
             b_samples: 10,
             significance_level: 0.01,
             ratio: 2.0,
@@ -565,6 +585,9 @@ mod tests {
             median: mean,
             mean,
             mean_deviation: 0.0,
+            samples: 10,
+            p25: mean,
+            p75: mean,
         };
         (effect_size, vec![summary(a, 100.0), summary(b, 200.0)])
     }

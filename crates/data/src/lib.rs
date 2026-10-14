@@ -230,6 +230,36 @@ impl FromStr for Phase {
     }
 }
 
+/// Below this many samples of a benchmark, report the full range rather than
+/// the interquartile range as its noise.
+///
+/// The quartiles are interpolated between neighboring samples, so with only a
+/// handful of them the interquartile range is reading off two or three points
+/// while the full range uses all of them. Above the threshold the balance
+/// reverses: the interquartile range keeps a single interfered-with sample
+/// from dominating, which the full range cannot do, since one outlier is one
+/// of its two ends.
+const FEW_SAMPLES: usize = 8;
+
+/// How far a benchmark's counts spread, as a percentage of `median`.
+///
+/// See [`Summary::noise`] for what this measures and when it is comparable.
+fn noise(samples: usize, min: f64, max: f64, p25: f64, p75: f64, median: f64) -> f64 {
+    // A benchmark whose counts are all zero has no scale to be noisy relative
+    // to, and dividing by its median would give infinity or NaN.
+    if median == 0.0 {
+        return 0.0;
+    }
+
+    let spread = if samples < FEW_SAMPLES {
+        max - min
+    } else {
+        p75 - p25
+    };
+
+    spread / median * 100.0
+}
+
 /// A summary of grouped measurements.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Summary<'a> {
@@ -266,6 +296,15 @@ pub struct Summary<'a> {
 
     /// The mean deviation (note: not standard deviation) of the `count` field.
     pub mean_deviation: f64,
+
+    /// How many measurements went into this summary.
+    pub samples: usize,
+
+    /// The 25th percentile of the `count` field.
+    pub p25: f64,
+
+    /// The 75th percentile of the `count` field.
+    pub p75: f64,
 }
 
 /// Version of [`Summary`] for serialization purposes.
@@ -285,6 +324,29 @@ struct SummaryWire<'a> {
     pub median: f64,
     pub mean: f64,
     pub mean_deviation: f64,
+    pub samples: usize,
+    pub p25: f64,
+    pub p75: f64,
+}
+
+impl Summary<'_> {
+    /// How much this benchmark's counts moved between samples, as a
+    /// percentage of the median.
+    ///
+    /// When there are at least [`FEW_SAMPLES`], this is the interquartile range
+    /// divided by the median (`(p75 - p25) / median`); otherwise, we don't have
+    /// enough samples to ignore outliers, so this becomes `(max - min) /
+    /// median`.
+    pub fn noise(&self) -> f64 {
+        noise(
+            self.samples,
+            self.min as f64,
+            self.max as f64,
+            self.p25,
+            self.p75,
+            self.median,
+        )
+    }
 }
 
 impl<'a> Serialize for Summary<'a> {
@@ -305,6 +367,9 @@ impl<'a> Serialize for Summary<'a> {
             median: self.median,
             mean: self.mean,
             mean_deviation: self.mean_deviation,
+            samples: self.samples,
+            p25: self.p25,
+            p75: self.p75,
         };
         wire.serialize(serializer)
     }
@@ -330,6 +395,9 @@ impl<'a, 'de> Deserialize<'de> for Summary<'a> {
             median: wire.median,
             mean: wire.mean,
             mean_deviation: wire.mean_deviation,
+            samples: wire.samples,
+            p25: wire.p25,
+            p75: wire.p75,
         })
     }
 }
@@ -369,6 +437,18 @@ pub struct EffectSize<'a> {
     /// The first engine's result's median of the `count` field.
     pub a_median: f64,
 
+    /// The first engine's result's minimum of the `count` field.
+    pub a_min: u64,
+
+    /// The first engine's result's maximum of the `count` field.
+    pub a_max: u64,
+
+    /// The first engine's result's 25th percentile of the `count` field.
+    pub a_p25: f64,
+
+    /// The first engine's result's 75th percentile of the `count` field.
+    pub a_p75: f64,
+
     /// How many samples the first engine contributed.
     pub a_samples: usize,
 
@@ -383,6 +463,18 @@ pub struct EffectSize<'a> {
 
     /// The second engine's result's median of the `count` field.
     pub b_median: f64,
+
+    /// The second engine's result's minimum of the `count` field.
+    pub b_min: u64,
+
+    /// The second engine's result's maximum of the `count` field.
+    pub b_max: u64,
+
+    /// The second engine's result's 25th percentile of the `count` field.
+    pub b_p25: f64,
+
+    /// The second engine's result's 75th percentile of the `count` field.
+    pub b_p75: f64,
 
     /// How many samples the second engine contributed.
     pub b_samples: usize,
@@ -419,11 +511,19 @@ struct EffectSizeWire<'a> {
     a_engine_flags: Option<Cow<'a, str>>, // a_engine.flags
     a_mean: f64,
     a_median: f64,
+    a_min: u64,
+    a_max: u64,
+    a_p25: f64,
+    a_p75: f64,
     a_samples: usize,
     b_engine: Cow<'a, str>,
     b_engine_flags: Option<Cow<'a, str>>,
     b_mean: f64,
     b_median: f64,
+    b_min: u64,
+    b_max: u64,
+    b_p25: f64,
+    b_p75: f64,
     b_samples: usize,
     significance_level: f64,
     ratio: f64,
@@ -441,6 +541,38 @@ impl EffectSize<'_> {
     /// uncertainty.
     pub fn is_significant(&self) -> bool {
         self.confidence_interval.is_some() && self.p_value <= self.significance_level
+    }
+
+    /// How much the first engine's counts moved between samples, as a
+    /// percentage of its median.
+    ///
+    /// See [`Summary::noise`], which measures the same thing the same way. A
+    /// comparison has one of these per engine rather than one overall, since
+    /// which of the two scattered is the useful thing to know.
+    pub fn a_noise(&self) -> f64 {
+        noise(
+            self.a_samples,
+            self.a_min as f64,
+            self.a_max as f64,
+            self.a_p25,
+            self.a_p75,
+            self.a_median,
+        )
+    }
+
+    /// How much the second engine's counts moved between samples, as a
+    /// percentage of its median.
+    ///
+    /// See [`EffectSize::a_noise`].
+    pub fn b_noise(&self) -> f64 {
+        noise(
+            self.b_samples,
+            self.b_min as f64,
+            self.b_max as f64,
+            self.b_p25,
+            self.b_p75,
+            self.b_median,
+        )
     }
 
     /// Return `b`'s speed up over `a` and the speed up's confidence interval.
@@ -477,9 +609,17 @@ impl<'a> Serialize for EffectSize<'a> {
             b_engine_flags: self.b_engine.flags.clone(),
             a_mean: self.a_mean,
             a_median: self.a_median,
+            a_min: self.a_min,
+            a_max: self.a_max,
+            a_p25: self.a_p25,
+            a_p75: self.a_p75,
             a_samples: self.a_samples,
             b_mean: self.b_mean,
             b_median: self.b_median,
+            b_min: self.b_min,
+            b_max: self.b_max,
+            b_p25: self.b_p25,
+            b_p75: self.b_p75,
             b_samples: self.b_samples,
             significance_level: self.significance_level,
             ratio: self.ratio,
@@ -512,9 +652,17 @@ impl<'a, 'de> Deserialize<'de> for EffectSize<'a> {
             event: wire.event,
             a_mean: wire.a_mean,
             a_median: wire.a_median,
+            a_min: wire.a_min,
+            a_max: wire.a_max,
+            a_p25: wire.a_p25,
+            a_p75: wire.a_p75,
             a_samples: wire.a_samples,
             b_mean: wire.b_mean,
             b_median: wire.b_median,
+            b_min: wire.b_min,
+            b_max: wire.b_max,
+            b_p25: wire.b_p25,
+            b_p75: wire.b_p75,
             b_samples: wire.b_samples,
             significance_level: wire.significance_level,
             ratio: wire.ratio,
@@ -804,5 +952,144 @@ mod tests {
         // When one is a prefix, there's no difference to detect, so returns full names
         assert_eq!(label1, "engines/wasmtime");
         assert_eq!(label2, "engines/wasmtime/v2.0");
+    }
+
+    /// A `Summary` whose counts are `counts`, with the fields `noise` reads
+    /// filled in from them.
+    fn summary_of(counts: &[u64]) -> Summary<'static> {
+        let mut sorted = counts.to_vec();
+        sorted.sort();
+        let percentile = |p: f64| {
+            let index = (p / 100.0) * (sorted.len() - 1) as f64;
+            let (low, high) = (index.floor() as usize, index.ceil() as usize);
+            if low == high {
+                sorted[low] as f64
+            } else {
+                let weight = index - low as f64;
+                sorted[low] as f64 * (1.0 - weight) + sorted[high] as f64 * weight
+            }
+        };
+
+        Summary {
+            arch: "x86_64".into(),
+            engine: "wasmtime".into(),
+            wasm: "benchmark.wasm".into(),
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            min: sorted[0],
+            max: sorted[sorted.len() - 1],
+            median: percentile(50.0),
+            mean: sorted.iter().sum::<u64>() as f64 / sorted.len() as f64,
+            mean_deviation: 0.0,
+            samples: sorted.len(),
+            p25: percentile(25.0),
+            p75: percentile(75.0),
+        }
+    }
+
+    /// Which spread `noise` measures depends on how many samples there are,
+    /// and the two give different answers on the same data.
+    #[test]
+    fn noise_switches_from_the_range_to_the_interquartile_range() {
+        // One sample sits well above the rest, so the range and the
+        // interquartile range disagree about how noisy this is.
+        let spike = |n: usize| {
+            let mut counts = vec![100; n];
+            *counts.last_mut().unwrap() = 200;
+            counts
+        };
+
+        // Below the threshold the full range is reported: 100 over a median of
+        // 100.
+        let few = summary_of(&spike(FEW_SAMPLES - 1));
+        assert_eq!(few.samples, 7);
+        assert!((few.noise() - 100.0).abs() < 1e-9, "{}", few.noise());
+
+        // At the threshold the interquartile range takes over, and the lone
+        // high sample no longer sets the answer.
+        let enough = summary_of(&spike(FEW_SAMPLES));
+        assert_eq!(enough.samples, 8);
+        assert_eq!(enough.noise(), 0.0);
+    }
+
+    /// Resisting a single interfered-with sample is the reason the
+    /// interquartile range takes over at all.
+    #[test]
+    fn an_outlier_moves_the_interquartile_range_far_less_than_the_range() {
+        let clean: Vec<u64> = (100..120).collect();
+        let mut spiked = clean.clone();
+        *spiked.last_mut().unwrap() = 400;
+
+        let before = summary_of(&clean).noise();
+        let after = summary_of(&spiked).noise();
+        assert!(
+            (after - before).abs() < before,
+            "one sample should not double it: {before} became {after}"
+        );
+
+        // The same data read as a range, which the outlier does dominate.
+        let mut as_range = summary_of(&spiked);
+        as_range.samples = FEW_SAMPLES - 1;
+        assert!(
+            as_range.noise() > 3.0 * after,
+            "the range should be far wider: {} vs {after}",
+            as_range.noise()
+        );
+    }
+
+    /// Counts that are all zero have no scale to be noisy against, and must
+    /// not divide by it.
+    #[test]
+    fn zero_counts_have_no_noise() {
+        let zeros = summary_of(&[0, 0, 0]);
+        assert_eq!(zeros.median, 0.0);
+        assert_eq!(zeros.noise(), 0.0);
+
+        // Identical non-zero counts did not move at all.
+        assert_eq!(summary_of(&[1000; 10]).noise(), 0.0);
+    }
+
+    /// A comparison reports a figure per engine, since which engine scattered
+    /// is the useful thing to know.
+    #[test]
+    fn an_effect_size_reports_noise_for_each_engine() {
+        let (a, b) = (summary_of(&[100; 10]), summary_of(&[90, 95, 100, 105, 110]));
+
+        let effect_size = EffectSize {
+            arch: "x86_64".into(),
+            wasm: "benchmark.wasm".into(),
+            phase: Phase::Execution,
+            event: "cycles".into(),
+            a_engine: "a.so".into(),
+            a_mean: a.mean,
+            a_median: a.median,
+            a_min: a.min,
+            a_max: a.max,
+            a_p25: a.p25,
+            a_p75: a.p75,
+            a_samples: a.samples,
+            b_engine: "b.so".into(),
+            b_mean: b.mean,
+            b_median: b.median,
+            b_min: b.min,
+            b_max: b.max,
+            b_p25: b.p25,
+            b_p75: b.p75,
+            b_samples: b.samples,
+            significance_level: 0.01,
+            ratio: 1.0,
+            confidence_interval: None,
+            p_value: 1.0,
+        };
+
+        // `a` never moved; `b` did, and with five samples that is its range.
+        assert_eq!(effect_size.a_noise(), 0.0);
+        assert_eq!(effect_size.a_noise(), a.noise());
+        assert_eq!(effect_size.b_noise(), b.noise());
+        assert!(
+            (effect_size.b_noise() - 20.0).abs() < 1e-9,
+            "{}",
+            effect_size.b_noise()
+        );
     }
 }

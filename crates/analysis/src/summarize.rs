@@ -13,25 +13,27 @@ pub fn calculate<'a>(measurements: &[Measurement<'a>]) -> Vec<Summary<'a>> {
             .filter(|m| k.matches(m))
             .map(|m| m.count)
             .collect();
+
+        // Sort up front so the percentiles and the extremes can all be read
+        // off the same ordering.
+        grouped_counts.sort();
+        let first = *grouped_counts.first().expect("at least one element");
+        let last = *grouped_counts.last().expect("at least one element");
+
         summaries.push(Summary {
             arch: k.arch.unwrap(),
             engine: k.engine.unwrap(),
             wasm: k.wasm.unwrap(),
             phase: k.phase.unwrap(),
             event: k.event.unwrap(),
-            min: grouped_counts
-                .iter()
-                .cloned()
-                .min()
-                .expect("at least one element"),
-            max: grouped_counts
-                .iter()
-                .cloned()
-                .max()
-                .expect("at least one element"),
+            min: first,
+            max: last,
             mean: mean(&grouped_counts),
             mean_deviation: mean_deviation(&grouped_counts),
-            median: median(grouped_counts.as_mut_slice()),
+            median: percentile_from_sorted(&grouped_counts, 50.0),
+            samples: grouped_counts.len(),
+            p25: percentile_from_sorted(&grouped_counts, 25.0),
+            p75: percentile_from_sorted(&grouped_counts, 75.0),
         })
     }
     summaries
@@ -113,15 +115,6 @@ pub fn coefficient_of_variation(numbers: &[u64]) -> f64 {
     } else {
         (std_deviation(numbers) / mean_val) * 100.0
     }
-}
-
-/// Returns the median value of a group.
-///
-/// An even-length group's median interpolates between the two middle values,
-/// agreeing with [`percentile_from_sorted`] at the 50th percentile.
-fn median(numbers: &mut [u64]) -> f64 {
-    numbers.sort();
-    percentile_from_sorted(numbers, 50.0)
 }
 
 /// Write a vector of [Summary] structures to the passed `output_file` in
@@ -302,6 +295,9 @@ mod tests {
                 median: 1.0,
                 max: 2,
                 mean_deviation: 2f64 / 3f64,
+                samples: 3,
+                p25: 0.5,
+                p75: 1.5,
             }]
         );
     }
@@ -368,6 +364,9 @@ mod tests {
                 median: 2.0,
                 mean: 2.0,
                 mean_deviation: 0.0,
+                samples: 3,
+                p25: 1.5,
+                p75: 2.5,
             }
         }
 
@@ -410,6 +409,9 @@ mod tests {
             median: 2.0,
             mean: 2.0,
             mean_deviation: 0.0,
+            samples: 3,
+            p25: 1.5,
+            p75: 2.5,
         }];
         let mut out = termcolor::NoColor::new(Vec::new());
         write(summaries, &[], &mut out).unwrap();
@@ -434,16 +436,16 @@ mod tests {
     }
 
     #[test]
-    fn median_interpolates_like_the_50th_percentile() {
-        // The two functions disagreed on even-length input: this one returned
-        // the upper middle element, 6, where the percentile interpolated.
-        let mut numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        assert_eq!(median(&mut numbers), 5.5);
-        assert_eq!(median(&mut numbers), percentile_from_sorted(&numbers, 50.0));
+    fn the_median_interpolates_on_even_lengths() {
+        // A separate median helper used to return the upper middle element, 6,
+        // where the percentile interpolates. Everything reads the median off
+        // `percentile_from_sorted` now, so there is one answer.
+        let numbers = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        assert_eq!(percentile_from_sorted(&numbers, 50.0), 5.5);
 
         // Odd lengths have an exact middle either way.
-        let mut numbers = vec![3, 1, 2];
-        assert_eq!(median(&mut numbers), 2.0);
+        let numbers = vec![1, 2, 3];
+        assert_eq!(percentile_from_sorted(&numbers, 50.0), 2.0);
     }
 
     #[test]
