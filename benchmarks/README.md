@@ -1,12 +1,39 @@
 # Candidate Benchmark Programs
 
-This directory contains the candidate programs for the benchmark suite. They are
-candidates, not officially part of the suite yet, because we [intend][rfc] to
-record various metrics about the programs and then run a principal component
-analysis to find a representative subset of candidates that doesn't contain
-effectively duplicate workloads.
+This directory contains our various benchmark programs. Not all are included in
+a benchmark suite.
 
-[rfc]: https://github.com/bytecodealliance/rfcs/pull/4
+## Which Benchmark Programs Should I Run?
+
+**99% of the time, you want to run the `default.suite`.**
+
+The default suite is derived from a [principal-component analysis
+(PCA)](https://github.com/bytecodealliance/sightglass/blob/main/scripts/pca.R)
+to maximize the amount of benchmark variation covered while avoiding
+effectively-redundant workloads (those that exercise the same kinds of code that
+an existing benchmark already exercises) and conserving developer
+time. `default.suite` is an alias of `pca-20-min.suite`, and completes a full
+run with default options in an estimated ~20 minutes.
+
+For fast iteration locally, but not as a replacement for a full `default.suite`
+run, you can also use one of the smaller PCA-based subsets of `default.suite`:
+
+* `pca-5-min.suite`: completes in an estimated ~5 minutes
+* `pca-10-min.suite`: completes in an estimated ~10 minutes
+
+If you are specifically interested in a certain kind of program, you can also
+try one of these suites:
+
+* `gc.suite`: the set of benchmarks that use Wasm GC
+* `simd.suite`: the set of benchmarks that use SIMD
+
+Finally, while you *can* also run `all.suite` -- which contains every benchmark
+program in this directory -- be aware that it contains many
+effectively-redundant workloads (e.g. many of the libsodium benchmarks exercise
+basically the same kind of code) and therefore its geomean is lopsided, weighing
+these redundant workloads heavier than workloads that appear only once in the
+corpus, and running it takes an exceedingly long time. We do not recommend
+benchmarking `all.suite`.
 
 ## Building
 
