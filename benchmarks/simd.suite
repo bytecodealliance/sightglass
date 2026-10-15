@@ -2,16 +2,18 @@
 # does not guarantee that the benchmark is a SIMD-centric workload in the
 # measured section, only that SIMD instructions are present.
 #
-# These files were gathered by:
-# - creating a `find-simd.sh` script containing: `wasm2wat --disable-simd $1
-#   &>/dev/null || echo $1`
-# - running the script over the benchmarks: `find . -name '*.wasm' | xargs -L 1
-#   ./find-simd.sh`
+# These files were gathered by running, from this directory:
+#
+#     find . -name '*.wasm' | sort | while read f; do
+#         wasm-tools validate --features=-simd,-relaxed-simd "$f" >/dev/null 2>&1 || echo "${f#./}"
+#     done
 
 blake3-simd/benchmark.wasm
 hex-simd/benchmark.wasm
 intgemm-simd/benchmark.wasm
 meshoptimizer/benchmark.wasm
+libsodium/libsodium-aead_aegis128l.wasm
+libsodium/libsodium-aead_aegis256.wasm
 libsodium/libsodium-aead_chacha20poly1305.wasm
 libsodium/libsodium-aead_chacha20poly13052.wasm
 libsodium/libsodium-aead_xchacha20poly1305.wasm
@@ -46,6 +48,7 @@ libsodium/libsodium-generichash3.wasm
 libsodium/libsodium-hash.wasm
 libsodium/libsodium-hash3.wasm
 libsodium/libsodium-kdf.wasm
+libsodium/libsodium-kdf_hkdf.wasm
 libsodium/libsodium-keygen.wasm
 libsodium/libsodium-kx.wasm
 libsodium/libsodium-metamorphic.wasm

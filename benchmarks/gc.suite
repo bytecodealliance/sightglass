@@ -1,1 +1,17 @@
+# These benchmarks use the WebAssembly GC proposal (`struct`/`array` types,
+# `ref.cast`, `i31`, etc.). Inclusion in this list does not guarantee that the
+# benchmark is a GC-centric workload in the measured section, only that GC
+# instructions are present.
+#
+# These files were gathered by running, from this directory:
+#
+#     find . -name '*.wasm' | sort | while read f; do
+#         wasm-tools validate --features=-gc,-gc-types "$f" >/dev/null 2>&1 || echo "${f#./}"
+#     done
+
+dart-deltablue/dart-deltablue.wasm
+hoot-earley-boyer/hoot-earley-boyer.wasm
+java-navier-stokes/java-navier-stokes.wasm
+kotlin-richards/kotlin-richards.wasm
+ocaml-raytrace/ocaml-raytrace.wasm
 splay/splay.wasm
