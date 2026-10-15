@@ -1,12 +1,13 @@
 # Candidate Benchmark Programs
 
-This directory contains the candidate programs for the benchmark suite.
+This directory contains our various benchmark programs. Not all are included in
+a benchmark suite.
 
 ## Which Benchmark Programs Should I Run?
 
 **99% of the time, you want to run the `default.suite`.**
 
-The default suite is derived from a [principle-component analysis
+The default suite is derived from a [principal-component analysis
 (PCA)](https://github.com/bytecodealliance/sightglass/blob/main/scripts/pca.R)
 to maximize the amount of benchmark variation covered while avoiding
 effectively-redundant workloads (those that exercise the same kinds of code that
@@ -26,13 +27,13 @@ try one of these suites:
 * `gc.suite`: the set of benchmarks that use Wasm GC
 * `simd.suite`: the set of benchmarks that use SIMD
 
-Finally, while you *can* also run `all.suite` -- which contains every candidate
-benchmark program in Sightglass -- be aware that it contains many
+Finally, while you *can* also run `all.suite` -- which contains every benchmark
+program in this directory -- be aware that it contains many
 effectively-redundant workloads (e.g. many of the libsodium benchmarks exercise
 basically the same kind of code) and therefore its geomean is lopsided, weighing
 these redundant workloads heavier than workloads that appear only once in the
-corpus, and also its full runs take an exceedingly long time. We do not
-recommend benchmarking `all.suite`.
+corpus, and running it takes an exceedingly long time. We do not recommend
+benchmarking `all.suite`.
 
 ## Building
 
