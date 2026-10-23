@@ -51,15 +51,21 @@ fn main() {
     // Clone the repository at the specified revision. The sequence below is more space-efficient
     // (and thus faster) than cloning the entire repository.
     section("Retrieving the repository");
-    exec(&["git", "init"], &build_dir);
-    exec(&["git", "remote", "add", "origin", &repository], &build_dir);
+    exec(&["git", "init"], &[], &build_dir);
     exec(
-        &["git", "fetch", "--depth", "1", "origin", &revision],
+        &["git", "remote", "add", "origin", &repository],
+        &[],
         &build_dir,
     );
-    exec(&["git", "checkout", "FETCH_HEAD"], &build_dir);
+    exec(
+        &["git", "fetch", "--depth", "1", "origin", &revision],
+        &[],
+        &build_dir,
+    );
+    exec(&["git", "checkout", "FETCH_HEAD"], &[], &build_dir);
     exec(
         &["git", "submodule", "update", "--init", "--depth", "1"],
+        &[],
         &build_dir,
     );
 
@@ -67,6 +73,27 @@ fn main() {
     section("Building the engine");
     exec(
         &["cargo", "build", "--release", "-p", "wasmtime-bench-api"],
+        // Avoid codegen layout noise across commits due to functions "randomly"
+        // being inlined or not across builds of different Wasmtime commits
+        // based on whether they are in the same CGU or not.
+        //
+        // We do *not* also enable LTO (or, equivalently, use Wasmtime's
+        // `--profile fastest-runtime`) because this would enable more "random"
+        // (across different Wasmtime commits) inlining noise between
+        // crates. With CGUs=1 and LTO disabled, the inlining boundary is very
+        // clear and related directly to the code we write and not our
+        // dependencies: anything within a crate is a candidate for inlining
+        // into function in that same crate, unless the function is marked
+        // `#[inline]` (or, in some cases, is generic) in which case it can be
+        // inlined across crates.
+        //
+        // Minimizing codegen layout noise across builds of mostly-the-same
+        // Wasmtime commits is important so that when we compare the performance
+        // of, say, the latest `HEAD` to `HEAD^`, we are not, as much as
+        // possible, measuring changes due to LLVM's heuristics that could just
+        // as easily happen with *any* commit on top of `HEAD^` and isn't
+        // actually related to what `HEAD` itself is doing.
+        &[("CARGO_PROFILE_RELEASE_CODEGEN_UNITS", "1")],
         &build_dir,
     );
 
@@ -131,10 +158,11 @@ fn create_temp_directory() -> PathBuf {
 }
 
 /// Execute a `command` in the `working_directory`, panicking on failure.
-fn exec<P: AsRef<Path>>(command: &[&str], working_directory: P) {
+fn exec<P: AsRef<Path>>(command: &[&str], env: &[(&str, &str)], working_directory: P) {
     eprintln!("> {}", command.join(" "));
     let mut cmd = Command::new(command[0]);
     cmd.args(&command[1..]);
+    cmd.envs(env.iter().copied());
     cmd.current_dir(working_directory);
     cmd.status().expect("unable to execute command");
 }
