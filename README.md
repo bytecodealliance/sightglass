@@ -2,7 +2,7 @@
   <h1><code>sightglass</code></h1>
 
   <p>
-    <strong>A benchmarking suite and tooling for Wasmtime and Cranelift</strong>
+    <strong>Benchmarking for Wasmtime and Cranelift</strong>
   </p>
 
   <strong>A <a href="https://bytecodealliance.org/">Bytecode Alliance</a> project</strong>
@@ -22,208 +22,153 @@
 
 ## About
 
-This repository contains benchmarking infrastructure for Wasmtime and Cranelift,
-as described in [this
-RFC](https://github.com/bytecodealliance/rfcs/blob/main/accepted/benchmark-suite.md).
-In particular, it has
+This repository contains benchmarking infrastructure for Wasmtime and
+Cranelift. In particular, it has
 
-* a benchmark suite of Wasm applications in `benchmarks/*`, and
+* a suite of Wasm benchmark programs in `benchmarks/*`, and
 
-* a benchmark runner CLI tool to record, analyze, and display benchmark results
-  in `crates/cli/*`.
+* a CLI tool to record, analyze, compare, and display benchmark results in
+  `crates/cli/*`.
 
-We plan to implement a server that periodically runs benchmarks as new commits
-are pushed to Wasmtime and display the history of those benchmark results,
-similar to Firefox's [Are We Fast Yet?](https://arewefastyet.com). However, this
-work is not completed yet. See [issue
-93](https://github.com/bytecodealliance/sightglass/issues/93) for details.
+Continuous benchmarking, showing historical performance over time and filing
+issues for performance regressions, is built on top of this infrastructure in
+the [`bytecodealliance/are-we-fast-yet`] repository.
+
+[`bytecodealliance/are-we-fast-yet`]: https://github.com/bytecodealliance/are-we-fast-yet
+
+Analyses use sound and rigorous statistical methods: Mann-Whitney U-tests for
+significance (because benchmark results are not normally distributed), reporting
+effect sizes only for statistically significant results, etc...
 
 Results are always broken down by *phase* &mdash; compilation vs. instantiation
 vs. execution &mdash; for each program in the suite. This allows us to reason
 about, for example, compiler performance separately from its generated code
-quality. How all this works together:
+quality.
 
-- each __benchmark__ is compiled to a `benchmark.wasm` module that calls two host functions,
-  `bench.start` and `bench.end`, to notify Sightglass of the portion of the execution to measure
-  (see the [benchmarks README])
-- we build an __engine__ (e.g., Wasmtime) as a shared library that implements the [bench API]; the
-  Sightglass infrastructure uses this to measure each phase (see an [engine README])
-- the __`sightglass-cli`__ tool runs __benchmarks__ using the __engines__ and emits __measurements__
-  for each phase; this is configurable, e.g., by various measurement mechanisms, various output
-  formats, different aggregations, etc.
+More details:
 
-[benchmarks README]: benchmarks/README.md
-[engine README]: engines/wasmtime/README.md
+* [`benchmarks/README.md`]: Wasm benchmark programs and adding new ones.
+* [`engines/wasmtime/README.md`]: Building Wasmtime for benchmarking with Sightglass.
 
-## This is *NOT* a General-Purpose WebAssembly Benchmark Suite
+[`benchmarks/README.md`]: ./benchmarks/README.md
+[`engines/wasmtime/README.md`]: ./engines/wasmtime/README.md
 
-This benchmark suite and tooling is specifically designed for Wasmtime and
-Cranelift, as explained in [the benchmarking suite
-RFC](https://github.com/bytecodealliance/rfcs/blob/main/accepted/benchmark-suite.md#nongoal-creating-a-general-purpose-webassembly-benchmark-suite):
+## Quickstart
 
-> It is also worth mentioning this explicit non-goal: we do not intend to
-> develop a general-purpose WebAssembly benchmark suite, used to compare between
-> different WebAssembly compilers and runtimes. We don't intend to trigger a
-> WebAssembly benchmarking war, reminiscent of JavaScript benchmarking wars in
-> Web browsers. Doing so would make the benchmark suite's design high stakes,
-> because engineers would be incentivized to game the benchmarks, and would
-> additionally impose cross-engine portability constraints on the benchmark
-> runner. We only intend to compare the performance of various versions of
-> Wasmtime and Cranelift, where we don't need the cross-engine portability in
-> the benchmark runner, and where gaming the benchmarks isn't incentivized.
->
-> Furthermore, general-purpose WebAssembly benchmarking must include WebAssembly
-> on the Web. Doing that well requires including interactions with the rest of
-> the Web browser: JavaScript, rendering, and the DOM. Building and integrating
-> a full Web browser is overkill for our purposes, and represents significant
-> additional complexity that we would prefer to avoid.
+Compare the performance between a baseline commit and a feature commit:
 
-Even if someone did manage to get other Wasm engines hooked into this
-benchmarking infrastructure, comparing results across engines would likely be
-invalid. The `wasmtime-bench-api` intentionally does things that will likely
-hurt its absolute performance numbers but which help us more easily get
-statistically meaningful results, like randomizing the locations of heap
-allocations. Without taking great care to level the playing field with respect
-to these sorts of tweaks, as well as keeping an eye on all engine specific
-configuration options, you'll end up comparing apples and oranges.
+```bash
+rustc engines/wasmtime/build.rs
+
+# Build the baseline engine.
+mkdir baseline
+REPOSITORY=/path/to/my/wasmtime REVISION=my-baseline-branch-or-sha ./build baseline/
+
+# Build the feature engine.
+mkdir feature
+REPOSITORY=/path/to/my/wasmtime REVISION=my-feature-branch-or-sha ./build feature/
+
+# Run the benchmarks in both engines and compare their performance!
+cargo run -- benchmark \
+    -e baseline/libengine.so \     # or `.dylib` on macos; `.dll` on windows
+    -e feature/libengine.so
+```
 
 ## Usage
 
-You can always see all subcommands and options via
+You can always see all usage options via:
 
 ```
-cargo run -- help
-```
-
-There are flags to control how many iterations of each benchmark we measure
-(each in its own process), etc...
-
-That said, here are a couple of typical usage scenarios.
-
-### Building the Runtime Engine for Wasmtime
-```
-$ cd engines/wasmtime && rustc build.rs && ./build && cd ../../
+cargo run -- --help
 ```
 
 ### Running the Default Benchmark Suite
 
 ```
-$ cargo run -- benchmark --engine engines/wasmtime/libengine.so
+cargo run -- benchmark --engine engines/wasmtime/libengine.so
 ```
 
 This runs all benchmarks listed in [`default.suite`](benchmarks/default.suite).
-The output will be a summary of each benchmark program's compilation,
-instantiation, and execution times.
 
-### Running a Single Wasm Benchmark
+When one engine is given, the output will be a summary of each benchmark's
+compilation, instantiation, and execution times. When multiple engines are
+given, each pair of engines' results are compared and tested for statistical
+significance.
+
+### Running Particular Wasm Benchmarks
 
 ```
-$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/benchmark.wasm
+cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/benchmark.wasm
 ```
 
 Append multiple `*.wasm` paths to the end of that command to run multiple
 benchmarks.
 
-### Running All Benchmarks
+See also "Which Benchmark Programs Should I Run?" in [`benchmarks/README.md`].
+
+### Running Alternative Benchmark Suites
 
 ```
-$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- benchmarks/all.suite
+$ cargo run -- benchmark --engine engines/wasmtime/libengine.so -- path/to/the.suite
 ```
 
 `*.suite` files contain relative paths of a list of benchmarks to run. This is a
 convenience for organizing benchmarks but is functionally equivalent to listing
-all `*.wasm` paths at the end of the `benchmark` command.
+all `*.wasm` paths at the end of the `benchmark` command. There are a handful of
+alternative suites defined in `./benchmarks/*.suite` files.
+
+See also "Which Benchmark Programs Should I Run?" in [`benchmarks/README.md`].
 
 ### Comparing a Feature Branch to Main
 
-First, build `libwasmtime_bench_api.so` (or `.dylib` or `.dll` depending on your
-OS) for the latest `main` branch:
+Build one `libengine.so` for `main` and another for your `my-feature` branch and
+pass both to `cargo run -- benchmark`:
 
 ```
-$ cd ~/wasmtime
-$ git checkout main
-$ cargo build --release -p wasmtime-bench-api
-$ cp target/release/libwasmtime_bench_api.so /tmp/wasmtime_main.so
+rustc engines/wasmtime/build.rs
+
+# Build the engine for `main`.
+mkdir main
+REPOSITORY=/path/to/my/wasmtime REVISION=main ./build main/
+
+# Build the engine for the `my-feature` branch.
+mkdir my-feature
+REPOSITORY=/path/to/my/wasmtime REVISION=my-feature ./build my-feature/
+
+# Pass all the engines to `benchmark` to compare their performance.
+cargo run -- benchmark \
+    --engine main/libengine.so \       # or `.dylib` on macos; `.dll` on windows
+    --engine my-feature/libengine.so
 ```
 
-Then, checkout your feature branch and build its `libwasmtime_bench_api.so`:
+You may pass in a third or fourth or etc... `--engine` and each pair of engines
+will be compared.
+
+### Collecting Different Measurements
+
+You can change what measures are recorded via the `-m`/`--measure` CLI flag:
 
 ```
-$ git checkout my-feature
-$ cargo build --release -p wasmtime-bench-api
+cargo run -- benchmark -e path/to/libengine.so -m insts-retired
 ```
 
-Finally, run the benchmarks and supply both versions of
-`libwasmtime_bench_api.so` via repeated use of the `--engine` flag:
+Available measures:
 
-```
-$ cd ~/sightglass
-$ cargo run -- \
-    benchmark \
-    --engine /tmp/wasmtime_main.so \
-    --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
-    -- \
-    benchmarks/all.suite
-```
+* `cycles`: CPU cycles elapsed. This is the default.
 
-The output will show a comparison between the `main` branch's results and your
-feature branch's results, giving you an effect size and confidence interval
-(i.e. "we are 99% confident that `my-feature` is 1.32x to 1.37x faster than
-`main`" or "there is no statistically significant difference in performance
-between `my-feature` and `main`") for each benchmark Wasm program in the suite.
+* `insts-retired`: Instructions retired.
 
-As you make further changes to your `my-feature` branch, you can execute this
-command whenever you want new, updated benchmark results:
+* `perf-counters`: A selection of common `perf` counters (CPU cycles,
+  instructions retired, cache accesses, cache misses). Only available on Linux.
 
-```
-$ cargo build --manifest-path ~/wasmtime/Cargo.toml --release -p wasmtime-bench-api && \
-    cargo run --manifest-path ~/sightglass/Cargo.toml -- \
-      benchmark \
-      --engine /tmp/wasmtime_main.so \
-      --engine ~/wasmtime/target/release/libwasmtime_bench_api.so \
-      -- \
-      benchmarks/all.suite
-```
-
-### Collecting Different Kinds of Results
-
-Sightglass comes enabled with several different kinds of measurement mechanisms
-&mdash; a _measure_.  The default _measure_ is `cycles`, which simply measures
-the elapsed duration of CPU cycles for each phase (e.g., using `RDTSC`). The
-accuracy of this _measure_ is documented [here](crates/recorder/README.md) but
-note that measuring using CPU cycles alone can be problematic (e.g., CPU
-frequency changes, context switches, etc.).
-
-Several _measures_ can be configured using the `--measure` option:
-
-- `cycles`: The number of CPU cycles elapsed. On macOS this is the kernel's
-  per-process count from the hardware performance monitor; elsewhere it is a
-  user-space counter such as `RDTSC`, which ticks at a constant rate rather than
-  at the core's actual clock speed.
-
-- `perf-counters`: A selection of common `perf` counters (CPU cycles,
-  instructions retired, cache accesses, cache misses); only available on Linux.
-
-- `callgrind`: Uses Valgrind's Callgrind to count instructions retired and
+* `callgrind`: Uses Valgrind's Callgrind to count instructions retired and
   simulate caches and branch prediction. Mostly deterministic and very low
   noise. Only available on Linux and when built with `--features callgrind`.
 
-- `vtune`: Record each phase as a VTune task for analysis; see [this help
-  documentation](docs/vtune.md) for more details.
+* `vtune`: Record each phase as a VTune task for analysis; see
+  [`docs/vtune.md`](./docs/vtune.md) for details.
 
-- `noop`: No measurement is performed.
-
-For example, run:
-
-```
-$ cargo run -- benchmark --measure perf-counters ...
-```
-
-For `callgrind`, Sightglass runs benchmark children under `setarch -R valgrind`
-with a fixed cache model and forces single-threaded Wasmtime compilation with
-`RAYON_NUM_THREADS=1` so results stay stable across machines. Use the same
-Valgrind version when comparing data recorded on different machines for best
-results.
+See also [`crates/recorder/README.md`](crates/recorder/README.md).
 
 ### Re-analyzing a Previous Run's Results
 
@@ -248,21 +193,21 @@ to do with the raw results yourself.
 ### Getting Raw JSON or CSV Results
 
 If you don't want the results to be summarized and displayed in a human-readable
-format, you can get raw JSON or CSV via the `--raw` flag:
+format, you can get raw JSON or CSV via the `--raw` and `--output-format` CLI
+flags:
 
 ```
 $ cargo run -- benchmark --raw --output-format json -- benchmark.wasm
 ```
 
-Then you can use your own R/Python/spreadsheets/etc. to analyze and visualize
+Then you can use your own R/Python/spreadsheets/etc... to analyze and visualize
 the benchmark results.
 
 ### HTML Report Generation
 
-For raw results collected in the JSON format, sightglass includes a built-in `report`
-subcommand that generates comprehensive HTML reports with statistical analysis and
-interactive visualizations. This approach provides rigorous statistical significance
-testing following the Bytecode Alliance RFC standards.
+For raw results collected in the JSON format, sightglass includes a built-in
+`report` subcommand that generates comprehensive HTML reports with statistical
+analysis and interactive visualizations:
 
 ```bash
 # Generate HTML report comparing multiple measurement files
@@ -272,19 +217,34 @@ $ cargo run -- report --output-file report.html baseline.json experiment1.json e
 $ cargo run -- report --baseline-engine wasmtime-baseline --output-file report.html baseline.json experiment.json
 ```
 
-The generated HTML report includes:
-- Statistical significance testing with confidence intervals
-- Interactive charts showing performance distributions
-- Effect size analysis with practical significance assessment
-- Filtering and sorting capabilities for large result sets
+### Building the Engine(s) to Run Benchmarks Within
 
-See `cargo run -- report --help` for all available options.
+```shell-session
+rustc engines/wasmtime/build.rs
+./build
+```
 
-### Adding a New Benchmark
+The resulting engine will be at `libengine.so` (or `libengine.dll` on windows
+and `libengine.dylib` on macos). You may pass a directory path as an argument to
+`./build` and the engine will be placed there instead of the current directory.
 
-Add a Dockerfile under `benchmarks/<your benchmark>` building a Wasm file that
-brackets the work to measure with the `bench.start` and `bench.end` host calls.
-See the [benchmarks README] for a fuller set of requirements and the
-[`build.sh`] script for building this file.
+By default this builds the latest commit on `main` from the canonical
+`bytecodealliance/wasmtime` repository.
 
-[`build.sh`]: benchmarks/build.sh
+You can set the following environment variables while running `./build` to
+configure the engine's build:
+
+* `REPOSITORY`: the URL or file path of the Wasmtime repository to be built. If
+  the version of Wasmtime you'd like to benchmark is not merged upstream yet,
+  you can set this to your fork. Defaults to
+  `https://github.com/bytecodealliance/wasmtime.git`.
+* `REVISION`: the git branch, commit, tag, etc... that should be built. Defaults
+  to `main`.
+
+For example:
+
+```
+REPOSITORY=https://github.com/fitzgen/wasmtime.git \
+REVISION=add-cool-new-optimization \
+    ./build
+```
