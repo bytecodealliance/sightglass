@@ -2,7 +2,7 @@
 //!
 //! ```
 //! rustc build.rs
-//! [REPOSITORY=<repo url>] [REVISION=<hash|branch|tag>] ./build [<destination dir>]
+//! ./build [--repository <url>] [--revision <hash|branch|tag>] [<destination dir>]
 //! ```
 //!
 //! Note that a `hash` must be the full commit hash.
@@ -20,45 +20,55 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::SystemTime;
 
-fn main() {
-    // The sole CLI argument is the path at which to place the built engine library and metadata.
-    let args: Vec<_> = env::args_os().collect();
-    let destination_dir = match args.get(1) {
-        Some(p) => Path::new(p)
-            .canonicalize()
-            .expect("the first parameter is not a valid directory"),
-        None => env::current_dir().unwrap(),
-    };
+const DEFAULT_REPOSITORY: &str = "https://github.com/bytecodealliance/wasmtime.git";
+const DEFAULT_REVISION: &str = "main";
 
-    // Collect configuration for building the engine library from environment variables.
-    // - `REPOSITORY` controls the Wasmtime source to pull
-    // - `REVISION` is a valid Git identifier: e.g., branch name, tag name, long or short commit
-    //   hash.
-    // - `BUILD_DIR` is used internally to control where the library is cloned to and built; if not
-    //   present, a temporary directory is created and later removed
-    let repository =
-        var("REPOSITORY").unwrap_or("https://github.com/bytecodealliance/wasmtime/".into());
-    let revision = var("REVISION").unwrap_or("main".into());
-    let (build_dir, remove_build_dir) = if let Some(p) = env::var_os("BUILD_DIR") {
-        let p = PathBuf::from(p)
-            .canonicalize()
-            .expect("BUILD_DIR must be a valid directory");
-        (p, false)
-    } else {
-        (create_temp_directory(), true)
+const USAGE: &str = "\
+Build a Wasmtime benchmarking engine for Sightglass.
+
+Usage:
+    build [OPTIONS] [<destination dir>]
+
+Options:
+    --repository <url|path>        The Wasmtime repository to build.
+                                   [default: https://github.com/bytecodealliance/wasmtime.git]
+    --revision <hash|branch|tag>   The revision of that repository to build; a
+                                   hash must be the full commit hash.
+                                   [default: main]
+    --build-dir <dir>              Where to clone and build Wasmtime. Reused
+                                   across runs, and not deleted afterwards.
+                                   [default: a temporary directory]
+    -h, --help                     Print this message.
+
+Positional arguments:
+    <destination dir>              Where to place the built engine library and
+                                   its `.build-info` metadata. [default: .]
+";
+
+fn main() {
+    let config = Config::from_args_and_env();
+
+    // The destination and build directories may not exist yet, so create them
+    // before canonicalizing, which requires an existing path.
+    let destination_dir = make_dir(&config.destination);
+    let (build_dir, remove_build_dir) = match &config.build_dir {
+        Some(p) => (make_dir(p), false),
+        None => (create_temp_directory(), true),
     };
+    let repository = config.repository.as_str();
+    let revision = config.revision.as_str();
 
     // Clone the repository at the specified revision. The sequence below is more space-efficient
     // (and thus faster) than cloning the entire repository.
     section("Retrieving the repository");
     exec(&["git", "init"], &[], &build_dir);
     exec(
-        &["git", "remote", "add", "origin", &repository],
+        &["git", "remote", "add", "origin", repository],
         &[],
         &build_dir,
     );
     exec(
-        &["git", "fetch", "--depth", "1", "origin", &revision],
+        &["git", "fetch", "--depth", "1", "origin", revision],
         &[],
         &build_dir,
     );
@@ -100,10 +110,10 @@ fn main() {
     // Construct a `.build-info` file that will capture the important details a user would want to
     // know if attempting to replicate benchmark results. (The current set is not exhaustive!).
     section("Collecting metadata");
-    let build_info = write_buildinfo(&build_dir, &repository, &revision);
+    let build_info = write_buildinfo(&build_dir, repository, revision);
     let build_info_contents =
         fs::read_to_string(&build_info).expect("unable to read .build-info file");
-    eprintln!("{}", build_info_contents);
+    eprintln!("{build_info_contents}");
 
     // Finally, the generated files are copied to their destination and we clean up the build
     // directory.
@@ -127,17 +137,96 @@ fn main() {
 /// Print a section header for logging.
 fn section(title: &str) {
     eprintln!();
-    eprintln!("===== {} =====", title);
+    eprintln!("===== {title} =====");
 }
 
-/// Helpful wrapper to access an environment variable as a string. `env::var` returns an error when
-/// the `OsString` cannot be converted, which is not exactly what we want. This function panics if the
-/// string cannot be converted but still returns an `Option` indicating if the variable was present.
-fn var(key: &str) -> Option<String> {
-    env::var_os(key).map(|s| {
-        s.into_string()
-            .expect("the given value could not be converted to UTF-8")
-    })
+/// The configuration for a build, assembled from CLI flags, environment variables, and defaults,
+/// in that order of precedence.
+struct Config {
+    repository: String,
+    revision: String,
+    destination: PathBuf,
+    build_dir: Option<PathBuf>,
+}
+
+impl Config {
+    /// Parse the configuration from this process's CLI arguments and environment, exiting the
+    /// process on a usage error or on `--help`.
+    fn from_args_and_env() -> Self {
+        let mut repository = None;
+        let mut revision = None;
+        let mut build_dir = None;
+        let mut destination = None;
+
+        let mut args = env::args().skip(1);
+        while let Some(arg) = args.next() {
+            // Accept both `--flag value` and `--flag=value`.
+            let (flag, inline_value) = match arg.split_once('=') {
+                Some((flag, value)) => (flag.to_string(), Some(value.to_string())),
+                None => (arg.clone(), None),
+            };
+            let mut value = || match inline_value.clone().or_else(|| args.next()) {
+                Some(v) => v,
+                None => usage_error(&format!("{flag} requires a value")),
+            };
+            match flag.as_str() {
+                "--repository" => repository = Some(value()),
+                "--revision" => revision = Some(value()),
+                "--build-dir" => build_dir = Some(PathBuf::from(value())),
+                "-h" | "--help" => {
+                    print!("{USAGE}");
+                    std::process::exit(0);
+                }
+                _ if arg.starts_with('-') => usage_error(&format!("unknown flag: {arg}")),
+                _ if destination.is_some() => {
+                    usage_error("only one destination directory may be given")
+                }
+                _ => destination = Some(PathBuf::from(arg)),
+            }
+        }
+
+        Self {
+            repository: repository
+                .or_else(|| deprecated_var("REPOSITORY", "--repository"))
+                .unwrap_or(DEFAULT_REPOSITORY.into()),
+            revision: revision
+                .or_else(|| deprecated_var("REVISION", "--revision"))
+                .unwrap_or(DEFAULT_REVISION.into()),
+            destination: destination.unwrap_or(env::current_dir().unwrap()),
+            build_dir: build_dir
+                .or_else(|| deprecated_var("BUILD_DIR", "--build-dir").map(PathBuf::from)),
+        }
+    }
+}
+
+/// Print the usage message along with `message` and exit unsuccessfully.
+fn usage_error(message: &str) -> ! {
+    eprint!("{USAGE}");
+    eprintln!();
+    eprintln!("error: {message}");
+    std::process::exit(1);
+}
+
+/// Read a deprecated environment variable, warning when it is present so that users migrate to
+/// `flag`.
+///
+/// Panics if the value is not valid UTF-8.
+fn deprecated_var(key: &str, flag: &str) -> Option<String> {
+    let value = env::var_os(key)?.into_string().unwrap_or_else(|_| {
+        // `rustc build.rs` compiles this as edition 2015, where a lone `panic!` argument is not a
+        // format string, so `key` must be passed separately.
+        panic!("the value of {} could not be converted to UTF-8", key);
+    });
+    eprintln!("warning: the {key} environment variable is deprecated; use {flag} instead");
+    Some(value)
+}
+
+/// Create `dir` and any missing parents, returning its canonical path.
+fn make_dir(dir: &Path) -> PathBuf {
+    fs::create_dir_all(dir)
+        .unwrap_or_else(|e| panic!("unable to create directory {}: {e}", dir.display()));
+    dir.canonicalize()
+        .unwrap_or_else(|e| panic!("unable to canonicalize {}: {e}", dir.display()))
 }
 
 /// Helpful wrapper to create a temporary directory; e.g., `/tmp/sightglass-wasmtime-build-<current
@@ -185,24 +274,24 @@ where
     P: AsRef<Path>,
 {
     let build_dir = build_dir.as_ref();
-    let commit = exec_with_stdout(&["git", "rev-parse", "HEAD"], &build_dir);
+    let commit = exec_with_stdout(&["git", "rev-parse", "HEAD"], build_dir);
     let datetime = exec_with_stdout(
         &["git", "show", "--no-patch", "--no-notes", "--pretty=%cI"],
-        &build_dir,
+        build_dir,
     );
-    let cargo = exec_with_stdout(&["cargo", "--version"], &build_dir);
-    let rustc = exec_with_stdout(&["rustc", "--version"], &build_dir);
+    let cargo = exec_with_stdout(&["cargo", "--version"], build_dir);
+    let rustc = exec_with_stdout(&["rustc", "--version"], build_dir);
     let build_info = build_dir.join(".build-info");
     eprintln!("Writing metadata to {}:", build_info.display());
     {
         let mut file = File::create(&build_info).expect("failed to create .build-info file");
         writeln!(file, "NAME=wasmtime").unwrap();
-        writeln!(file, "REPOSITORY={}", repository).unwrap();
-        writeln!(file, "REVISION={}", revision).unwrap();
-        writeln!(file, "_COMMIT={}", commit).unwrap();
-        writeln!(file, "_COMMIT_DATETIME={}", datetime).unwrap();
-        writeln!(file, "_CARGO={}", cargo).unwrap();
-        writeln!(file, "_RUSTC={}", rustc).unwrap();
+        writeln!(file, "REPOSITORY={repository}").unwrap();
+        writeln!(file, "REVISION={revision}").unwrap();
+        writeln!(file, "_COMMIT={commit}").unwrap();
+        writeln!(file, "_COMMIT_DATETIME={datetime}").unwrap();
+        writeln!(file, "_CARGO={cargo}").unwrap();
+        writeln!(file, "_RUSTC={rustc}").unwrap();
     }
     build_info
 }

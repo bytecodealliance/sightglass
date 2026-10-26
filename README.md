@@ -61,17 +61,19 @@ Compare the performance between a baseline commit and a feature commit:
 rustc engines/wasmtime/build.rs
 
 # Build the baseline engine.
-mkdir baseline
-REPOSITORY=/path/to/my/wasmtime REVISION=my-baseline-branch-or-sha ./build baseline/
+./build --repository /path/to/my/wasmtime \
+    --revision my-baseline-branch-or-sha \
+    ./baseline
 
 # Build the feature engine.
-mkdir feature
-REPOSITORY=/path/to/my/wasmtime REVISION=my-feature-branch-or-sha ./build feature/
+./build --repository /path/to/my/wasmtime \
+    --revision my-feature-branch-or-sha \
+    ./feature
 
 # Run the benchmarks in both engines and compare their performance!
 cargo run -- benchmark \
-    -e baseline/libengine.so \     # or `.dylib` on macos; `.dll` on windows
-    -e feature/libengine.so
+    -e ./baseline/libengine.so \     # or `.dylib` on macos; `.dll` on windows
+    -e ./feature/libengine.so
 ```
 
 ## Usage
@@ -128,17 +130,15 @@ pass both to `cargo run -- benchmark`:
 rustc engines/wasmtime/build.rs
 
 # Build the engine for `main`.
-mkdir main
-REPOSITORY=/path/to/my/wasmtime REVISION=main ./build main/
+./build --repository /path/to/my/wasmtime --revision main ./main
 
 # Build the engine for the `my-feature` branch.
-mkdir my-feature
-REPOSITORY=/path/to/my/wasmtime REVISION=my-feature ./build my-feature/
+./build --repository /path/to/my/wasmtime --revision my-feature ./my-feature
 
 # Pass all the engines to `benchmark` to compare their performance.
 cargo run -- benchmark \
-    --engine main/libengine.so \       # or `.dylib` on macos; `.dll` on windows
-    --engine my-feature/libengine.so
+    --engine ./main/libengine.so \        # or `.dylib` on macos; `.dll` on windows
+    --engine ./my-feature/libengine.so
 ```
 
 You may pass in a third or fourth or etc... `--engine` and each pair of engines
@@ -226,25 +226,32 @@ rustc engines/wasmtime/build.rs
 
 The resulting engine will be at `libengine.so` (or `libengine.dll` on windows
 and `libengine.dylib` on macos). You may pass a directory path as an argument to
-`./build` and the engine will be placed there instead of the current directory.
+`./build`, and the engine will be placed there instead of the current directory.
+The directory is created if it doesn't already exist.
 
 By default this builds the latest commit on `main` from the canonical
-`bytecodealliance/wasmtime` repository.
+[`bytecodealliance/wasmtime`](https://github.com/bytecodealliance/wasmtime)
+repository.
 
-You can set the following environment variables while running `./build` to
-configure the engine's build:
+The following flags configure the engine's build:
 
-* `REPOSITORY`: the URL or file path of the Wasmtime repository to be built. If
-  the version of Wasmtime you'd like to benchmark is not merged upstream yet,
+* `--repository`: the URL or file path of the Wasmtime repository to be built.
+  If the version of Wasmtime you'd like to benchmark is not merged upstream yet,
   you can set this to your fork. Defaults to
   `https://github.com/bytecodealliance/wasmtime.git`.
-* `REVISION`: the git branch, commit, tag, etc... that should be built. Defaults
-  to `main`.
+
+* `--revision`: the git branch, commit, tag, etc... that should be built.
+  Defaults to `main`.
+
+* `--build-dir`: where to clone and build Wasmtime. Reusing one across builds
+  shares a cargo target directory between them, which can speed up builds.
+  Defaults to a temporary directory that is removed once the build finishes.
+
+Run `./build --help` to see all the options.
 
 For example:
 
 ```
-REPOSITORY=https://github.com/fitzgen/wasmtime.git \
-REVISION=add-cool-new-optimization \
-    ./build
+./build --repository https://github.com/fitzgen/wasmtime.git \
+    --revision cool-new-optimization-branch
 ```
