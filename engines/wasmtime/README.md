@@ -22,13 +22,13 @@ rustc build.rs
 The script can be configured in several ways:
 
 ```
-[REPOSITORY=<repo url>] [REVISION=<hash|branch|tag>] ./build [<destination dir>]
+./build [--repository <url|path>] [--revision <hash|branch|tag>] [<destination dir>]
 ```
 
-All configuration is optional. The script responds to environment variables that change the Wasmtime
-source code used; by default, the script will download the tip-of-`main` Wasmtime from the official
-repository. Note that a `hash`, if provided, must be the full commit hash. If provided, the first
-CLI argument can override the destination directory at which to place the built files.
+All configuration is optional; by default, the script will download the tip-of-`main` Wasmtime from
+the official repository. Note that a `hash`, if provided, must be the full commit hash. The
+destination directory is created if it doesn't already exist. Run `./build --help` to see all the
+options.
 
 ### Contributing
 

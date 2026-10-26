@@ -38,7 +38,7 @@ jobs:
       run: |
         pushd engines/wasmtime
         rustc build.rs
-        ./build
+        ./build --revision "$REVISION"
         popd
     - name: Upload Wasmtime Shared Library
       uses: actions/upload-artifact@v4

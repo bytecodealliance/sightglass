@@ -1,3 +1,4 @@
+/build
 *.svg
 
 **/*.rs.bk
